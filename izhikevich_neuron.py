@@ -47,7 +47,7 @@ a = np.concatenate([
     0.02 + 0.08*inhibitory_vector           # inhibitory contribution
     ])
 b = np.concatenate([
-    0.2*np.ones((excitatory_neurons, 1)),   # excitatory contribution
+    0.25*np.ones((excitatory_neurons, 1)),   # excitatory contribution
     0.25 - 0.05*inhibitory_vector           # inhibitory contribution
     ])
 c = np.concatenate([
@@ -55,8 +55,8 @@ c = np.concatenate([
     -65*np.ones((inhibitory_neurons, 1))    # inhibitory contribution
     ])
 d = np.concatenate([
-    8 - 6*excitatory_vector**2,             # excitatory contribution
-    2*np.ones((inhibitory_neurons, 1))      # inhibitory contribution
+    0.05 - 6*excitatory_vector**2,             # excitatory contribution
+    2.05*np.ones((inhibitory_neurons, 1))      # inhibitory contribution
     ])
 S = np.concatenate([
     0.5*np.random.rand(neurons, excitatory_neurons),
