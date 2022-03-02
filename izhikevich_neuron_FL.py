@@ -34,130 +34,13 @@ equations:
     inhibitory_vector: Column vector of inhibitory neurons
 """
 
-import numpy as np
+
 import matplotlib.pyplot as plt
 
-def izhikevich_neurons(
-        a,
-        b,
-        c,
-        d,
-        simulation_time,
-        time_step,
-        excitatory_neurons, 
-        inhibitory_neurons,
-        input_voltage,
-        voltage_pick,
-        excitatory = True,
-        inhibitory = True,
-        ):
-    
-    neurons = excitatory_neurons + inhibitory_neurons
-    excitatory_vector = np.random.rand(excitatory_neurons, 1)
-    inhibitory_vector = np.random.rand(inhibitory_neurons, 1)
-    
-    if (excitatory and inhibitory):
-        a_arr = np.concatenate([
-            a*np.ones((excitatory_neurons, 1)),  # excitatory contribution
-            a + 0.08*inhibitory_vector           # inhibitory contribution
-            ])
-        b_arr = np.concatenate([
-            b*np.ones((excitatory_neurons, 1)),   # excitatory contribution
-            b - 0.05*inhibitory_vector           # inhibitory contribution
-            ])
-        c_arr = np.concatenate([
-            c + 15*excitatory_vector**2,          # excitatory contribution
-            c*np.ones((inhibitory_neurons, 1))    # inhibitory contribution
-            ])
-        d_arr = np.concatenate([
-            d - 6*excitatory_vector**2,             # excitatory contribution
-            d*np.ones((inhibitory_neurons, 1))      # inhibitory contribution
-            ])
-        S = np.concatenate([
-            0.5*np.random.rand(neurons, excitatory_neurons),
-            -np.random.rand(neurons,excitatory_neurons)
-            ], axis = 1)
-    elif (excitatory): 
-        a_arr = np.concatenate([
-            a*np.ones((excitatory_neurons, 1)),  # excitatory contribution
-            a*np.ones((inhibitory_neurons, 1))           # inhibitory contribution
-            ])
-        b_arr = np.concatenate([
-            b*np.ones((excitatory_neurons, 1)),   # excitatory contribution
-            b*np.ones((inhibitory_neurons, 1))           # inhibitory contribution
-            ])
-        c_arr = np.concatenate([
-            c + 15*excitatory_vector**2,          # excitatory contribution
-            c + 15*inhibitory_vector**2    # inhibitory contribution
-            ])
-        d_arr = np.concatenate([
-            d - 6*excitatory_vector**2,             # excitatory contribution
-            d - 6*inhibitory_vector**2,      # inhibitory contribution
-            ])
-        S = np.concatenate([
-            0.5*np.random.rand(neurons, excitatory_neurons),
-            -np.random.rand(neurons,inhibitory_neurons)
-            ], axis = 1)
-    elif (inhibitory):
-        a_arr = np.concatenate([
-            a + 0.08*excitatory_vector,  # excitatory contribution
-            a + 0.08*inhibitory_vector           # inhibitory contribution
-            ])
-        b_arr = np.concatenate([
-            b - 0.05*excitatory_vector,   # excitatory contribution
-            b - 0.05*inhibitory_vector           # inhibitory contribution
-            ])
-        c_arr = np.concatenate([
-            c*np.ones((excitatory_neurons, 1)),          # excitatory contribution
-            c*np.ones((inhibitory_neurons, 1))    # inhibitory contribution
-            ])
-        d_arr = np.concatenate([
-            d*np.ones((excitatory_neurons, 1)),             # excitatory contribution
-            d*np.ones((inhibitory_neurons, 1))      # inhibitory contribution
-            ])
-        S = np.concatenate([
-            0.5*np.random.rand(neurons, excitatory_neurons),
-            -np.random.rand(neurons,excitatory_neurons)
-            ], axis = 1)
+from izhikevich_neuron import izhikevich_neuron
 
-    v = -65*np.ones((neurons, 1))
-    u = b*-65
-    neurons_that_fired_across_time = []
-    voltage_across_time = []
-    
-    time = np.arange(0, simulation_time + time_step, time_step) 
-    
-    for t in time:
-        # The input voltage
-        I = input_voltage*np.concatenate([
-            np.random.rand(excitatory_neurons, 1),
-            np.random.rand(inhibitory_neurons, 1)
-            ])
-    
-        neurons_that_fired = np.where(v > voltage_pick)
 
-        voltage_across_time.append(float(v[10]))
-        neurons_that_fired_across_time.append([
-            t, 
-            neurons_that_fired[0]
-            ])
-
-        for i in neurons_that_fired[0]:
-            v[i] = c_arr[i]
-            u[i] += d_arr[i]
-        
-        I += np.expand_dims(np.sum(S[:, neurons_that_fired[0]], axis = 1), axis = 1)
-        
-        # Incrementing 0.5ms for numerical stability
-        v += 0.5*(0.04*v**2 + 5*v + 140 - u + I)
-        v += 0.5*(0.04*v**2 + 5*v + 140 - u + I)
-        u = u + a_arr*(b_arr*v - u)
-    
-    voltage_across_time = np.array(voltage_across_time)
-    
-    return voltage_across_time
-
-RS_neuron = izhikevich_neurons(
+RS_neuron = izhikevich_neuron(
     a = 0.02,
     b = 0.2,
     c = -65,
@@ -171,7 +54,7 @@ RS_neuron = izhikevich_neurons(
     excitatory=True,
     inhibitory=False
     )
-IB_neuron = izhikevich_neurons(
+IB_neuron = izhikevich_neuron(
     a = 0.02,
     b = 0.2,
     c = -55,
@@ -185,7 +68,7 @@ IB_neuron = izhikevich_neurons(
     excitatory=True,
     inhibitory=False
     )
-FS_neuron = izhikevich_neurons(
+FS_neuron = izhikevich_neuron(
     a = 0.1,
     b = 0.2,
     c = -65,
@@ -199,7 +82,7 @@ FS_neuron = izhikevich_neurons(
     excitatory=False,
     inhibitory=True
     )
-LTS_neuron = izhikevich_neurons(
+LTS_neuron = izhikevich_neuron(
     a = 0.02,
     b = 0.25,
     c = -65,
@@ -213,7 +96,7 @@ LTS_neuron = izhikevich_neurons(
     excitatory=False,
     inhibitory=True
     )
-TC_neuron = izhikevich_neurons(
+TC_neuron_rest = izhikevich_neuron(
     a = 0.02,
     b = 0.25,
     c = -65,
@@ -227,7 +110,7 @@ TC_neuron = izhikevich_neurons(
     excitatory=True,
     inhibitory=False
     )
-TR_neuron = izhikevich_neurons(
+TC_neuron_depolarized = izhikevich_neuron(
     a = 0.02,
     b = 0.25,
     c = -65,
@@ -236,7 +119,7 @@ TR_neuron = izhikevich_neurons(
     time_step = 0.1,
     excitatory_neurons = 800,
     inhibitory_neurons = 200,
-    input_voltage = 1.5,
+    input_voltage = -1.5,
     voltage_pick = 30,
     excitatory=False,
     inhibitory=True
@@ -273,14 +156,14 @@ plt.show()
 
 plt.figure(5)
 plt.suptitle("Izhikevich model - Thalamo-Cortical")
-plt.plot(TC_neuron, 'b', label='voltage (mV)')
+plt.plot(TC_neuron_rest, 'b', label='voltage (mV)')
 plt.legend(shadow=True, fancybox=True)
 plt.grid(True)
 plt.show()
 
 plt.figure(6)
 plt.suptitle("Izhikevich model - Thalamic Reticular")
-plt.plot(TR_neuron, 'b', label='voltage (mV)')
+plt.plot(TC_neuron_depolarized, 'b', label='voltage (mV)')
 plt.legend(shadow=True, fancybox=True)
 plt.grid(True)
 plt.show()
