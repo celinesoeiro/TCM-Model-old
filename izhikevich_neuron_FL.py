@@ -2,36 +2,26 @@
 
 @author: Celine Soeiro
 
-@description: Izhikevich Model
+@description: Izhikevich neurons parameters used by FL Model
 
-The Izhikevich model can be represented through an 2-D system of differential 
-equations:
-    
-    dvdt = 0.04*v*v + 5*v + 140 - u + I
-    dudt = a*(b*v - u)
-    
-    with conditions: 
-        if v >= 30mV, then v = c and u = u + d
-    
-    for excitatory neurons: 
-        (ai,bi) = (a,b)
-        (ci,di) = (c,d) + (15, -6)r**2
-    for inhibitory neurons:
-        (ai,bi) = (a,b) + (0.08, -0.05)*r
-        (ci,di) = (c,d)
+RS:
+    a = 0.02 | b = 0.2 | c = -65 | d = 8 | Idc = 2.5 | Vp = 30
 
-    u: Equation variable - Represents membrane recovery variable
-    v: Equation variable - Represents membrane potential of the neuron
-    a: Equation parameter - Time scale of the recovery variable u
-    b: Equation parameter - Sensitivity of u to the fluctuations in v
-    c: Equation parameter - After-spike reset value of v
-    d: Equation parameter - After-spike reset value of u
-    S: Synaptic matrix - Synaptic connection weights between the neurons
+IB:
+    a = 0.02 | b = 0.2 | c = -55 | d = 4 | Idc = 2.5 | Vp = 30
     
-    excitatory_neurons: Number of excitatory neurons
-    inhibitory_neurons: Number of inhibitory neurons
-    excitatory_vector: Column vector of excitatory neurons
-    inhibitory_vector: Column vector of inhibitory neurons
+FS:
+    a = 0.1 | b = 0.2 | c = -65 | d = 2 | Idc = 3.2 | Vp = 30
+    
+LTS:
+    a = 0.02 | b = 0.25 | c = -65 | d = 2 | Idc = 0 | Vp = 30
+    
+TC:
+    a = 0.02 | b = 0.25 | c = -65 | d = 0.05 | Idc = 0 | Vp = 30
+
+TR: 
+    a = 0.02 | b = 0.25 | c = -65 | d = 2.05 | Idc = 0 | Vp = 30
+
 """
 
 
@@ -39,90 +29,63 @@ import matplotlib.pyplot as plt
 
 from izhikevich_neuron import izhikevich_neuron
 
-
 RS_neuron = izhikevich_neuron(
-    a = 0.02,
-    b = 0.2,
-    c = -65,
-    d = 8,
+    params = {'a': 0.02, 'b': 0.2, 'c': -65, 'd': 8},
+    input_current = [2.5, 0],
+    voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    excitatory_neurons = 800,
-    inhibitory_neurons = 200,
-    input_voltage = 5,
-    voltage_pick = 30,
-    excitatory=True,
-    inhibitory=False
+    excitatory_neurons = 1000,
+    inhibitory_neurons = 0,
     )
 IB_neuron = izhikevich_neuron(
-    a = 0.02,
-    b = 0.2,
-    c = -55,
-    d = 4,
+    params = {'a': 0.02, 'b': 0.2, 'c': -55, 'd': 4},
+    input_current = [2.5, 0],
+    voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    excitatory_neurons = 800,
-    inhibitory_neurons = 200,
-    input_voltage = 5,
-    voltage_pick = 30,
-    excitatory=True,
-    inhibitory=False
+    excitatory_neurons = 1000,
+    inhibitory_neurons = 0,
     )
+
 FS_neuron = izhikevich_neuron(
-    a = 0.1,
-    b = 0.2,
-    c = -65,
-    d = 2,
+    params = {'a': 0.1, 'b': 0.2, 'c': -65, 'd': 2},
+    input_current = [0, 3.2],
+    voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    excitatory_neurons = 800,
-    inhibitory_neurons = 200,
-    input_voltage = 7,
-    voltage_pick = 30,
-    excitatory=False,
-    inhibitory=True
+    excitatory_neurons = 0,
+    inhibitory_neurons = 1000,
     )
+
 LTS_neuron = izhikevich_neuron(
-    a = 0.02,
-    b = 0.25,
-    c = -65,
-    d = 2,
+    params = {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 2},
+    input_current = [0, 0],
+    voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    excitatory_neurons = 800,
-    inhibitory_neurons = 200,
-    input_voltage = 7,
-    voltage_pick = 30,
-    excitatory=False,
-    inhibitory=True
+    excitatory_neurons = 0,
+    inhibitory_neurons = 1000,
     )
-TC_neuron_rest = izhikevich_neuron(
-    a = 0.02,
-    b = 0.25,
-    c = -65,
-    d = 0.05,
+
+TC_neuron_relay = izhikevich_neuron(
+    params = {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 0.05},
+    input_current = [0, 0],
+    voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    excitatory_neurons = 800,
-    inhibitory_neurons = 200,
-    input_voltage = 1.1,
-    voltage_pick = 30,
-    excitatory=True,
-    inhibitory=False
+    excitatory_neurons = 1000,
+    inhibitory_neurons = 0,
     )
-TC_neuron_depolarized = izhikevich_neuron(
-    a = 0.02,
-    b = 0.25,
-    c = -65,
-    d = 2.05,
+
+TC_neuron_reticular = izhikevich_neuron(
+    params = {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 2.05},
+    input_current = [0, 0],
+    voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    excitatory_neurons = 800,
-    inhibitory_neurons = 200,
-    input_voltage = -1.5,
-    voltage_pick = 30,
-    excitatory=False,
-    inhibitory=True
+    excitatory_neurons = 0,
+    inhibitory_neurons = 1000,
     )
 
 # Plots
@@ -156,15 +119,16 @@ plt.show()
 
 plt.figure(5)
 plt.suptitle("Izhikevich model - Thalamo-Cortical")
-plt.plot(TC_neuron_rest, 'b', label='voltage (mV)')
+plt.plot(TC_neuron_relay, 'b', label='voltage (mV)')
 plt.legend(shadow=True, fancybox=True)
 plt.grid(True)
 plt.show()
 
 plt.figure(6)
 plt.suptitle("Izhikevich model - Thalamic Reticular")
-plt.plot(TC_neuron_depolarized, 'b', label='voltage (mV)')
+plt.plot(TC_neuron_reticular, 'b', label='voltage (mV)')
 plt.legend(shadow=True, fancybox=True)
 plt.grid(True)
 plt.show()
+
 
