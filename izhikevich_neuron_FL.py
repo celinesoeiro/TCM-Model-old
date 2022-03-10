@@ -29,63 +29,76 @@ import matplotlib.pyplot as plt
 
 from izhikevich_neuron import izhikevich_neuron
 
-RS_neuron = izhikevich_neuron(
+RS_neuron, I_RS = izhikevich_neuron(
     params = {'a': 0.02, 'b': 0.2, 'c': -65, 'd': 8},
-    input_current = [2.5, 0],
+    current_value = 2.5,
+    current_start = 100,
+    current_finish = 900,
     voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    excitatory_neurons = 1000,
-    inhibitory_neurons = 0,
+    neurons = 1,
+    neuron_type = 'excitatory',
+    initial_voltage = -65
     )
-IB_neuron = izhikevich_neuron(
+IB_neuron, I_IB = izhikevich_neuron(
     params = {'a': 0.02, 'b': 0.2, 'c': -55, 'd': 4},
-    input_current = [2.5, 0],
+    current_value = 2.5,
+    current_start = 100,
+    current_finish = 900,
     voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    excitatory_neurons = 1000,
-    inhibitory_neurons = 0,
+    neurons = 1,
+    neuron_type = 'excitatory',
     )
 
-FS_neuron = izhikevich_neuron(
+FS_neuron, I_FS = izhikevich_neuron(
     params = {'a': 0.1, 'b': 0.2, 'c': -65, 'd': 2},
-    input_current = [0, 3.2],
+    current_value = 3.2,
+    current_start = 100,
+    current_finish = 900,
     voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    excitatory_neurons = 0,
-    inhibitory_neurons = 1000,
+    neurons = 1,
+    neuron_type = 'inhibitory',
     )
 
-LTS_neuron = izhikevich_neuron(
+LTS_neuron, I_LTS = izhikevich_neuron(
     params = {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 2},
-    input_current = [0, 0],
+    current_value = 0,
+    current_start = 100,
+    current_finish = 900,
     voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    excitatory_neurons = 0,
-    inhibitory_neurons = 1000,
+    neurons = 1,
+    neuron_type = 'inhibitory',
     )
 
-TC_neuron_relay = izhikevich_neuron(
+TC_neuron_relay, I_TC = izhikevich_neuron(
     params = {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 0.05},
-    input_current = [0, 0],
+    current_value = 0,
+    current_start = 100,
+    current_finish = 900,
     voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    excitatory_neurons = 1000,
-    inhibitory_neurons = 0,
+    neurons = 1,
+    neuron_type = 'excitatory',
     )
 
-TC_neuron_reticular = izhikevich_neuron(
+TC_neuron_reticular, I_TR = izhikevich_neuron(
     params = {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 2.05},
-    input_current = [0, 0],
+    current_value = 0,
+    current_start = 100,
+    current_finish = 200,
     voltage_pick = 30,
     simulation_time = 100,
-    time_step = 0.1,
-    excitatory_neurons = 0,
-    inhibitory_neurons = 1000,
+    time_step = 0.5,
+    neurons = 1,
+    neuron_type = 'inhibitory',
     )
 
 # Plots

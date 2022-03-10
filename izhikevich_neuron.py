@@ -35,17 +35,23 @@ equations:
 """
 
 import numpy as np
-from utils import randn
+from random import seed, random
 
 def izhikevich_neuron(
         params: dict,
-        input_current: np.array([5,2], dtype=float),
+        neuron_type: str,
+        neurons: int,
+        voltage_pick: float,
         simulation_time: int,
         time_step: float,
-        excitatory_neurons: int, 
-        inhibitory_neurons: int,
-        voltage_pick: float,
+        current_value: int,
+        current_start: int,
+        current_finish: int,
+        initial_voltage = -65,
         ):
+    
+    # Time grid
+    time = np.arange(0, simulation_time + time_step, time_step)
     
     # Check if paramaters exists, if dont display error msg
     if (not params.get('a') 
@@ -56,67 +62,57 @@ def izhikevich_neuron(
         return 'Parameters must be a, b, c and d' 
     
     # Parameters according Izhikevich article 
-    neurons = excitatory_neurons + inhibitory_neurons
-    excitatory_rand_factor = np.random.rand(excitatory_neurons, 1)
-    inhibitory_rand_factor = np.random.rand(inhibitory_neurons, 1)
+    seed(1)
+    random_factor = random()
     
-    a = np.concatenate([
-        params['a']*np.ones((excitatory_neurons, 1)),   # excitatory contribution
-        params['a'] + 0.08*inhibitory_rand_factor       # inhibitory contribution
-        ])
-    b = np.concatenate([
-        params['b']*np.ones((excitatory_neurons, 1)),   # excitatory contribution
-        params['b'] - 0.05*inhibitory_rand_factor       # inhibitory contribution
-        ])
-    c = np.concatenate([
-        params['c'] + 15*excitatory_rand_factor**2,     # excitatory contribution
-        params['c']*np.ones((inhibitory_neurons, 1))    # inhibitory contribution
-        ])
-    d = np.concatenate([
-        params['d'] - 6*excitatory_rand_factor**2,      # excitatory contribution
-        params['d']*np.ones((inhibitory_neurons, 1))    # inhibitory contribution
-        ])
+    if (neuron_type == 'excitatory' or 'excit'):
+        a = params['a']
+        b = params['b']
+        c = params['c'] + 15*random_factor**2
+        d = params['d'] - 6*random_factor**2
+    elif (neuron_type == 'inhibitory' or 'inib'):
+        a = params['a'] + 0.08*random_factor
+        b = params['b'] - 0.05*random_factor
+        c = params['c']
+        d = params['d']
+    else:
+        return 'Neuron type must be excitatory or inhibitory'
     
-    # Synaptic Matrix
-    S = np.concatenate([
-        0.5*np.random.rand(neurons, excitatory_neurons),# excitatory contribution
-        -np.random.rand(neurons,inhibitory_neurons)     # inhibitory contribution
-        ], axis = 1)
+    I = np.zeros(len(time))
+    I[current_start:current_finish] = current_value
     
-    v = -65*np.ones((neurons, 1))
-    u = b*v
+    v = np.zeros(len(time))    
+    v[0] = initial_voltage
     
-    neurons_that_fired_across_time = []
-    voltage_across_time = []
+    u = np.zeros(len(time))    
+    u[0] = b*v[0]
     
-    time = np.arange(0, simulation_time + time_step, time_step) 
+    # Izhikevich neuron equations
+    def dvdt(v, u, I):
+        return 0.04*v**2 + 5*v + 140 - u + I
     
-    for t in time:
-        I = np.concatenate([
-        input_current[0]*randn(excitatory_neurons, column=True),# excitatory contribution
-        input_current[1]*randn(inhibitory_neurons, column=True) # inhibitory contribution
-        ])
+    def dudt(v,u):
+        return a*(b*v - u)
+    
+    fired = []
+    
+    for t in range(1, len(time)):     
+        vc = v[t - 1]
+        uc = u[t - 1]
+        Ic = I[t - 1]
         
-        # Array contaning neurons that fired
-        fired = np.where(v >= voltage_pick)
-
-        voltage_across_time.append(float(v[10]))
-        neurons_that_fired_across_time.append([
-            t, 
-            fired[0]
-            ])
-
-        for i in fired[0]:
-            v[i] = c[i]
-            u[i] += d[i]
-
-        I += np.expand_dims(np.sum(S[:, fired[0]], axis = 1), axis = 1)
+        if (vc >= voltage_pick):
+            vc = v[t]
+            v[t] = c
+            u[t] = uc + d
+            fired.append(t)
         
-        v += 0.5*(0.04*v**2 + 5*v + 140 - u + I)
-        v += 0.5*(0.04*v**2 + 5*v + 140 - u + I)
-        u = u + a*(b*v - u)
-    
-    voltage_across_time = np.array(voltage_across_time)
-    
-    return voltage_across_time
+        else:            
+            # solve using euler
+            dv = dvdt(vc, uc, Ic)
+            du = dudt(vc, uc)
+            v[t] = vc + dv*time_step
+            u[t] = uc + du*time_step
+
+    return v, I
 
