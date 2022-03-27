@@ -26,7 +26,6 @@ equations:
     b: Equation parameter - Sensitivity of u to the fluctuations in v
     c: Equation parameter - After-spike reset value of v
     d: Equation parameter - After-spike reset value of u
-    S: Synaptic matrix - Synaptic connection weights between the neurons
     
     excitatory_neurons: Number of excitatory neurons
     inhibitory_neurons: Number of inhibitory neurons
@@ -40,13 +39,13 @@ from random import seed, random
 def izhikevich_neuron(
         params: dict,
         neuron_type: str,
-        neurons: int,
         voltage_pick: float,
         simulation_time: int,
         time_step: float,
         current_value: int,
         current_start: int,
         current_finish: int,
+        neurons = 1,
         initial_voltage = -65,
         ):
     
@@ -70,7 +69,7 @@ def izhikevich_neuron(
         b = params['b']
         c = params['c'] + 15*random_factor**2
         d = params['d'] - 6*random_factor**2
-    elif (neuron_type == 'inhibitory' or 'inib'):
+    elif (neuron_type == 'inhibitory' or 'inhib'):
         a = params['a'] + 0.08*random_factor
         b = params['b'] - 0.05*random_factor
         c = params['c']
@@ -78,12 +77,15 @@ def izhikevich_neuron(
     else:
         return 'Neuron type must be excitatory or inhibitory'
     
+    # Current vector input
     I = np.zeros(len(time))
     I[current_start:current_finish] = current_value
     
+    # membrane potential vector
     v = np.zeros(len(time))    
     v[0] = initial_voltage
     
+    # membrane recovery variable vector
     u = np.zeros(len(time))    
     u[0] = b*v[0]
     
@@ -94,25 +96,27 @@ def izhikevich_neuron(
     def dudt(v,u):
         return a*(b*v - u)
     
+    # when the neuron fired vector
     fired = []
     
     for t in range(1, len(time)):     
-        vc = v[t - 1]
-        uc = u[t - 1]
-        Ic = I[t - 1]
+        v_aux = v[t - 1]
+        u_aux = u[t - 1]
+        I_aux = I[t - 1]
         
-        if (vc >= voltage_pick):
-            vc = v[t]
+        if (v_aux >= voltage_pick):
+            v_aux = v[t]
             v[t] = c
-            u[t] = uc + d
+            u[t] = u_aux + d
             fired.append(t)
         
         else:            
             # solve using euler
-            dv = dvdt(vc, uc, Ic)
-            du = dudt(vc, uc)
-            v[t] = vc + dv*time_step
-            u[t] = uc + du*time_step
+            dv = dvdt(v_aux, u_aux, I_aux)
+            du = dudt(v_aux, u_aux)
+            v[t] = v_aux + dv*time_step
+            u[t] = u_aux + du*time_step
 
+    # return membrane tension and input current
     return v, I
 

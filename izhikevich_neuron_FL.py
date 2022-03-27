@@ -37,10 +37,10 @@ RS_neuron, I_RS = izhikevich_neuron(
     voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    neurons = 1,
     neuron_type = 'excitatory',
     initial_voltage = -65
     )
+
 IB_neuron, I_IB = izhikevich_neuron(
     params = {'a': 0.02, 'b': 0.2, 'c': -55, 'd': 4},
     current_value = 2.5,
@@ -49,7 +49,6 @@ IB_neuron, I_IB = izhikevich_neuron(
     voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    neurons = 1,
     neuron_type = 'excitatory',
     )
 
@@ -61,7 +60,6 @@ FS_neuron, I_FS = izhikevich_neuron(
     voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    neurons = 1,
     neuron_type = 'inhibitory',
     )
 
@@ -73,7 +71,6 @@ LTS_neuron, I_LTS = izhikevich_neuron(
     voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    neurons = 1,
     neuron_type = 'inhibitory',
     )
 
@@ -85,7 +82,6 @@ TC_neuron_relay, I_TC = izhikevich_neuron(
     voltage_pick = 30,
     simulation_time = 100,
     time_step = 0.1,
-    neurons = 1,
     neuron_type = 'excitatory',
     )
 
@@ -93,11 +89,10 @@ TC_neuron_reticular, I_TR = izhikevich_neuron(
     params = {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 2.05},
     current_value = 0,
     current_start = 100,
-    current_finish = 200,
+    current_finish = 900,
     voltage_pick = 30,
     simulation_time = 100,
-    time_step = 0.5,
-    neurons = 1,
+    time_step = 0.1,
     neuron_type = 'inhibitory',
     )
 
