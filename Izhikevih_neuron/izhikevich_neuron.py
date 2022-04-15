@@ -109,14 +109,28 @@ def izhikevich_neuron(
             v[t] = c
             u[t] = u_aux + d
             fired.append(t)
-        
+           
         else:            
-            # solve using euler
+            # solve using Euler
             dv = dvdt(v_aux, u_aux, I_aux)
             du = dudt(v_aux, u_aux)
             v[t] = v_aux + dv*time_step
             u[t] = u_aux + du*time_step
+            
+            # solve using RK 4th order
 
-    # return membrane tension and input current
+            # dv1 = time_step * dvdt(vc, uc, Ic)
+            # dv2 = time_step * dvdt(vc + dv1 * 0.5, uc, Ic)
+            # dv3 = time_step * dvdt(vc + dv2 * 0.5, uc, Ic)
+            # dv4 = time_step * dvdt(vc + dv3, uc, Ic)
+            # v[t] = 1/6 * (dv1 + 2*(dv2 + dv3) + dv4)
+            
+            # du1 = time_step * dudt(vc, uc)
+            # du2 = time_step * dudt(vc, uc + du1 * 0.5)
+            # du3 = time_step * dudt(vc, uc + du2 * 0.5)
+            # du4 = time_step * dudt(vc, uc + du3)
+            # u[t] = 1/6 * (du1 + 2*(du2 + du3) + du4)
+
+    # return membrane potential and input current
     return v, I
 
