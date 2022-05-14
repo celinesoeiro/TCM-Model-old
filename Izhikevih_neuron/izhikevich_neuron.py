@@ -1,5 +1,4 @@
 """
-
 @author: Celine Soeiro
 
 @description: Izhikevich Model

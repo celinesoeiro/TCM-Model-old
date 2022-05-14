@@ -234,6 +234,19 @@ def intrinsically_bursting_FL():
     }
     return params
 
+def chattering_FL():
+    params = {
+        'params': {'a': 0.05, 'b': 0.2, 'c': -50, 'd': 2},
+        'current_value': 2.5,
+        'current_start': 100,
+        'current_finish':  900,
+        'voltage_pick': 30,
+        'simulation_time': 100,
+        'time_step': 0.1,
+        'neuron_type': 'excitatory',
+    }
+    return params
+
 def fast_spiking_FL():
     params = {
         'params': {'a': 0.1, 'b': 0.2, 'c': -65, 'd': 2},
@@ -261,6 +274,19 @@ def low_thresholding_spiking_FL():
     return params
 
 def thalamo_cortical_FL():
+    params = {
+        'params': {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 0.05},
+        'current_value': 0,
+        'current_start': 100,
+        'current_finish':  900,
+        'voltage_pick': 30,
+        'simulation_time': 100,
+        'time_step': 0.1,
+        'neuron_type': 'excitatory',
+    }
+    return params
+
+def rel_chattering_FL():
     params = {
         'params': {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 0.05},
         'current_value': 0,

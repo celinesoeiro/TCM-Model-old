@@ -6,8 +6,7 @@
 
 """
 
-import numpy as np
-from izhikevich_neuron import izhikevich_neuron
+from .izhikevich_neuron import izhikevich_neuron
 
 def neuron_population(size: int, neuron_params: dict):
     if (size < 1):
