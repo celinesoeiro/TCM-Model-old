@@ -30,6 +30,7 @@ def TCM_model_parameters():
     hyperdirect_neurons = 0.1
     connectivity_factor_normal = 2.5
     connectivity_factor_PD = 5
+    Idc_tune = 0.1
     
     # Neuron quantities
     qnt_neurons_s = 100
@@ -109,13 +110,8 @@ def TCM_model_parameters():
         'neurons_synapse_hyperd_TC': 1*hyperdirect_neurons*qnt_neurons_tc,
         }
     
-    connectivity_matrix_normal_condition = {
-        ''
-        }
-    
-    connectivity_matrix_PD_condition = {
-        ''
-        }
+    # Bias currents (Subthreshold CTX and Suprethreshold THM) - Will be used in the neurons
+    Idc=[3.5,3.6,3.5,3.8,0.4,0.6,0.5,0.6] + Idc_tune*np.ones((1,8));
     
     # Export all dictionaries
     data = {
@@ -124,8 +120,7 @@ def TCM_model_parameters():
         'model_global_parameters': model_global_parameters,
         'synaptic_fidelity': synaptic_fidelity,
         'neurons_connected_with_hyperdirect_neurons': neurons_connected_with_hyperdirect_neurons,
-        'connectivity_matrix_normal_condition': connectivity_matrix_normal_condition,
-        'connectivity_matrix_PD_condition': connectivity_matrix_PD_condition,
+        'bias_current': Idc,
         }
     
     return data

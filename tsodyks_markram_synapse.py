@@ -207,22 +207,24 @@ fr = 20 + 2*random_factor   # Poissonian firing frequency from other parts of th
 [spikess, t_sp] = poissonSpikeGen(fr, T/1000, 1, dt/1000)
 tps = np.argwhere(spikess==1)[:,1]
 
-[t_syn, I_PS] = TM_Synapse(
+[t_syn_E, I_PS_E] = TM_Synapse(
     t_event = tps, 
     n_sim = n_sim, 
     t_delay = td_syn, 
     dt = dt, 
-    synapse_type = synapse_type)
+    synapse_type = 'excitatory')
 
-[u, x, I_ins, I_PS_ins] = TM_Synapse_Inst(
+[t_syn_I, I_PS_I] = TM_Synapse(
     t_event = tps, 
+    n_sim = n_sim, 
+    t_delay = td_syn, 
     dt = dt, 
-    synapse_type = synapse_type, 
-    delta = dt, 
-    n_sim = n_sim
-    )
+    synapse_type = 'inhibitory')
 
-plt.plot(I_PS)
+
+plt.plot(I_PS_E)
+plt.plot(I_PS_I)
+
 plt.show()
 
 
