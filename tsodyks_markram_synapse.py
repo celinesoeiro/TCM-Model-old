@@ -32,9 +32,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from random import seed, random
 
-from Izhikevih_neuron.neuron_population import neuron_population
-from Izhikevih_neuron.neuron_params import regular_spiking
+# from Izhikevih_neuron.neuron_population import neuron_population
+# from Izhikevih_neuron.neuron_params import regular_spiking
 
+from model_parameters import TCM_model_parameters
+
+from utils import poissonSpikeGen
 
 # =============================================================================
 # Parameters
@@ -59,6 +62,7 @@ def getParamaters(synapse_type: str):
             'U': [0.016, 0.25, 0.32],
             'distribution': [0.08, 0.75, 0.17],
         };
+    
     else:
         return 'Invalid synapse_type. Synapse_type must be excitatory or inhibitory.'
     
@@ -77,20 +81,34 @@ def u_eq(u, t_f, U, delta):
 def I_eq(I, t_s, A, u, x, delta):
     # post-synaptic current
     return -(I/t_s) + A*u*x*delta
+
+# =============================================================================
+# Synapse
+# =============================================================================
     
-def TM_Synapse(t_event, n_sim, t_delay, dt, synapse_type):
+def TM_Synapse(
+        t_event: float, 
+        n_sim: int, 
+        t_delay: int, 
+        dt: float, 
+        synapse_type: str, 
+        dbs = False,
+    ):
     t = np.arange(t_delay + 1, n_sim - 1)
     n_sim = int(n_sim)
     
     # parameters
-    t_f = getParamaters(synapse_type)['t_f']
-    t_d = getParamaters(synapse_type)['t_d']
+    tau_f = getParamaters(synapse_type)['t_f']
+    tau_d = getParamaters(synapse_type)['t_d']
     U = getParamaters(synapse_type)['U']
     A = getParamaters(synapse_type)['distribution']
-    parameters_length = len(t_f)
     
-    # IDK what this variable means
-    t_s = 11
+    parameters_length = len(tau_f)
+    
+    if (synapse_type == 'inhibitory'):
+        tau_s = 11
+    elif (synapse_type == 'excitatory'):
+        tau_s = 3
 
     # Initial values
     u = np.zeros((3, n_sim))
@@ -106,52 +124,105 @@ def TM_Synapse(t_event, n_sim, t_delay, dt, synapse_type):
         spd[0][t_event] = 1/dt
         # Solve ODE using Euler method
         for i in range(t_delay + 1, n_sim - 1):
-            delta = spd[0][i - t_delay] # marks when the spike occurs
+            if (dbs):
+                delta = dbs[0][i - t_delay]
+            else:
+                delta = spd[0][i - t_delay] # marks when the spike occurs
             
-            u[p][i + 1] = u[p][i] + dt*u_eq(u[p][i], t_f[p], U[p], delta)
-            x[p][i + 1] = x[p][i] + dt*x_eq(x[p][i], t_d[p], u[p][i], delta)
-            I[p][i + 1] = I[p][i] + dt*I_eq(I[p][i], t_s, A[p], u[p][i], x[p][i], delta)
+            u[p][i + 1] = u[p][i] + dt*u_eq(u[p][i], tau_f[p], U[p], delta)
+            x[p][i + 1] = x[p][i] + dt*x_eq(x[p][i], tau_d[p], u[p][i], delta)
+            I[p][i + 1] = I[p][i] + dt*I_eq(I[p][i], tau_s, A[p], u[p][i], x[p][i], delta)
 
     I_post_synaptic = np.concatenate(I, axis=None)
     
-    return t, t_f, t_d, U, A, I_post_synaptic
-
+    return t, I_post_synaptic
 
 # =============================================================================
-# Utils
+# Instantaneos Synapse
 # =============================================================================
 
-def poissonSpikeGen(fr, tSim, nTrials, dt):    
-    nBins = int(np.floor(tSim/dt))
-    spikeMat = np.random.rand(nTrials, nBins) < fr*dt
-    tVec = np.arange(0,tSim - dt, dt)
+def TM_Synapse_Inst(
+        t_event: [], 
+        dt: float, 
+        synapse_type: str, 
+        delta: float, 
+        n_sim: int,
+        layer = None,
+    ):
+    # Turn number of simulations into an int
+    n_sim = int(n_sim)
     
-    return spikeMat, tVec
+    # get parameters
+    tau_f = getParamaters(synapse_type)['t_f']
+    tau_d = getParamaters(synapse_type)['t_d']
+    U = getParamaters(synapse_type)['U']
+    A = getParamaters(synapse_type)['distribution']
+    parameters_length = len(tau_f)
+    
+    # Pick tau_s according to synapse time
+    if (synapse_type == 'inhibitory'):
+        tau_s = 11
+    elif (synapse_type == 'excitatory'):
+        tau_s = 3
+        
+    # If in any specific layer, set the distribution according to the layer
+    if (layer == 'D'):
+        A = [0,1,0]*np.ones((1,3))
+    elif (layer == 'F'):
+        A = [1,0,0]*np.ones((1,3))
+
+    # Initial values
+    u = np.zeros((3, n_sim))
+    x = np.ones((3, n_sim))
+    I = np.zeros((3, n_sim))
+    
+    # Loop trhough the parameters
+    for p in range(parameters_length - 1):
+        # Solve EDOs using Euler method 
+        u[p + 1] = u[p] + dt*u_eq(u[p], tau_f[p], U[p], delta)
+        x[p + 1] = x[p] + dt*x_eq(x[p], tau_d[p], u[p], delta)
+        I[p + 1] = I[p] + dt*I_eq(I[p], tau_s, A[p], u[p], x[p], delta)
+        
+    # Concatenate the final current
+    I_post_synaptic = np.concatenate(I, axis=None)
+    
+    return u, x, I, I_post_synaptic
+
 
 # =============================================================================
 # Usage
 # =============================================================================
 
-sim_time = 10               # Simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
-T = (sim_time + 1)*1000     # Simulation time in ms with 1 extra second to reach the steady state and trash later
-dt = .1                     # Time span and step (of ms)
-td_syn = 1                  # Synaptic transmission delay (fixed for all synapses in the TCM)
+TCM_model = TCM_model_parameters()['model_global_parameters']
+
+       
+T = TCM_model['simulation_time_ms']
+dt = TCM_model['dt']                    
+td_syn = TCM_model['transmission_delay_synapse'] # Synaptic transmission delay 
 n_sim = np.round(T/dt)      # Number of simulation steps
 synapse_type = 'inhibitory' # Synapse type
+
 fr = 20 + 2*random_factor   # Poissonian firing frequency from other parts of the brain
 
-[spikess, tsp] = poissonSpikeGen(fr, T/1000, 1, dt/1000)
+[spikess, t_sp] = poissonSpikeGen(fr, T/1000, 1, dt/1000)
 tps = np.argwhere(spikess==1)[:,1]
 
-TM_Synapse(tps, n_sim, td_syn, dt, synapse_type)
+[t_syn, I_PS] = TM_Synapse(
+    t_event = tps, 
+    n_sim = n_sim, 
+    t_delay = td_syn, 
+    dt = dt, 
+    synapse_type = synapse_type)
 
+[u, x, I_ins, I_PS_ins] = TM_Synapse_Inst(
+    t_event = tps, 
+    dt = dt, 
+    synapse_type = synapse_type, 
+    delta = dt, 
+    n_sim = n_sim
+    )
 
-rs_neuron_params = regular_spiking()
-
-RS_population_voltage, RS_population_current = neuron_population(1, rs_neuron_params)
-
-first_neuron = RS_population_voltage[0]
-plt.plot(first_neuron)
+plt.plot(I_PS)
 plt.show()
 
 

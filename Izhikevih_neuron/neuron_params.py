@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 @author: Celine Soeiro
 
@@ -273,6 +272,7 @@ def low_thresholding_spiking_FL():
     }
     return params
 
+# Thalamo-Cortical Relay Nucleus (TCR)
 def thalamo_cortical_FL():
     params = {
         'params': {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 0.05},
@@ -299,6 +299,7 @@ def rel_chattering_FL():
     }
     return params
 
+# Thalamic Reticular Nucleus (TRN)
 def thalamo_reticular_FL():
     params = {
         'params': {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 2.05},
