@@ -11,6 +11,7 @@ Abbreviations:
 """
 
 import numpy as np
+from matplotlib import pyplot as plt
 
 # =============================================================================
 # IMPORT PARAMETERS
@@ -42,3 +43,29 @@ facilitating_factor_PD = TCM_model['connectivity_factor_PD_condition']
 
 Z_PD = coupling_matrix_PD(facilitating_factor_PD, n_s, n_m, n_d, n_ci, n_tc, n_tr)['matrix']
 Z_PD_norm = Z_PD/np.linalg.norm(Z_PD)
+
+
+
+fig, (ax1, ax2, cax) = plt.subplots(ncols=3,figsize=(10,5), 
+                  gridspec_kw={"width_ratios":[1,1, 0.05]})
+
+fig.subplots_adjust(wspace=0.3)
+
+im1 = ax1.imshow(Z_N_norm, 
+                 extent=[-1,1,-1,1], 
+                 origin = 'lower', 
+                 vmin = -1, vmax = 1,
+                 cmap=plt.cm.seismic
+                 )
+im2 = ax2.imshow(Z_PD_norm, 
+                 extent=[-1,1,-1,1], 
+                 origin = 'lower', 
+                 vmin = -1, vmax = 1,
+                 cmap=plt.cm.seismic
+                 )
+
+ax1.grid(True)
+ax2.grid(True)
+
+fig.colorbar(im1, cax=cax)
+plt.show()
