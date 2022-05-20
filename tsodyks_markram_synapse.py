@@ -29,21 +29,6 @@ The two major parameters of the model are A and U
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-from random import seed, random
-
-# from Izhikevih_neuron.neuron_population import neuron_population
-# from Izhikevih_neuron.neuron_params import regular_spiking
-
-from model_parameters import TCM_model_parameters
-
-from utils import poissonSpikeGen
-
-# =============================================================================
-# Parameters
-# =============================================================================
-seed(1)
-random_factor = random()
 
 def getParamaters(synapse_type: str):
     if (synapse_type == 'excitatory'):
@@ -189,43 +174,6 @@ def TM_Synapse_Inst(
     return u, x, I, I_post_synaptic
 
 
-# =============================================================================
-# Usage
-# =============================================================================
-
-TCM_model = TCM_model_parameters()['model_global_parameters']
-
-       
-T = TCM_model['simulation_time_ms']
-dt = TCM_model['dt']                    
-td_syn = TCM_model['transmission_delay_synapse'] # Synaptic transmission delay 
-n_sim = np.round(T/dt)      # Number of simulation steps
-synapse_type = 'inhibitory' # Synapse type
-
-fr = 20 + 2*random_factor   # Poissonian firing frequency from other parts of the brain
-
-[spikess, t_sp] = poissonSpikeGen(fr, T/1000, 1, dt/1000)
-tps = np.argwhere(spikess==1)[:,1]
-
-[t_syn_E, I_PS_E] = TM_Synapse(
-    t_event = tps, 
-    n_sim = n_sim, 
-    t_delay = td_syn, 
-    dt = dt, 
-    synapse_type = 'excitatory')
-
-[t_syn_I, I_PS_I] = TM_Synapse(
-    t_event = tps, 
-    n_sim = n_sim, 
-    t_delay = td_syn, 
-    dt = dt, 
-    synapse_type = 'inhibitory')
-
-
-plt.plot(I_PS_E)
-plt.plot(I_PS_I)
-
-plt.show()
 
 
 
