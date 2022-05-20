@@ -16,6 +16,7 @@ from random import seed, random
 
 from utils import poissonSpikeGen
 from tsodyks_markram_synapse import TM_Synapse
+from dbs import DBS, dbsDelta
 
 seed(1)
 random_factor = random()
@@ -27,9 +28,9 @@ from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupl
 
 TCM_model = TCM_model_parameters()['model_global_parameters']
 neurons_per_structure = TCM_model_parameters()['neuron_per_structure']
-synaptic_fidelity_per_structure = TCM_model_parameters()['synaptic_fidelity']
+synaptic_fidelity_per_structure = TCM_model_parameters()['synaptic_fidelity_per_structure']
 neurons_connected_with_hyperdirect_neurons = TCM_model_parameters()['neurons_connected_with_hyperdirect_neurons']
-bias_current = TCM_model_parameters()['bias_current']
+bias_current = TCM_model_parameters()['currents_per_structure']
 neuron_quantities = TCM_model_parameters()['neuron_quantities']
 noise = TCM_model_parameters()['noise']
 
@@ -44,6 +45,9 @@ T = TCM_model['simulation_time_ms']                 # simulation time in ms
 dt = TCM_model['dt']                                # step
 td_syn = TCM_model['transmission_delay_synapse']    # Synaptic transmission delay 
 n_sim = TCM_model['simulation_steps']               # Number of simulation steps
+synaptic_fidelity = TCM_model['synaptic_fidelity']
+Fs = TCM_model['sampling_frequency']
+chop_till = TCM_model['chop_till']
 
 # =============================================================================
 # COUPLING MATRIXES
@@ -54,14 +58,14 @@ facilitating_factor_N = TCM_model['connectivity_factor_normal_condition']
 
 Z_N = coupling_matrix_normal(facilitating_factor_N, n_s, n_m, n_d, n_ci, n_tc, n_tr)['matrix']
 # normalizing
-Z_N_norm = Z_N/np.linalg.norm(Z_N)
+# Z_N_norm = Z_N/np.linalg.norm(Z_N)
 
 # Coupling matrix - Parkinsonian Desease condition
 facilitating_factor_PD = TCM_model['connectivity_factor_PD_condition']
 
 Z_PD = coupling_matrix_PD(facilitating_factor_PD, n_s, n_m, n_d, n_ci, n_tc, n_tr)['matrix']
 # normalizing 
-Z_PD_norm = Z_PD/np.linalg.norm(Z_PD)
+# Z_PD_norm = Z_PD/np.linalg.norm(Z_PD)
 
 # =============================================================================
 # Graphs
@@ -165,6 +169,9 @@ tps = np.argwhere(spikess==1)[:,1]
 # =============================================================================
 # DBS
 # =============================================================================
+I_dbs = DBS(n_sim, synaptic_fidelity, Fs, chop_till)['I_dbs']
+I_dbs_pre = DBS(n_sim, synaptic_fidelity, Fs, chop_till)['I_dbs_pre']
+
 
 
 

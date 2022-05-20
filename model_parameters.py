@@ -108,7 +108,7 @@ def TCM_model_parameters():
         }
     
     # Impact of DBS on the other cortical structures via D PNs axons:
-    synaptic_fidelity = {
+    synaptic_fidelity_per_structure = {
         'synaps_fidelity_CI': 1*synaptic_fidelity,
         'synapse_fidelity_M': 0*synaptic_fidelity,
         'synapse_fidelity_S': 1*synaptic_fidelity,
@@ -204,7 +204,7 @@ def TCM_model_parameters():
         'neuron_quantities': neuron_quantities,
         'neuron_per_structure': neuron_per_structure,
         'model_global_parameters': model_global_parameters,
-        'synaptic_fidelity': synaptic_fidelity,
+        'synaptic_fidelity_per_structure': synaptic_fidelity_per_structure,
         'neurons_connected_with_hyperdirect_neurons': neurons_connected_with_hyperdirect_neurons,
         'bias_current': Idc,
         'currents_per_structure': currents_per_structure,

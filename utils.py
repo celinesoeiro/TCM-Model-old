@@ -62,6 +62,7 @@ def pinkNoise(m, n):
     x = x/x.std(axis=0)
     x = x.flatten()
     return x
-    
-    
+
+
+
     
