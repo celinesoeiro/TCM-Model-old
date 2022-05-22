@@ -106,11 +106,12 @@ def TM_Synapse(
     # Loop trhough the parameters
     for p in range(parameters_length):
         # Update the variable
-        spd[0][t_event] = 1/dt
+        if (dbs == False):
+            spd[0][t_event] = 1/dt
         # Solve ODE using Euler method
         for i in range(t_delay + 1, n_sim - 1):
             if (dbs):
-                delta = dbs[0][i - t_delay]
+                delta = t_event[0][i - t_delay]
             else:
                 delta = spd[0][i - t_delay] # marks when the spike occurs
             
@@ -118,7 +119,10 @@ def TM_Synapse(
             x[p][i + 1] = x[p][i] + dt*x_eq(x[p][i], tau_d[p], u[p][i], delta)
             I[p][i + 1] = I[p][i] + dt*I_eq(I[p][i], tau_s, A[p], u[p][i], x[p][i], delta)
 
-    I_post_synaptic = np.concatenate(I, axis=None)
+    if (dbs):
+        I_post_synaptic = I.sum(axis=0)
+    else:
+        I_post_synaptic = np.concatenate(I, axis=None)
     
     return t, I_post_synaptic
 

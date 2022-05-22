@@ -51,4 +51,5 @@ def DBS(n_sim, synaptic_fidelity, Fs, chop_till):
         # multiplied by 10 to make the transmembrane voltage about 80 mv
         I_dbs_pre = dbsDelta(f_dbs, dbs_duration, dev, n_sim, Fs, chop_till)
         
-    return {'I_dbs': I_dbs, 'I_dbs_pre': I_dbs_pre}
+    return [I_dbs, I_dbs_pre, dev]
+    # return {'I_dbs': I_dbs, 'I_dbs_pre': I_dbs_pre, 'dev': dev}

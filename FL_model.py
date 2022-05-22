@@ -16,7 +16,7 @@ from random import seed, random
 
 from utils import poissonSpikeGen
 from tsodyks_markram_synapse import TM_Synapse
-from dbs import DBS, dbsDelta
+from dbs import DBS
 
 seed(1)
 random_factor = random()
@@ -58,55 +58,54 @@ facilitating_factor_N = TCM_model['connectivity_factor_normal_condition']
 
 Z_N = coupling_matrix_normal(facilitating_factor_N, n_s, n_m, n_d, n_ci, n_tc, n_tr)['matrix']
 # normalizing
-# Z_N_norm = Z_N/np.linalg.norm(Z_N)
+Z_N_norm = Z_N/np.linalg.norm(Z_N)
 
 # Coupling matrix - Parkinsonian Desease condition
 facilitating_factor_PD = TCM_model['connectivity_factor_PD_condition']
 
 Z_PD = coupling_matrix_PD(facilitating_factor_PD, n_s, n_m, n_d, n_ci, n_tc, n_tr)['matrix']
 # normalizing 
-# Z_PD_norm = Z_PD/np.linalg.norm(Z_PD)
+Z_PD_norm = Z_PD/np.linalg.norm(Z_PD)
 
 # =============================================================================
 # Graphs
 # =============================================================================
-# fig, (ax1, ax2, cax) = plt.subplots(ncols=3,figsize=(10,5), 
-#                   gridspec_kw={"width_ratios":[1,1, 0.05]})
-# 
-# fig.subplots_adjust(wspace=0.3)
-# 
-# im1 = ax1.imshow(Z_N_norm, 
-#                  extent=[-1,1,-1,1], 
-#                  vmin = -1, vmax = 1,
-#                  cmap=plt.cm.seismic
-#                  )
-# im2 = ax2.imshow(Z_PD_norm, 
-#                  extent=[-1,1,-1,1], 
-#                  vmin = -1, vmax = 1,
-#                  cmap=plt.cm.seismic
-#                  )
-# 
-# # Major ticks every 1, minor ticks every 1
-# major_ticks = np.arange(-1, 1.05, 2/6)
-# minor_ticks = np.arange(-1, 1.05, 2/6)
-# 
-# ax1.set_xticks(major_ticks)
-# ax1.set_xticks(minor_ticks, minor=True)
-# ax1.set_yticks(major_ticks)
-# ax1.set_yticks(minor_ticks, minor=True)
-# ax1.grid(True)
-# ax2.set_xticks(major_ticks)
-# ax2.set_xticks(minor_ticks, minor=True)
-# ax2.set_yticks(major_ticks)
-# ax2.set_yticks(minor_ticks, minor=True)
-# ax2.grid(True)
-# 
-# ax1.set_title('Normal condition')
-# ax2.set_title('PD condition')
-# 
-# fig.colorbar(im1, cax=cax)
-# plt.show()
-# =============================================================================
+fig, (ax1, ax2, cax) = plt.subplots(ncols=3,figsize=(10,5), 
+                  gridspec_kw={"width_ratios":[1,1, 0.05]})
+
+fig.subplots_adjust(wspace=0.3)
+
+im1 = ax1.imshow(Z_N_norm, 
+                 extent=[-1,1,-1,1], 
+                 vmin = -1, vmax = 1,
+                 cmap=plt.cm.seismic
+                 )
+im2 = ax2.imshow(Z_PD_norm, 
+                 extent=[-1,1,-1,1], 
+                 vmin = -1, vmax = 1,
+                 cmap=plt.cm.seismic
+                 )
+
+# Major ticks every 1, minor ticks every 1
+major_ticks = np.arange(-1, 1.05, 2/6)
+minor_ticks = np.arange(-1, 1.05, 2/6)
+
+ax1.set_xticks(major_ticks)
+ax1.set_xticks(minor_ticks, minor=True)
+ax1.set_yticks(major_ticks)
+ax1.set_yticks(minor_ticks, minor=True)
+ax1.grid(True)
+ax2.set_xticks(major_ticks)
+ax2.set_xticks(minor_ticks, minor=True)
+ax2.set_yticks(major_ticks)
+ax2.set_yticks(minor_ticks, minor=True)
+ax2.grid(True)
+
+ax1.set_title('Normal condition')
+ax2.set_title('PD condition')
+
+fig.colorbar(im1, cax=cax)
+plt.show()
 
 # =============================================================================
 # NOISE TERMS
@@ -169,9 +168,44 @@ tps = np.argwhere(spikess==1)[:,1]
 # =============================================================================
 # DBS
 # =============================================================================
-I_dbs = DBS(n_sim, synaptic_fidelity, Fs, chop_till)['I_dbs']
-I_dbs_pre = DBS(n_sim, synaptic_fidelity, Fs, chop_till)['I_dbs_pre']
+[I_dbs, I_dbs_pre, dev] = DBS(n_sim, synaptic_fidelity, Fs, chop_till)
 
+# Postsynaptic DBS pulses (intra-axonal)
 
+[t_dbs_post, I_dbs_post] = TM_Synapse(
+    t_event = I_dbs_pre, 
+    n_sim = n_sim,
+    t_delay = td_syn,
+    dt = dt, 
+    dbs = True, 
+    synapse_type = 'excitatory'
+    )
 
+I_dbs[0,:] = I_dbs_pre  
+I_dbs[1,:] = I_dbs_post
+# =============================================================================
+# Graphs
+# =============================================================================
+x0 = 105000
+xf = 110050
 
+fig1, (ax1, ax2) = plt.subplots(ncols=2,figsize=(10,5))
+ax1.set_title('Synaptic Stimulus')
+ax1.plot(I_dbs[0])
+ax1.grid()
+
+zoomed_1 = I_dbs[0]
+ax2.set_title('Synaptic Stimulus - Zoom')
+ax2.plot(I_dbs[0])
+ax2.set_xlim(x0, xf)
+ax1.grid()
+
+fig2, (ax1, ax2) = plt.subplots(ncols=2,figsize=(10,5))
+ax1.set_title('Post Synaptic Stimulus')
+ax1.plot(I_dbs[1])
+ax1.grid()
+
+ax2.set_title('Post Synaptic Stimulus - Zoom')
+ax2.plot(I_dbs[1])
+ax2.set_xlim(x0, xf)
+ax1.grid()
