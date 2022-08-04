@@ -183,19 +183,18 @@ tps = np.argwhere(spikess==1)[:,1]
 
 I_dbs[0,:] = I_dbs_pre  
 I_dbs[1,:] = I_dbs_post
-# =============================================================================
+
 # Graphs
-# =============================================================================
 x0 = 105000
 xf = 110050
 
 fig1, (ax1, ax2) = plt.subplots(ncols=2,figsize=(10,5))
-ax1.set_title('Synaptic Stimulus')
+ax1.set_title('Pre Synaptic Stimulus')
 ax1.plot(I_dbs[0])
 ax1.grid()
 
 zoomed_1 = I_dbs[0]
-ax2.set_title('Synaptic Stimulus - Zoom')
+ax2.set_title('Pre Synaptic Stimulus - Zoom')
 ax2.plot(I_dbs[0])
 ax2.set_xlim(x0, xf)
 ax1.grid()
@@ -209,3 +208,57 @@ ax2.set_title('Post Synaptic Stimulus - Zoom')
 ax2.plot(I_dbs[1])
 ax2.set_xlim(x0, xf)
 ax1.grid()
+
+# =============================================================================
+# SETTING INITIAL SIMULATION VALUES
+# =============================================================================
+vr = TCM_model['vr']
+
+# Voltages
+v_E_s = vr*np.ones((n_s, n_sim));     u_E_s = 0*v_E_s;
+v_E_m = vr*np.ones((n_m, n_sim));     u_E_m = 0*v_E_m;
+v_E_d = vr*np.ones((n_d, n_sim));     u_E_d = 0*v_E_d;
+v_I_s = vr*np.ones((n_s, n_sim));     u_I_s = 0*v_I_s;
+v_ret = vr*np.ones((n_tr, n_sim));    u_ret = 0*v_ret;
+v_rel = vr*np.ones((n_tc, n_sim));    u_rel = 0*v_rel;
+
+# Post Synaptic Current
+E_PSC_s = np.zeros((1, n_sim))
+E_PSC_m = np.zeros((1, n_sim))
+E_PSC_d = np.zeros((1, n_sim))
+E_PSC_d_F = np.zeros((1, n_sim))
+E_PSC_d_D = np.zeros((1, n_sim))
+E_PSC_rel = np.zeros((1, n_sim))
+E_PSC_rel_D = np.zeros((1, n_sim))
+I_PSC_CI_s = np.zeros((1, n_sim))
+I_PSC_ret = np.zeros((1, n_sim))
+
+# Synapse 
+r_E_s = np.zeros((3,1))
+r_E_m = np.zeros((3,1))
+r_E_d = np.zeros((3,1))
+r_E_rel = np.zeros((3,1))
+r_I_CI = np.zeros((3,1))
+r_I_ret = np.zeros((3,1))
+
+x_E_s = np.ones((3,1))
+x_E_m = np.ones((3,1))
+x_E_d = np.ones((3,1))
+x_E_rel = np.ones((3,1))
+x_I_CI = np.ones((3,1))
+x_I_ret = np.ones((3,1))
+
+I_s_E_s = np.zeros((3,1))
+I_s_E_m = np.zeros((3,1))
+I_s_E_d = np.zeros((3,1))
+I_s_E_rel = np.zeros((3,1))
+I_s_I_CI = np.zeros((3,1))
+I_s_I_ret = np.zeros((3,1))
+
+r_E_d_F = np.zeros((3,1))
+x_E_d_F = np.zeros((3,1))
+I_s_E_d_F = np.zeros((3,1))
+r_E_rel_D = np.zeros((3,1))
+x_E_rel_D = np.zeros((3,1))
+I_s_E_rel_D = np.zeros((3,1))
+

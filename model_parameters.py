@@ -33,6 +33,7 @@ def TCM_model_parameters():
     connectivity_factor_normal = 2.5
     connectivity_factor_PD = 5
     Idc_tune = 0.1
+    vr = -65
     
     # Neuron quantities
     qnt_neurons_s = 100
@@ -105,6 +106,7 @@ def TCM_model_parameters():
         'time_vector': t_vec,
         'connectivity_factor_normal_condition': connectivity_factor_normal,
         'connectivity_factor_PD_condition': connectivity_factor_PD,
+        'vr': vr,
         }
     
     # Impact of DBS on the other cortical structures via D PNs axons:
