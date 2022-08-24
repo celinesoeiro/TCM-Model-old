@@ -262,3 +262,56 @@ r_E_rel_D = np.zeros((3,1))
 x_E_rel_D = np.zeros((3,1))
 I_s_E_rel_D = np.zeros((3,1))
 
+# =============================================================================
+# RUN THE SIMULATION
+# =============================================================================
+
+# Thalamic Reticular Nucleus (TRN) cells
+
+# =============================================================================
+## Valores de saida
+# Inh_AP = vRet(:,i+1)
+# Inh_Aux = uRet(:,i+1)
+# r = rI
+# x = xI
+# Is =IsI
+# IPSC = IPSC_ret(i+1)
+#
+## Valores de entrada
+# a = aIret
+# b = bIret
+# c = cIret
+# d = dIret
+# n = nIret
+# v = vRet(:,i)
+# u = uRet(:,i)
+# r = rIret
+# x = xIret
+# Is = IsIret
+# IPSC = IPSC_ret(i-td_wL-td_syn)
+# EPSCs = EPSCs(i-td_CT-td_syn)
+# EPSCm = EPSCm(i-td_CT-td_syn)
+# EPSCd = EPSCdF(i-td_CT-td_syn)
+# IPSC_in = IPSC_INs(i-td_CT-td_syn)
+# EPSC_rel = EPSC_rel(i-td_L-td_syn)
+# W_II = W_IIret
+# W_IErs = W_IE_Ret_s
+# W_IErm = W_IE_Ret_m
+# W_IErd = W_IE_Ret_d
+# W_II_IN = W_II_Ret_INs
+# W_IE_rel = W_IE_Ret_Rel
+# I_psE = 0*I_ps(5,1,i-td_wL-td_syn)
+# I_psI = 0*I_ps(5,2,i-td_wL-td_syn)
+# kisi = kisiIret(:,i)+pnIret(:,i)
+# zeta = zetaIret(:,i)
+# Idc = Idc_Ret
+# Idbs = fidN*I_dbs(2,i)
+# n_affected = n_conn_N
+# dt = dt
+# =============================================================================
+
+input_values = {
+    
+    
+}
+
