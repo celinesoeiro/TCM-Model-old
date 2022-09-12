@@ -131,7 +131,6 @@ def TM_Synapse(
 # =============================================================================
 
 def TM_Synapse_Inst(
-        t_event: [], 
         dt: float, 
         synapse_type: str, 
         delta: float, 

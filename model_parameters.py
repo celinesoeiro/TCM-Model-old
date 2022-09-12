@@ -13,8 +13,12 @@
 
 import numpy as np
 from utils import pinkNoise
+from random import seed, random
 
 def TCM_model_parameters():
+    seed(1)
+    random_factor = random()
+    
     simulation_time = 10
     number_trials = 1
     dt = 0.1
@@ -211,6 +215,7 @@ def TCM_model_parameters():
         'bias_current': Idc,
         'currents_per_structure': currents_per_structure,
         'noise': noise,
+        'random_factor': random_factor,
         }
     
     return data
