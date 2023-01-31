@@ -5,10 +5,14 @@
 
 # Abreviations:
     PD: Parkinson Desease
+    S: Superficial layer
+    M: Medium layer
+    D: Deep layer
     CI: Cortical Interneurons
     TC: Thalamo-Cortical Relay Nucleus (TCR)
     TR: Thalamic Reticular Nucleus (TRN)
     PD: Poissonian Distribution 
+    DBS: Deep Brain Stimulation
 """
 
 import numpy as np
@@ -19,63 +23,89 @@ def TCM_model_parameters():
     seed(1)
     random_factor = random()
     
-    simulation_time = 10
-    number_trials = 1
-    dt = 0.1
-    fs = 1000/dt
-    Fs = int(np.round(fs))
-    dbs_on = 5*67
-    dbs_off = 0
-    synaptic_fidelity = dbs_off
-    sim_time = 10
-    sim_time_ms = (sim_time + 1)*1000
-    sim_steps = int(np.round(sim_time_ms/dt))
-    td_synapse = 1
-    td_thalamus_cortex = 15 # 25
-    td_cortex_thalamus = 20
-    hyperdirect_neurons = 0.1
-    connectivity_factor_normal = 2.5
-    connectivity_factor_PD = 5
-    Idc_tune = 0.1
-    vr = -65
+    number_trials = 1                           # number of trials
+    dt = 0.1                                    # time step in ms
+    fs = 1000/dt                                # sampling frequency in Hz
+    Fs = int(np.round(fs))                      # 
+    dbs_on = 5*67                               # value of synaptic fidelity when DBS on
+    dbs_off = 0                                 # value of synaptic fidelity when DBS off
+    synaptic_fidelity = dbs_off                 # synaptic fidelity
+    simulation_time = 10                        # simulation time in seconds
+    sim_time_ms = (simulation_time + 1)*1000    # Simulation time in ms with 1 extra second to reach the steady state and trash later
+    sim_steps = int(np.round(sim_time_ms/dt))   # number of simulation steps
+    chop_till = 1*fs;                           # Cut the first 1 seconds of the simulation
+
+    td_synapse = 1                              # Synaptic transmission delay (fixed for all synapses in the TCM)
+    td_thalamus_cortex = 15 # 25                # time delay between thalamus and cortex (ms) (transmission time delay)
+    td_cortex_thalamus = 20                     # time delay between cortex and thalamus (ms) (transmission time delay)  
+    td_layers = 8                               # time delay between the layers in corticex and nuclei in thalamus (ms)
+    td_within_layers = 1                        # time delay within a structure (ms)
     
-    # Neuron quantities
-    qnt_neurons_s = 100
-    qnt_neurons_m = 100
-    qnt_neurons_d = 100
-    qnt_neurons_ci = 100
-    qnt_neurons_tc = 100
-    qnt_neurons_tr = 40
+    hyperdirect_neurons = 0.1                   # percentage of PNs that are hyperdirect
     
+    connectivity_factor_normal = 2.5            # For 100 neurons
+    connectivity_factor_PD = 5                  # For 100 neurons
+    
+    Idc_tune = 0.1                              # 
+    vr = -65                                    # membrane potential resting value 
+    
+    # Time vector
     if (td_thalamus_cortex >= td_cortex_thalamus): 
         t_vec = np.arange(td_thalamus_cortex + td_synapse + 1, sim_steps)
     else:
         t_vec = np.arange(td_cortex_thalamus + td_synapse + 1, sim_steps)
+        
+    # Neuron quantities
+    qnt_neurons_s = 100         # Excitatory
+    qnt_neurons_m = 100         # Excitatory
+    qnt_neurons_d = 100         # Excitatory
+    qnt_neurons_ci = 100        # Excitatory
+    qnt_neurons_tc = 100        # Inhibitory
+    qnt_neurons_tr = 40         # Inhibitory
     
     neuron_quantities = {
-        'qnt_neurons_s': 100,
-        'qnt_neurons_m': 100,
-        'qnt_neurons_d': 100,
-        'qnt_neurons_ci': 100,
-        'qnt_neurons_tc': 100,
-        'qnt_neurons_tr': 40,
-        'qnt_neurons_hyperdirect': qnt_neurons_d*hyperdirect_neurons, 
+        'S': qnt_neurons_s,                      # Number of neurons in Superficial layer
+        'M': qnt_neurons_m,                      # Number of neurons in Medium layer
+        'D': qnt_neurons_d,                      # Number of neurons in Deep layer
+        'CI': qnt_neurons_ci,                    # Number of IC neurons
+        'TC': qnt_neurons_tc,                    # Number of neurons in TCR
+        'TR': qnt_neurons_tr,                    # Number of neurons in TRN
+        'HD': qnt_neurons_d*hyperdirect_neurons, # Number of hyperdirect neurons
         'total': qnt_neurons_s + qnt_neurons_m + qnt_neurons_d + qnt_neurons_ci + qnt_neurons_tc + qnt_neurons_tr,
         }
     
+    # Impact of DBS on the other cortical structures via D PNs axons:
+    synaptic_fidelity_per_structure = {
+        'CI': 1*synaptic_fidelity, # the synaptic fidelity, for dbs carriers (to be used to invade CIs)
+        'M': 0*synaptic_fidelity, # the synaptic fidelity, for dbs carriers (to be used to invade layer M)
+        'S': 1*synaptic_fidelity, # the synaptic fidelity, for dbs carriers (to be used to invade layer S)
+        'TR': 1*synaptic_fidelity,# the synaptic fidelity, for dbs carriers (to be used to invade layer TCR)
+        'TC': 1*synaptic_fidelity,# the synaptic fidelity, for dbs carriers (to be used to invade layer TRN)
+        }
+    
+    nCI = 1; nS = 1; nR = 1; nN = 1; nM = 0;
+    # Percentage of neurons that have synaptic contact with hyperdirect neurons axon arbors
+    neurons_connected_with_hyperdirect_neurons = {
+        'CI': nCI*hyperdirect_neurons*qnt_neurons_ci,# percentage of CI neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'S': nS*hyperdirect_neurons*qnt_neurons_s,   # percentage of S neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'M': nM*hyperdirect_neurons*qnt_neurons_m,   # percentage of M neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'TR': nR*hyperdirect_neurons*qnt_neurons_tr, # percentage of R neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'TC': nN*hyperdirect_neurons*qnt_neurons_tc, # percentage of N neurons that have synaptic contact with hyperdirect neurons axon arbors
+        }
+    
     # Distribution of neurons in each structure
-    neurons_s_1 = int(0.5*neuron_quantities['qnt_neurons_s'])
-    neurons_s_2 = int(0.5*neuron_quantities['qnt_neurons_s'])
-    neurons_m_1 = int(1*neuron_quantities['qnt_neurons_m'])
-    neurons_m_2 = int(1*neuron_quantities['qnt_neurons_m'])
-    neurons_d_1 = int(0.7*neuron_quantities['qnt_neurons_d'])
-    neurons_d_2 = int(0.3*neuron_quantities['qnt_neurons_d'])
-    neurons_ci_1 = int(0.5*neuron_quantities['qnt_neurons_ci'])
-    neurons_ci_2 = int(0.5*neuron_quantities['qnt_neurons_ci'])
-    neurons_tcr_tc_1 = int(0.7*neuron_quantities['qnt_neurons_tc'])
-    neurons_tcr_tc_2 = int(0.3*neuron_quantities['qnt_neurons_tc'])
-    neurons_tcr_tr_1 = int(0.5*neuron_quantities['qnt_neurons_tr'])
-    neurons_tcr_tr_2 = int(0.5*neuron_quantities['qnt_neurons_tr'])
+    neurons_s_1 = int(0.5*qnt_neurons_s)
+    neurons_s_2 = int(0.5*qnt_neurons_s)
+    neurons_m_1 = int(1*qnt_neurons_m)
+    neurons_m_2 = int(0*qnt_neurons_m)
+    neurons_d_1 = int(0.7*qnt_neurons_d)
+    neurons_d_2 = int(0.3*qnt_neurons_d)
+    neurons_ci_1 = int(0.5*qnt_neurons_ci)
+    neurons_ci_2 = int(0.5*qnt_neurons_ci)
+    neurons_tcr_tr_1 = int(0.5*qnt_neurons_tr)
+    neurons_tcr_tr_2 = int(0.5*qnt_neurons_tr)
+    neurons_tcr_tc_1 = int(0.7*qnt_neurons_tc)
+    neurons_tcr_tc_2 = int(0.3*qnt_neurons_tc)
     
     neuron_per_structure = {
         'neurons_s_1': neurons_s_1,             # Regular Spiking
@@ -92,6 +122,97 @@ def TCM_model_parameters():
         'neurons_tcr_tr_2': neurons_tcr_tr_2,   # Reticular
         }
     
+    # Neuron parameters to model Izhikevich Neurons
+    # 0 - RS - Regular Spiking
+    # 1 - IB - Intrinsically Bursting
+    # 2 - CH - Chattering
+    # 3 - FS - Fast Spiking
+    # 4 - LTS - Low Threshold Spiking
+    # 5 - TC (rel) - Thalamo-Cortical Relay
+    # 6 - CH (rel) - 
+    # 7 - TR - Thalamic Reticular
+
+        # 0-RS 1-IB  2-CH 3-FS 4-LTS 5-TC  6-CH  7-TR 
+    a = [0.02, 0.02, 0.5, 0.1, 0.02, 0.02, 0.02, 0.02]
+    b = [0.2,  0.2,  0.2, 0.2, 0.25, 0.25, 0.25, 0.25]
+    c = [-65,  -55,  -50, -65, -65,  -65,  -65,  -65]
+    d = [8,    4,    2,   2,   2,    0.05, 0.05, 2.05]
+    
+    neuron_params = {
+        'S1': {
+            'a': a[0],
+            'b': b[0],
+            'c': c[0],
+            'd': d[0],
+            },
+        'S2': {
+            'a': a[1],
+            'b': b[1],
+            'c': c[1],
+            'd': d[1],
+            },
+        'M1': {
+            'a': a[0],
+            'b': b[0],
+            'c': c[0],
+            'd': d[0],
+            },
+        'M2': {
+            'a': a[0],
+            'b': b[0],
+            'c': c[0],
+            'd': d[0],
+            },
+        'D1': {
+            'a': a[0],
+            'b': b[0],
+            'c': c[0],
+            'd': d[0],
+            },
+        'D2': {
+            'a': a[1],
+            'b': b[1],
+            'c': c[1],
+            'd': d[1],
+            },
+        'CI1': {
+            'a': a[3],
+            'b': b[3],
+            'c': c[3],
+            'd': d[3],
+            },
+        'CI2': {
+            'a': a[4],
+            'b': b[4],
+            'c': c[4],
+            'd': d[4],
+            },
+        'TR1': {
+            'a': a[7],
+            'b': b[7],
+            'c': c[7],
+            'd': d[7],
+            },
+        'TR2': {
+            'a': a[7],
+            'b': b[7],
+            'c': c[7],
+            'd': d[7],
+            },
+        'TC1': {
+            'a': a[5],
+            'b': b[5],
+            'c': c[5],
+            'd': d[5],
+            },
+        'TC2': {
+            'a': a[5],
+            'b': b[5],
+            'c': c[5],
+            'd': d[5],
+            },
+        }
+
     model_global_parameters = {
         'number_trials': number_trials,
         'synaptic_fidelity': synaptic_fidelity, # DBS off - To turn DBS on set this value to 5*67
@@ -113,23 +234,6 @@ def TCM_model_parameters():
         'vr': vr,
         }
     
-    # Impact of DBS on the other cortical structures via D PNs axons:
-    synaptic_fidelity_per_structure = {
-        'synaps_fidelity_CI': 1*synaptic_fidelity,
-        'synapse_fidelity_M': 0*synaptic_fidelity,
-        'synapse_fidelity_S': 1*synaptic_fidelity,
-        'synapse_fidelity_TR': 1*synaptic_fidelity,
-        'synapse_fidelity_TC': 1*synaptic_fidelity,
-        }
-    
-    # Percentage of neurons that have synaptic contact with hyperdirect neurons axon arbors
-    neurons_connected_with_hyperdirect_neurons = {
-        'neurons_synapse_hyperd_CI': 1*hyperdirect_neurons*qnt_neurons_ci,
-        'neurons_synapse_hyperd_S': 1*hyperdirect_neurons*qnt_neurons_s,
-        'neurons_synapse_hyperd_M': 0*hyperdirect_neurons*qnt_neurons_m,
-        'neurons_synapse_hyperd_TR': 1*hyperdirect_neurons*qnt_neurons_tr,
-        'neurons_synapse_hyperd_TC': 1*hyperdirect_neurons*qnt_neurons_tc,
-        }
     
     # Noise terms
     w_g_n_add = 1.5 # additive white Gaussian noise strength
@@ -212,6 +316,7 @@ def TCM_model_parameters():
         'model_global_parameters': model_global_parameters,
         'synaptic_fidelity_per_structure': synaptic_fidelity_per_structure,
         'neurons_connected_with_hyperdirect_neurons': neurons_connected_with_hyperdirect_neurons,
+        'neuron_paramaters': neuron_params,
         'bias_current': Idc,
         'currents_per_structure': currents_per_structure,
         'noise': noise,

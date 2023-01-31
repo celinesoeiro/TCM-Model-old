@@ -2,7 +2,7 @@
 """
 Created on Sun Sep 11 19:12:58 2022
 
-@author: Avell
+@author: Celine
 """
 
 def izhikevich_neuron_instaneous(

@@ -11,15 +11,17 @@ Abbreviations:
 """
 
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
-from random import seed, random
+import seaborn as sns
+
+sns.set()
 
 from utils import poissonSpikeGen
 from tsodyks_markram_synapse import TM_Synapse
+from izhikevich_neuron import izhikevich_neuron
 from dbs import DBS
 
-seed(1)
-random_factor = random()
 
 # =============================================================================
 # IMPORT PARAMETERS
@@ -33,13 +35,14 @@ neurons_connected_with_hyperdirect_neurons = TCM_model_parameters()['neurons_con
 bias_current = TCM_model_parameters()['currents_per_structure']
 neuron_quantities = TCM_model_parameters()['neuron_quantities']
 noise = TCM_model_parameters()['noise']
+random_factor = TCM_model_parameters()['random_factor']
 
-n_s = neuron_quantities['qnt_neurons_s']
-n_m = neuron_quantities['qnt_neurons_m']
-n_d = neuron_quantities['qnt_neurons_d']
-n_ci = neuron_quantities['qnt_neurons_ci']
-n_tc = neuron_quantities['qnt_neurons_tc']
-n_tr = neuron_quantities['qnt_neurons_tr']
+n_s = neuron_quantities['S']
+n_m = neuron_quantities['M']
+n_d = neuron_quantities['D']
+n_ci = neuron_quantities['CI']
+n_tc = neuron_quantities['TC']
+n_tr = neuron_quantities['TR']
 
 T = TCM_model['simulation_time_ms']                 # simulation time in ms
 dt = TCM_model['dt']                                # step
@@ -48,6 +51,7 @@ n_sim = TCM_model['simulation_steps']               # Number of simulation steps
 synaptic_fidelity = TCM_model['synaptic_fidelity']
 Fs = TCM_model['sampling_frequency']
 chop_till = TCM_model['chop_till']
+
 
 # =============================================================================
 # COUPLING MATRIXES
@@ -101,11 +105,28 @@ ax2.set_yticks(major_ticks)
 ax2.set_yticks(minor_ticks, minor=True)
 ax2.grid(True)
 
-ax1.set_title('Normal condition')
-ax2.set_title('PD condition')
+ax1.set_title('Condição normal')
+ax2.set_title('Condição parkinsoniana')
 
 fig.colorbar(im1, cax=cax)
 plt.show()
+
+CM = pd.DataFrame(Z_N_norm, columns=['S', 'M', 'P', 'IC', 'RTC', 'RT'])
+
+sns.heatmap(CM, 
+            vmin=-1, vmax=1, 
+            yticklabels=['S', 'M', 'P', 'IC', 'RTC', 'RT'], 
+            annot=True, 
+            fmt=".3f", 
+            linewidth=.75,
+            cmap=sns.color_palette("coolwarm", as_cmap=True),
+            )
+
+# =============================================================================
+# Neurons
+# =============================================================================
+
+
 
 # =============================================================================
 # NOISE TERMS
