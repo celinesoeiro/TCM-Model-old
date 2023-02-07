@@ -74,58 +74,41 @@ Z_PD_norm = Z_PD/np.linalg.norm(Z_PD)
 # =============================================================================
 # Graphs
 # =============================================================================
-fig, (ax1, ax2, cax) = plt.subplots(ncols=3,figsize=(10,5), 
-                  gridspec_kw={"width_ratios":[1,1, 0.05]})
+fig, (ax1, ax2) = plt.subplots(1,2, figsize=(17,7))
 
 fig.subplots_adjust(wspace=0.3)
+fig.suptitle('Matriz de conexão')
 
-im1 = ax1.imshow(Z_N_norm, 
-                 extent=[-1,1,-1,1], 
-                 vmin = -1, vmax = 1,
-                 cmap=plt.cm.seismic
-                 )
-im2 = ax2.imshow(Z_PD_norm, 
-                 extent=[-1,1,-1,1], 
-                 vmin = -1, vmax = 1,
-                 cmap=plt.cm.seismic
-                 )
+CM_Normal = pd.DataFrame(Z_N_norm, columns=['S', 'M', 'P', 'IC', 'RTC', 'RT'])
+CM_PD = pd.DataFrame(Z_PD_norm, columns=['S', 'M', 'P', 'IC', 'RTC', 'RT'])
 
-# Major ticks every 1, minor ticks every 1
-major_ticks = np.arange(-1, 1.05, 2/6)
-minor_ticks = np.arange(-1, 1.05, 2/6)
-
-ax1.set_xticks(major_ticks)
-ax1.set_xticks(minor_ticks, minor=True)
-ax1.set_yticks(major_ticks)
-ax1.set_yticks(minor_ticks, minor=True)
-ax1.grid(True)
-ax2.set_xticks(major_ticks)
-ax2.set_xticks(minor_ticks, minor=True)
-ax2.set_yticks(major_ticks)
-ax2.set_yticks(minor_ticks, minor=True)
-ax2.grid(True)
-
-ax1.set_title('Condição normal')
-ax2.set_title('Condição parkinsoniana')
-
-fig.colorbar(im1, cax=cax)
-plt.show()
-
-CM = pd.DataFrame(Z_N_norm, columns=['S', 'M', 'P', 'IC', 'RTC', 'RT'])
-
-sns.heatmap(CM, 
+sns.heatmap(CM_Normal, 
             vmin=-1, vmax=1, 
             yticklabels=['S', 'M', 'P', 'IC', 'RTC', 'RT'], 
             annot=True, 
             fmt=".3f", 
             linewidth=.75,
             cmap=sns.color_palette("coolwarm", as_cmap=True),
+            ax=ax1,
             )
+ax1.set(xlabel="", ylabel="")
+ax1.xaxis.tick_top()
+ax1.set_title('Condição normal')
 
-# =============================================================================
-# Neurons
-# =============================================================================
+sns.heatmap(CM_PD, 
+            vmin=-1, vmax=1, 
+            yticklabels=['S', 'M', 'P', 'IC', 'RTC', 'RT'], 
+            annot=True, 
+            fmt=".3f", 
+            linewidth=.75,
+            cmap=sns.color_palette("coolwarm", as_cmap=True),
+            ax=ax2,
+            )
+ax2.set(xlabel="", ylabel="")
+ax2.xaxis.tick_top()
+ax2.set_title('Condição parkinsoniana')
 
+plt.show()
 
 
 # =============================================================================
@@ -331,8 +314,4 @@ I_s_E_rel_D = np.zeros((3,1))
 # dt = dt
 # =============================================================================
 
-input_values = {
-    
-    
-}
 

@@ -9,8 +9,8 @@
     M: Medium layer
     D: Deep layer
     CI: Cortical Interneurons
-    TC: Thalamo-Cortical Relay Nucleus (TCR)
-    TR: Thalamic Reticular Nucleus (TRN)
+    TC: Thalamo-Cortical Relay Nucleus (TC)
+    TR: Thalamic Reticular Nucleus (TR)
     PD: Poissonian Distribution 
     DBS: Deep Brain Stimulation
 """
@@ -48,6 +48,7 @@ def TCM_model_parameters():
     
     Idc_tune = 0.1                              # 
     vr = -65                                    # membrane potential resting value 
+    vp = 30                                     # membrane peak voltage value
     
     # Time vector
     if (td_thalamus_cortex >= td_cortex_thalamus): 
@@ -232,8 +233,8 @@ def TCM_model_parameters():
         'connectivity_factor_normal_condition': connectivity_factor_normal,
         'connectivity_factor_PD_condition': connectivity_factor_PD,
         'vr': vr,
+        'vp': vp,
         }
-    
     
     # Noise terms
     w_g_n_add = 1.5 # additive white Gaussian noise strength
@@ -493,9 +494,9 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
         'W_EE_s': W_EE_s,
         'W_EE_m': W_EE_m,
         'W_EE_d': W_EE_d,
-        'W_II_ins': W_II_ci,
-        'W_II_ret': W_II_ret,
-        'W_EE_rel': W_EE_rel,
+        'W_II_ci': W_II_ci,
+        'W_II_tr': W_II_ret,
+        'W_EE_tc': W_EE_rel,
         'W_EE_s_m': W_EE_s_m,
         'W_EE_s_d': W_EE_s_d,
         'W_EI_s_ci': W_EI_s_ci,
@@ -504,28 +505,28 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
         'W_EE_m_s': W_EE_m_s,
         'W_EE_m_d': W_EE_m_d,
         'W_EI_m_ci': W_EI_m_ci,
-        'W_EI_m_ret': W_EI_m_ret,
-        'W_EE_m_rel': W_EE_m_rel,
+        'W_EI_m_tr': W_EI_m_ret,
+        'W_EE_m_tc': W_EE_m_rel,
         'W_EE_d_s': W_EE_d_s,
         'W_EE_d_m': W_EE_d_m,
         'W_EI_d_ci': W_EI_d_ci,
-        'W_EI_d_ret': W_EI_d_ret,
-        'W_EE_d_rel': W_EE_d_rel,
+        'W_EI_d_tr': W_EI_d_ret,
+        'W_EE_d_tc': W_EE_d_rel,
         'W_IE_ci_s': W_IE_ci_s,
         'W_IE_ci_m': W_IE_ci_m,
         'W_IE_ci_d': W_IE_ci_d,
-        'W_II_ci_Ret': W_II_ci_ret,
-        'W_IE_ci_Rel': W_IE_ci_rel,
-        'W_EE_rel_s': W_EE_rel_s,
-        'W_EE_rel_m': W_EE_rel_m,
-        'W_EE_rel_d': W_EE_rel_d,
-        'W_EI_rel_ci': W_EI_rel_ci,
-        'W_EI_rel_ret': W_EI_rel_ret,
-        'W_IE_ret_s': W_IE_ret_s,
-        'W_IE_ret_m': W_IE_ret_m,
-        'W_IE_ret_d': W_IE_ret_d,
-        'W_II_ret_ci': W_II_ret_ci,
-        'W_IE_ret_rel': W_IE_ret_rel,
+        'W_II_ci_tr': W_II_ci_ret,
+        'W_IE_ci_tc': W_IE_ci_rel,
+        'W_EE_tc_s': W_EE_rel_s,
+        'W_EE_tc_m': W_EE_rel_m,
+        'W_EE_tc_d': W_EE_rel_d,
+        'W_EI_tc_ic': W_EI_rel_ci,
+        'W_EI_tc_tr': W_EI_rel_ret,
+        'W_IE_tr_s': W_IE_ret_s,
+        'W_IE_tr_m': W_IE_ret_m,
+        'W_IE_tr_d': W_IE_ret_d,
+        'W_II_tr_ci': W_II_ret_ci,
+        'W_IE_tr_tc': W_IE_ret_rel,
         }
     
     return { 'matrix': matrix, 'weights': weights }
@@ -700,38 +701,38 @@ def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
         'W_EE_m': W_EE_m,
         'W_EE_d': W_EE_d,
         'W_II_ci': W_II_ci,
-        'W_II_ret': W_II_ret,
-        'W_EE_rel': W_EE_rel,
+        'W_II_tr': W_II_ret,
+        'W_EE_tc': W_EE_rel,
         'W_EE_s_m': W_EE_s_m,
         'W_EE_s_d': W_EE_s_d,
         'W_EI_s_ci': W_EI_s_ci,
-        'W_EI_s_ret': W_EI_s_ret,
-        'W_EE_s_rel': W_EE_s_rel,
+        'W_EI_s_tr': W_EI_s_ret,
+        'W_EE_s_tc': W_EE_s_rel,
         'W_EE_m_s': W_EE_m_s,
         'W_EE_m_d': W_EE_m_d,
         'W_EI_m_ci': W_EI_m_ci,
-        'W_EI_m_ret': W_EI_m_ret,
-        'W_EE_m_rel': W_EE_m_rel,
+        'W_EI_m_tr': W_EI_m_ret,
+        'W_EE_m_tc': W_EE_m_rel,
         'W_EE_d_s': W_EE_d_s,
         'W_EE_d_m': W_EE_d_m,
         'W_EI_d_ci': W_EI_d_ci,
-        'W_EI_d_ret': W_EI_d_ret,
-        'W_EE_d_rel': W_EE_d_rel,
-        'W_IE_ci_s': W_IE_ci_s,
-        'W_IE_ci_m': W_IE_ci_m,
-        'W_IE_ci_d': W_IE_ci_d,
-        'W_II_ci_ret': W_II_ci_ret,
-        'W_IE_ci_rel': W_IE_ci_rel,
-        'W_IE_ret_s': W_IE_ret_s,
-        'W_IE_ret_m': W_IE_ret_m,
-        'W_IE_ret_d': W_IE_ret_d,
-        'W_II_ret_ci': W_II_ret_ci,
-        'W_IE_ret_rel': W_IE_ret_rel,
-        'W_EE_rel_s': W_EE_rel_s,
-        'W_EE_rel_m': W_EE_rel_m,
-        'W_EE_rel_d': W_EE_rel_d,
-        'W_EI_rel_ci': W_EI_rel_ci,
-        'W_EI_rel_ret': W_EI_rel_ret,
+        'W_EI_d_tr': W_EI_d_ret,
+        'W_EE_d_tc': W_EE_d_rel,
+        'W_IE_ic_s': W_IE_ci_s,
+        'W_IE_ic_m': W_IE_ci_m,
+        'W_IE_ic_d': W_IE_ci_d,
+        'W_II_ic_tr': W_II_ci_ret,
+        'W_IE_ic_tc': W_IE_ci_rel,
+        'W_IE_tr_s': W_IE_ret_s,
+        'W_IE_tr_m': W_IE_ret_m,
+        'W_IE_tr_d': W_IE_ret_d,
+        'W_II_tr_ic': W_II_ret_ci,
+        'W_IE_tr_tc': W_IE_ret_rel,
+        'W_EE_tc_s': W_EE_rel_s,
+        'W_EE_tc_m': W_EE_rel_m,
+        'W_EE_tc_d': W_EE_rel_d,
+        'W_EI_tc_ci': W_EI_rel_ci,
+        'W_EI_tc_tr': W_EI_rel_ret,
         }
     
     return { 'matrix': matrix, 'weights': weights }

@@ -7,7 +7,6 @@ For an individual synapse the model reproduces the postsynaptic responses enerat
 by any presynaptice spike train t_sp for interpyramidal synapses in layer V
     
 * PHENOMENOLOGICAL MODEL:
-    
     dudt = -(u/t_f) + U*(1 - u)*delta(t - t_sp - delta)
     dxdt = -((1 - x)/t_d) - u*x*delta(t - t_sp - delta)    
     dIdt = -(I/t_sp) + A*u*x*delta(t - t_sp - delta)
