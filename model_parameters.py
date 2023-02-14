@@ -33,7 +33,7 @@ def TCM_model_parameters():
     simulation_time = 10                        # simulation time in seconds
     sim_time_ms = (simulation_time + 1)*1000    # Simulation time in ms with 1 extra second to reach the steady state and trash later
     sim_steps = int(np.round(sim_time_ms/dt))   # number of simulation steps
-    chop_till = 1*fs;                           # Cut the first 1 seconds of the simulation
+    chop_till = 1*Fs;                           # Cut the first 1 seconds of the simulation
 
     td_synapse = 1                              # Synaptic transmission delay (fixed for all synapses in the TCM)
     td_thalamus_cortex = 15 # 25                # time delay between thalamus and cortex (ms) (transmission time delay)
@@ -223,7 +223,7 @@ def TCM_model_parameters():
         'dt': dt, # time step
         'sampling_frequency': fs, # in Hz
         'simulation_steps': sim_steps,
-        'chop_till': Fs, # cut the first 1s of simulation
+        'chop_till': chop_till, # cut the first 1s of simulation
         'time_delay_between_layers': 8,
         'time_delay_within_layers': 1,
         'time_delay_thalamus_cortex': 15,
