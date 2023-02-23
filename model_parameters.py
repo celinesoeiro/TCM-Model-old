@@ -30,7 +30,7 @@ def TCM_model_parameters():
     dbs_on = 5*67                               # value of synaptic fidelity when DBS on
     dbs_off = 0                                 # value of synaptic fidelity when DBS off
     synaptic_fidelity = dbs_off                 # synaptic fidelity
-    simulation_time = 10                        # simulation time in seconds
+    simulation_time = 5                        # simulation time in seconds
     sim_time_ms = (simulation_time + 1)*1000    # Simulation time in ms with 1 extra second to reach the steady state and trash later
     sim_steps = int(np.round(sim_time_ms/dt))   # number of simulation steps
     chop_till = 1*Fs;                           # Cut the first 1 seconds of the simulation
