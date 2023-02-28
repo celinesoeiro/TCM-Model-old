@@ -67,245 +67,168 @@ v/u = inhibitory self feedback
 
 """
 
-
 import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+import seaborn as sns
 
-from utils import poissonSpikeGen
-from tsodyks_markram_synapse import TM_Synapse
+sns.set()
 
-from izhikevich_neuron_instantaneous import izhikevich_neuron_instaneous
 from model_parameters import TCM_model_parameters, coupling_matrix_normal
 
+# =============================================================================
+# INITIAL VALUES
+# =============================================================================
+global_parameters = TCM_model_parameters()['model_global_parameters']
 neuron_quantities = TCM_model_parameters()['neuron_quantities']
-TCM_model = TCM_model_parameters()['model_global_parameters']
-bias_current = TCM_model_parameters()['currents_per_structure']
-noise = TCM_model_parameters()['noise']
-random_factor = TCM_model_parameters()['random_factor']
+neuron_params = TCM_model_parameters()['neuron_paramaters']
 
-T = TCM_model['simulation_time_ms']                 # simulation time in ms
-dt = TCM_model['dt']                                # step
-n_sim = TCM_model['simulation_steps']               # Number of simulation steps
-td_syn = TCM_model['transmission_delay_synapse']    # Synaptic transmission delay 
+facilitating_factor_N = global_parameters['connectivity_factor_normal_condition']
+facilitating_factor_PD = global_parameters['connectivity_factor_PD_condition']
 
-n_neurons = neuron_quantities['qnt_neurons_tr']     # Number of neurons
-
-# =============================================================================
-# Neuron parameters for Izhikevich neuron model
-# =============================================================================
-neuron_params = {
-    'a': 0.02,
-    'b': 0.25,
-    'c': -65,
-    'd':2.05,
-    }
-
-vp = 30             # peak voltage
-vr = -65            # initial voltage
-v = vr*np.ones((n_neurons, n_sim))
+dt = global_parameters['dt']
+sim_steps = global_parameters['simulation_steps']
+time = global_parameters['time_vector']
+vr = global_parameters['vr']
+vp = global_parameters['vp']
+chop_till = global_parameters['chop_till']
+n = neuron_quantities['TC']
+neuron_params = neuron_params['TC1']
+v = vr*np.ones((n,sim_steps))
 u = 0*v
-I_Ret = bias_current['I_Ret']
+r = np.zeros((3,len(time)))
+x = np.ones((3,len(time)))
+I = np.zeros((3,len(time)))
+PSC_self = np.zeros((1,sim_steps))
+PSC_S = np.zeros((1,sim_steps))
+PSC_M = np.zeros((1,sim_steps))
+PSC_D = np.zeros((1,sim_steps))
+PSC_TR = np.zeros((1,sim_steps))
+PSC_CI = np.zeros((1,sim_steps))
+
+n_s = neuron_quantities['S']
+n_m = neuron_quantities['M']
+n_d = neuron_quantities['D']
+n_ci = neuron_quantities['CI']
+n_tc = neuron_quantities['TC']
+W_N = coupling_matrix_normal(facilitating_factor_N, n_s, n_m, n_d, n_ci, n_tc, n)['weights']
+
+SW_self = W_N['W_EE_tc']
+SW_S = W_N['W_EE_tc_s']
+SW_M = W_N['W_EE_tc_m']
+SW_D = W_N['W_EE_tc_d']
+SW_TR = W_N['W_EI_tc_tr']
+SW_CI = W_N['W_EI_tc_ic']
+
+Ib = 0.6 + 0.1*np.ones(n)
 
 # =============================================================================
-# Synapse parameters for Tsodyks and Markram model
-# =============================================================================
-r = np.zeros(3)
-x = np.zeros(3)
-i = np.zeros(3)
-
-# =============================================================================
-# Coupling matrix
-# =============================================================================
-facilitating_factor_N = TCM_model['connectivity_factor_normal_condition']
-n_s = neuron_quantities['qnt_neurons_s']
-n_m = neuron_quantities['qnt_neurons_m']
-n_d = neuron_quantities['qnt_neurons_d']
-n_ci = neuron_quantities['qnt_neurons_ci']
-n_tc = neuron_quantities['qnt_neurons_tc']
-W = coupling_matrix_normal(facilitating_factor_N, n_s, n_m, n_d, n_ci, n_tc, n_neurons)['weights']
-
-# =============================================================================
-# Inhibitory self feedback
-# =============================================================================
-W_II = W['W_II_ret']            # Weight from inhibitory to inhibitory
-IPSC = np.zeros((1, n_sim))     # Inhibitory Post Synaptic Current 
-
-# =============================================================================
-# excitatory inputs from layers S, M and D
-# =============================================================================
-W_IE_ret_s = W['W_IE_ret_s']    # Weight from inhibitory to excitatory - reticular to layer S
-W_IE_ret_m = W['W_IE_ret_m']    # Weight from inhibitory to excitatory - reticular to layer M
-W_IE_ret_d = W['W_IE_ret_d']    # Weight from inhibitory to excitatory - reticular to layer D
-EPSC_s = np.zeros((1, n_sim))   # Excitatory Post Synaptic Current - layer S
-EPSC_m = np.zeros((1, n_sim))   # Excitatory Post Synaptic Current - layer M
-EPSC_d = np.zeros((1, n_sim))   # Excitatory Post Synaptic Current - layer D
-
-# =============================================================================
-# excitatory inputs from TCR
-# =============================================================================
-W_IE_ret_rel = W['W_IE_ret_rel']  # Weight from inhibitory to excitatory - reticular to relay
-EPSC_rel = np.zeros((1, n_sim))   # Excitatory Post Synaptic Current - Relay cells
-
-# =============================================================================
-# Inhibitory inputs from Cortical Inter Neurons
-# =============================================================================
-W_II_ret_ci = W['W_II_ret_ci']  # Weight from inhibitory to inhibitory - reticular to cortical interneurons
-IPSC_CI = np.zeros((1, n_sim))  # Inhibitory Post Synaptic Current - Cortical Interneurons
-
-# =============================================================================
-# POISSONIAN background activity (assuming they invade primary motor cortex from premotor and supplimentary motor areas
-# =============================================================================
-# Poissonian postsynaptic input to the E and I neurons for all layers
-
-fr = 20 + 2*random_factor   # Poissonian firing frequency from other parts of the brain
-
-[spikess, t_sp] = poissonSpikeGen(fr, T/1000, 1, dt/1000)
-tps = np.argwhere(spikess == 1)[:,1]
-
-[t_syn_E, I_PS_E] = TM_Synapse(
-    t_event = tps, 
-    n_sim = n_sim, 
-    t_delay = td_syn, 
-    dt = dt, 
-    synapse_type = 'excitatory')
-
-[t_syn_I, I_PS_I] = TM_Synapse(
-    t_event = tps, 
-    n_sim = n_sim, 
-    t_delay = td_syn, 
-    dt = dt, 
-    synapse_type = 'inhibitory')
-
-# =============================================================================
-# Noise terms 
-# =============================================================================
-kisi_Ret_I = noise['kisi_Ret_I']
-pn_Ret_I = noise['pn_Ret_I']
-zeta_Ret_I = noise['zeta_Ret_I']
-
-# =============================================================================
-# Deep Brain Stimulation inputs (DBS)
+# CALCULATING THE NEW VALUE
 # =============================================================================
 
-# =============================================================================
-# TSODYKS AND MARKRAM SYNAPSE
-# =============================================================================
+# Izhikevich neuron equations
+def dvdt(v, u, I):
+    return 0.04*v**2 + 5*v + 140 - u + I
 
-def x_eq(x, t_d, u, delta):
-    # fraction of the neurotransmitter resources that remain available after synaptic transmission
-    return -(1-x)/t_d - u*x*delta
+def dudt(v, u, a, b):
+    return a*(b*v - u)
 
-def u_eq(u, t_f, U, delta):
+# TM synapse
+def r_eq(r, t_f, U, fired):
     # fraction of available neurotransmitter resources ready to be used
-    return -(u/t_f) + U*(1 - u)*delta
-    
-def I_eq(I, t_s, A, u, x, delta):
-    # post-synaptic current
-    return -(I/t_s) + A*u*x*delta
+    return -(r/t_f) + U*(1 - r)*fired
 
-def TM_synapse_instantaneous(r, x, Is, dt, sp_event, synapse_type):
-    if (synapse_type == 'excitatory'):
-        # [Facilitating, Depressing, Pseudo-linear]
-        t_f = [670, 17, 326]
-        t_d = [138, 671, 329]
-        U = [0.09, 0.5, 0.29]
-        A = [0.2, 0.63, 0.17]
-        tau_s = 3
+def x_eq(x, t_d, r, U, fired):
+    # fraction of the neurotransmitter resources that remain available after synaptic transmission
+    return (1 - x)/t_d - (r + U*(1 - r))*x*fired
     
+def I_eq(I, t_s, A, U, x, r, fired):
+    # post-synaptic current
+    return -(I/t_s) + A*(r + U*(1 - r))*x*fired
+
+def getParamaters(synapse_type: str):
+    if (synapse_type == 'excitatory'):
+        return {
+            # [Facilitating, Depressing, Pseudo-linear]
+            't_f': [670, 17, 326],
+            't_d': [138, 671, 329],
+            'U': [0.09, 0.5, 0.29],
+            'distribution': [0.2, 0.63, 0.17],
+            't_s': 11,
+        };
     elif (synapse_type == 'inhibitory'):
-        # [Facilitating, Depressing, Pseudo-linear]
-        t_f = [376, 21, 62]
-        t_d = [45, 706, 144]
-        U = [0.016, 0.25, 0.32]
-        A = [0.08, 0.75, 0.17]
-        tau_s = 11
+        return {
+            # [Facilitating, Depressing, Pseudo-linear]
+            't_f': [376, 21, 62],
+            't_d': [45, 706, 144],
+            'U': [0.016, 0.25, 0.32],
+            'distribution': [0.08, 0.75, 0.17],
+            't_s': 11,
+        };
     
     else:
         return 'Invalid synapse_type. Synapse_type must be excitatory or inhibitory.'
     
-    # Initial values
-    u = np.zeros(3)
-    x = np.ones(3)
-    I = np.zeros(3)
-    
-    # Loop trhough the parameters
-    for p in range(2):
-        # Solve EDOs using Euler method 
-        u[p + 1] = u[p] + dt*u_eq(u[p], t_f[p], U[p], sp_event[p])
-        x[p + 1] = x[p] + dt*x_eq(x[p], t_d[p], u[p], sp_event[p])
-        I[p + 1] = I[p] + dt*I_eq(I[p], tau_s, A[p], u[p], x[p], sp_event[p])
-        
-    # Concatenate the final current
-    
-    I_post_synaptic = np.sum(I)
-    
-    return u, x, I, I_post_synaptic
-        
-    
- 
-# =============================================================================
-# SIMULATION
-# =============================================================================
 
-v = np.zeros(n_neurons)
-u = np.zeros(n_neurons)
-sp = np.zeros(n_neurons)
-Isi= []
+AP = np.zeros((1,len(time)))
 
-for i in range(n_neurons):
-    # Self feedback
+for t in range(1, len(time)):
+    AP_aux = AP[0][t]
+    for k in range(1, n):        
+        v_aux = v[k - 1][t - 1]
+        u_aux = u[k - 1][t - 1]
+        
+        if (v_aux >= vp):
+            AP_aux = 1
+            v[k][t] = vp
+            v[k][t] = neuron_params['c']
+            u[k][t] = u[k][t] + neuron_params['d']
+        else:
+            neuron_contribution = dvdt(v_aux, u_aux, Ib[k])
+            self_feedback = SW_self[k][0]*PSC_self[0][t]/n
+            layer_S = SW_S[k][0]*PSC_S[0][t]/n
+            layer_M = SW_M[k][0]*PSC_M[0][t]/n
+            layer_D = SW_D[k][0]*PSC_D[0][t]/n
+            layer_TR = SW_TR[k][0]*PSC_TR[0][t]/n
+            layer_CI = SW_CI[k][0]*PSC_CI[0][t]/n
+            noise = 0
+            
+            v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_S + layer_M + layer_D + layer_TR + layer_CI + noise)
+            u[k][t] = u_aux + dt*dudt(v_aux, u_aux, neuron_params['a'], neuron_params['b'])
+            
+        # TM parameters
+        tau_f = getParamaters('excitatory')['t_f']
+        tau_d = getParamaters('excitatory')['t_d']
+        U = getParamaters('excitatory')['U']
+        A = getParamaters('excitatory')['distribution']
+        tau_s = getParamaters('excitatory')['t_s']
+        parameters_length = len(tau_f)
+        
+        # Loop trhough the parameters
+        for p in range(1, parameters_length):
+            r_aux = r[p - 1][t - 1]
+            x_aux = x[p - 1][t - 1]
+            I_aux = I[p - 1][t - 1]
+            # Solve EDOs using Euler method
+            r[p][t] = r_aux + dt*r_eq(r_aux, tau_f[p], U[p], AP_aux)
+            x[p][t] = x_aux + dt*x_eq(x_aux, tau_d[p], r_aux, U[p], AP_aux)
+            I[p][t] = I_aux + dt*I_eq(I_aux, tau_s, A[p], U[p], x_aux, r_aux, AP_aux)
+            
+        # Concatenate the final current
+        I_post_synaptic = np.concatenate(I, axis=None)
+        
+        if (np.isnan(v[k][t]) or np.isnan(u[k][t]) or np.isinf(v[k][t]) or np.isinf(u[k][t])):
+            print('NaN or inf in t = ', t)
+            break
+
+PSC_self = I_post_synaptic
     
-    izhikevich_i = I_Ret[0][i][0] + W_II[i][0]*IPSC[0][i]/n_neurons
-    
-    [izhikevich_v, izhikevich_u, c, d] = izhikevich_neuron_instaneous(
-        params = neuron_params, 
-        neuron_type = 'inhibitory',
-        voltage_pick = vp, 
-        time_step = dt, 
-        current_value = izhikevich_i, 
-        random_factor = random_factor
-        )
-    
-    # Excitatory inputs
-    excitatory_v = (W_IE_ret_s[i][0]*EPSC_s[0][i]/n_neurons) 
-    + (W_IE_ret_m[i][0]*EPSC_m[0][i]/n_neurons) 
-    + (W_IE_ret_d[i][0]*EPSC_d[0][i]/n_neurons) 
-    + (W_IE_ret_rel[i][0]*EPSC_rel[0][i]/n_neurons)
-    
-    # Inhibitory inputs
-    inhibitory_v = W_II_ret_ci[i][0]*IPSC_CI[0][i]/n_neurons
-    
-    # Background activity and noise
-    background_v = I_PS_E[i] - I_PS_I[i] + kisi_Ret_I[0][i][0]
-    
-    # voltages
-    v_aux = izhikevich_v + excitatory_v + inhibitory_v + background_v
-    
-    u_aux = izhikevich_u 
-    
-    zeta = zeta_Ret_I[0][i][0]
-    
-    print(zeta, v_aux, u_aux)
-    
-    if (v_aux >= (vp + zeta)):
-        v[i] = vp + zeta
-        v[i] = c
-        u[i] = u_aux + d
-        sp[i] = 1
-    
-    spikeI = sp
-    [rs, xs, Isyn, Ipost] = TM_synapse_instantaneous(
-        r = r, 
-        x = x, 
-        Is = i, 
-        dt = dt, 
-        sp_event = spikeI, 
-        synapse_type = 'inhibitory'
-    )
-    r = rs
-    x = xs
-    Is = Isyn
-    Isi.append(Ipost)
-    sp[i] = 0
+# Plotting
+# indexes = np.arange(0,40, dtype=object)
+# for k in range(n):
+#     indexes[k] = "neuron " + str(k)
+        
+# v_RT = pd.DataFrame(v.transpose())
     
     
     

@@ -22,7 +22,6 @@ from tsodyks_markram_synapse import TM_Synapse
 from izhikevich_neuron import izhikevich_neuron
 from dbs import DBS
 
-
 # =============================================================================
 # IMPORT PARAMETERS
 # =============================================================================
