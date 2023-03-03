@@ -46,23 +46,19 @@ Valores de entrada
 ------------ OVERVIEW
 
 Receive inhibitory stimulus from:
-    - Self 
+    - Thalamic Reticular Nucleus (TR) 
+    - Basal Ganglia Nucleus -> LATER
 
 Receive excitatory stimulus from:
-    - D layer
-    - Thalamo-cortical relay nucleus (TCR)
+    - Deep Layer (D)
 
 Send inhibitory stimulus to:
-    - Thalamo-cortical relay nucleus (TCR)
+    - None
     
 Send excitatory stimulus to:
-    
------------- EQUATION (following Izhikevich neuron + Tsodyks & Markram synaptic model)
-
-v/u = inhibitory self feedback 
-    + excitatory inputs from D layer 
-    + excitatory inputs from TCR
-
+    - Thalamic Reticular Nucleus (TR) 
+    - Cortical Interneurons (CI)
+    - Deep layer (D)
 
 """
 

@@ -43,6 +43,21 @@ Inputs:
     SW from TC: SW_TC 
     bias current: Ib
     time vector: time
+    
+------------ OVERVIEW
+
+Receive inhibitory stimulus from:
+    - Self 
+
+Receive excitatory stimulus from:
+    - Thalamo-cortical relay nucleus (TRN)
+
+Send inhibitory stimulus to:
+    - Thalamo-cortical relay nucleus (TRN)
+    
+Send excitatory stimulus to:
+    - None
+    
 """
 
 import numpy as np
