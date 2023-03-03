@@ -60,6 +60,7 @@ from model_parameters import TCM_model_parameters, coupling_matrix_normal
 global_parameters = TCM_model_parameters()['model_global_parameters']
 neuron_quantities = TCM_model_parameters()['neuron_quantities']
 neuron_params = TCM_model_parameters()['neuron_paramaters']
+currents = TCM_model_parameters()['currents_per_structure']
 
 facilitating_factor_N = global_parameters['connectivity_factor_normal_condition']
 facilitating_factor_PD = global_parameters['connectivity_factor_PD_condition']
@@ -70,8 +71,17 @@ time = global_parameters['time_vector']
 vr = global_parameters['vr']
 vp = global_parameters['vp']
 chop_till = global_parameters['chop_till']
+Idc = global_parameters['Idc']
+
 n = neuron_quantities['TR']
+n_s = neuron_quantities['S']
+n_m = neuron_quantities['M']
+n_d = neuron_quantities['D']
+n_ci = neuron_quantities['CI']
+n_tc = neuron_quantities['TC']
+
 neuron_params = neuron_params['TR1']
+
 v = vr*np.ones((n,sim_steps))
 u = 0*v
 r = np.zeros((3,len(time)))
@@ -84,11 +94,6 @@ PSC_D = np.zeros((1,sim_steps))
 PSC_TC = np.zeros((1,sim_steps))
 PSC_CI = np.zeros((1,sim_steps))
 
-n_s = neuron_quantities['S']
-n_m = neuron_quantities['M']
-n_d = neuron_quantities['D']
-n_ci = neuron_quantities['CI']
-n_tc = neuron_quantities['TC']
 W_N = coupling_matrix_normal(facilitating_factor_N, n_s, n_m, n_d, n_ci, n_tc, n)['weights']
 
 SW_self = W_N['W_II_tr']
@@ -98,7 +103,7 @@ SW_D = W_N['W_IE_tr_d']
 SW_TC = W_N['W_IE_tr_tc']
 SW_CI = W_N['W_II_tr_ci']
 
-Ib = 0.6 + 0.1*np.ones(n)
+Ib = currents['I_TR_1'] + Idc*np.ones(n)
 
 # =============================================================================
 # CALCULATING THE NEW VALUE

@@ -234,6 +234,7 @@ def TCM_model_parameters():
         'connectivity_factor_PD_condition': connectivity_factor_PD,
         'vr': vr,
         'vp': vp,
+        'Idc': Idc_tune,
         }
     
     # Noise terms
@@ -292,22 +293,41 @@ def TCM_model_parameters():
         }
     
     # Bias currents (Subthreshold CTX and Suprethreshold THM) - Will be used in the neurons
-    Idc=[3.5,3.6,3.5,3.8,0.4,0.6,0.5,0.6] + Idc_tune*np.ones((1,8));
+    Idc=[3.5,3.6,3.5,3.8,0.4,0.6,0.5,0.6]
     
-    I_S = [Idc[0][0]*np.ones((50, 1)), Idc[0][1]*np.ones((50, 1))]
-    I_M = [Idc[0][0]*np.ones((50, 1)), Idc[0][0]*np.ones((50, 1))]
-    I_D = [Idc[0][0]*np.ones((50, 1)), Idc[0][1]*np.ones((50, 1))]
-    I_CI = [Idc[0][3]*np.ones((50, 1)), Idc[0][4]*np.ones((50, 1))]
-    I_Ret = [Idc[0][7]*np.ones((50, 1)), Idc[0][7]*np.ones((50, 1))]
-    I_Rel = [Idc[0][5]*np.ones((20, 1)), Idc[0][5]*np.ones((20, 1))]
+    I_S_1 = Idc[0]
+    I_S_2 = Idc[1]
+    I_M_1 = Idc[0]
+    I_M_2 = Idc[0]
+    I_D_1 = Idc[5]
+    I_D_2 = Idc[1]
+    I_CI_1 = Idc[3]
+    I_CI_2 = Idc[4]
+    I_TR_1 = Idc[7]
+    I_TR_2 = Idc[7]
+    I_TN_1 = Idc[5]
+    I_TN_2 = Idc[5]
+    
+    # I_S = [Idc[0][0]*np.ones((50, 1)), Idc[0][1]*np.ones((50, 1))]
+    # I_M = [Idc[0][0]*np.ones((50, 1)), Idc[0][0]*np.ones((50, 1))]
+    # I_D = [Idc[0][0]*np.ones((50, 1)), Idc[0][1]*np.ones((50, 1))]
+    # I_CI = [Idc[0][3]*np.ones((50, 1)), Idc[0][4]*np.ones((50, 1))]
+    # I_Ret = [Idc[0][7]*np.ones((50, 1)), Idc[0][7]*np.ones((50, 1))]
+    # I_Rel = [Idc[0][5]*np.ones((20, 1)), Idc[0][5]*np.ones((20, 1))]
     
     currents_per_structure = {
-        'I_S': I_S,
-        'I_M': I_M,
-        'I_D': I_D,
-        'I_CI': I_CI,
-        'I_Ret': I_Ret,
-        'I_Rel': I_Rel,
+        'I_S_1': I_S_1,
+        'I_M_1': I_M_1,
+        'I_D_1': I_D_1,
+        'I_CI_1': I_CI_1,
+        'I_TR_1': I_TR_1,
+        'I_TN_1': I_TN_1,
+        'I_S_2': I_S_2,
+        'I_M_2': I_M_2,
+        'I_D_2': I_D_2,
+        'I_CI_2': I_CI_2,
+        'I_TR_2': I_TR_2,
+        'I_TN_2': I_TN_2,
         }
     
     # Export all dictionaries
