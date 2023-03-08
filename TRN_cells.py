@@ -95,7 +95,7 @@ n_s = neuron_quantities['S']
 n_m = neuron_quantities['M']
 n_d = neuron_quantities['D']
 n_ci = neuron_quantities['CI']
-n_tc = neuron_quantities['TC']
+n_tr = neuron_quantities['TR']
 
 neuron_params = neuron_params['TC1']
 
@@ -111,7 +111,7 @@ PSC_D = np.zeros((1,sim_steps))
 PSC_TR = np.zeros((1,sim_steps))
 PSC_CI = np.zeros((1,sim_steps))
 
-W_N = coupling_matrix_normal(facilitating_factor_N, n_s, n_m, n_d, n_ci, n_tc, n)['weights']
+W_N = coupling_matrix_normal(facilitating_factor_N, n_s, n_m, n_d, n_ci, n, n_tr)['weights']
 
 SW_self = W_N['W_EE_tc']
 SW_S = W_N['W_EE_tc_s']
@@ -154,7 +154,7 @@ def getParamaters(synapse_type: str):
             't_d': [138, 671, 329],
             'U': [0.09, 0.5, 0.29],
             'distribution': [0.2, 0.63, 0.17],
-            't_s': 11,
+            't_s': 3,
         };
     elif (synapse_type == 'inhibitory'):
         return {
@@ -163,7 +163,7 @@ def getParamaters(synapse_type: str):
             't_d': [45, 706, 144],
             'U': [0.016, 0.25, 0.32],
             'distribution': [0.08, 0.75, 0.17],
-            't_s': 11,
+            't_s': 3,
         };
     
     else:
