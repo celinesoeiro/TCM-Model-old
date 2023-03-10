@@ -1,63 +1,66 @@
 """
-Created on Mon Feb  6 20:31:49 2023
+Cortical Layer D
 
 @author: Celine Soeiro
 
-@description: Thalamic Reticular Nucleus (TR) cells
+Valores de saida
+    Inh_AP = vRet(:,i+1)
+    Inh_Aux = uRet(:,i+1)
+    r = rI
+    x = xI
+    Is =IsI
+    IPSC = IPSC_ret(i+1)
 
-# Abreviations:
-    PSC: Post Synaptic Current
-    IC: Intercortical Neurons
-    SW: Synaptic Weight
-    S: Surface (Supragranular) layer
-    M: Middle (Granular) layer
-    D: Deep (Infragranular) layer
-    CI: Cortical Interneurons
-    TR: Thalamic Reticular Nucleus
-    TC: Thalamo-Cortical Relay nucleus
-    PD: Parkinsonian Desease
+Valores de entrada
+    a = aIret
+    b = bIret
+    c = cIret
+    d = dIret
+    n = nIret
+    v = vRet(:,i)
+    u = uRet(:,i)
+    r = rIret
+    x = xIret
+    Is = IsIret
+    IPSC = IPSC_ret(i-td_wL-td_syn)
+    EPSCs = EPSCs(i-td_CT-td_syn)
+    EPSCm = EPSCm(i-td_CT-td_syn)
+    EPSCd = EPSCdF(i-td_CT-td_syn)
+    IPSC_in = IPSC_INs(i-td_CT-td_syn)
+    EPSC_rel = EPSC_rel(i-td_L-td_syn)
+    W_II = W_IIret
+    W_IErs = W_IE_Ret_s
+    W_IErm = W_IE_Ret_m
+    W_IErd = W_IE_Ret_d
+    W_II_IN = W_II_Ret_INs
+    W_IE_rel = W_IE_Ret_Rel
+    I_psE = 0*I_ps(5,1,i-td_wL-td_syn)
+    I_psI = 0*I_ps(5,2,i-td_wL-td_syn)
+    kisi = kisiIret(:,i)+pnIret(:,i)
+    zeta = zetaIret(:,i)
+    Idc = Idc_Ret
+    Idbs = fidN*I_dbs(2,i)
+    n_affected = n_conn_N
+    dt = dt
 
-Inputs:
-    time step: dt
-    peak voltage: vp
-    rest voltage: vr
-    simulation steps: sim_steps
-    number of neurons: n
-    neuron_params: a,b,c,d                                                          -> Izhikevich
-    membrane recovery variable: v                                                   -> Izhikevich
-    membrane potential of the neuron: u                                             -> Izhikevich
-    available neurotransmitter resources ready to be used: r                        -> TM model (u in original article)
-    neurotransmitter resources that remain available after synaptic transmission: x -> TM model
-    post-synaptic current: I                                                        -> TM model
-    PSC self contribution: PSC_self
-    PSC layer S: PSC_S
-    PSC layer M: PSC_M
-    PSC layer D: PSC_D
-    PSC layer TC: PSC_TC
-    PSC CI: PSC_CI
-    SW from self: SW_self
-    SW from S: SW_S
-    SW from M: SW_M
-    SW from D: SW_D
-    SW from CI: SW_CI
-    SW from TC: SW_TC 
-    bias current: Ib
-    time vector: time
-    
 ------------ OVERVIEW
 
 Receive inhibitory stimulus from:
-    - Self 
+    - Self
+    - Cortical Interneurons (CI)
 
 Receive excitatory stimulus from:
-    - Thalamo-cortical relay nucleus (TRN)
+    - Supraganular Layer (S)
+    - Thalamic Reticular Nucleus (TRN)
 
 Send inhibitory stimulus to:
-    - Thalamo-cortical relay nucleus (TRN)
-    
-Send excitatory stimulus to:
     - None
     
+Send excitatory stimulus to:
+    - Cortical Interneurons (CI)
+    - Supraganular Layer (S)
+    - Thalamic Reticular Nucleus (TRN)
+    - Basal Ganglia Nucleus -> LATER
 """
 
 import numpy as np
@@ -88,44 +91,44 @@ vp = global_parameters['vp']
 chop_till = global_parameters['chop_till']
 Idc = global_parameters['Idc']
 
-n = neuron_quantities['TR']
+n = neuron_quantities['D']
 n_s = neuron_quantities['S']
 n_m = neuron_quantities['M']
-n_d = neuron_quantities['D']
 n_ci = neuron_quantities['CI']
 n_tn = neuron_quantities['TC']
+n_tr = neuron_quantities['TR']
 
-neuron_params = neuron_params['TR1']
+neuron_params = neuron_params['D1']
 
 v = vr*np.ones((n,sim_steps))
 u = 0*v
 r = np.zeros((3,len(time)))
 x = np.ones((3,len(time)))
 I = np.zeros((3,len(time)))
-PSC_self = np.zeros((1,sim_steps))
+PSC_self = np.zeros((1,sim_steps)) # Post Synaptic Current Self
 PSC_S = np.zeros((1,sim_steps))
 PSC_M = np.zeros((1,sim_steps))
-PSC_D = np.zeros((1,sim_steps))
-PSC_TC = np.zeros((1,sim_steps))
+PSC_TR = np.zeros((1,sim_steps))
+PSC_TN = np.zeros((1,sim_steps))
 PSC_CI = np.zeros((1,sim_steps))
 
-W_N = coupling_matrix_normal(    
+W_N = coupling_matrix_normal(
     facilitating_factor = facilitating_factor_N, 
     n_s = n_s, 
-    n_m = n, 
-    n_d = n_d, 
+    n_m = n_m, 
+    n_d = n, 
     n_ci = n_ci, 
     n_tn = n_tn, 
-    n_tr = n)['weights']
+    n_tr = n_tr)['weights']
 
-SW_self = W_N['W_II_tr']
-SW_S = W_N['W_IE_tr_s']
-SW_M = W_N['W_IE_tr_m']
-SW_D = W_N['W_IE_tr_d']
-SW_TC = W_N['W_IE_tr_tc']
-SW_CI = W_N['W_II_tr_ci']
+SW_self = W_N['W_EE_d']
+SW_S = W_N['W_EE_d_s']
+SW_M = W_N['W_EE_d_m']
+SW_CI = W_N['W_EI_d_ci']
+SW_TR = W_N['W_EI_d_tr']
+SW_TN = W_N['W_EE_d_tn']
 
-Ib = currents['I_TR_1'] + Idc*np.ones(n)
+Ib = currents['I_D_1'] + Idc*np.ones(n)
 
 # =============================================================================
 # CALCULATING THE NEW VALUE
@@ -159,7 +162,7 @@ def getParamaters(synapse_type: str):
             't_d': [138, 671, 329],
             'U': [0.09, 0.5, 0.29],
             'distribution': [0.2, 0.63, 0.17],
-            't_s': 11,
+            't_s': 3,
         };
     elif (synapse_type == 'inhibitory'):
         return {
@@ -168,7 +171,7 @@ def getParamaters(synapse_type: str):
             't_d': [45, 706, 144],
             'U': [0.016, 0.25, 0.32],
             'distribution': [0.08, 0.75, 0.17],
-            't_s': 11,
+            't_s': 3,
         };
     
     else:
@@ -193,20 +196,20 @@ for t in range(1, len(time)):
             self_feedback = SW_self[k][0]*PSC_self[0][t]/n
             layer_S = SW_S[k][0]*PSC_S[0][t]/n
             layer_M = SW_M[k][0]*PSC_M[0][t]/n
-            layer_D = SW_D[k][0]*PSC_D[0][t]/n
-            layer_TC = SW_TC[k][0]*PSC_TC[0][t]/n
+            layer_TR = SW_TR[k][0]*PSC_TR[0][t]/n
+            layer_TN = SW_TN[k][0]*PSC_TN[0][t]/n
             layer_CI = SW_CI[k][0]*PSC_CI[0][t]/n
             noise = 0
             
-            v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_S + layer_M + layer_D + layer_TC + layer_CI + noise)
+            v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_S + layer_M + layer_TR + layer_TN + layer_CI + noise)
             u[k][t] = u_aux + dt*dudt(v_aux, u_aux, neuron_params['a'], neuron_params['b'])
             
         # TM parameters
-        tau_f = getParamaters('inhibitory')['t_f']
-        tau_d = getParamaters('inhibitory')['t_d']
-        U = getParamaters('inhibitory')['U']
-        A = getParamaters('inhibitory')['distribution']
-        tau_s = getParamaters('inhibitory')['t_s']
+        tau_f = getParamaters('excitatory')['t_f']
+        tau_d = getParamaters('excitatory')['t_d']
+        U = getParamaters('excitatory')['U']
+        A = getParamaters('excitatory')['distribution']
+        tau_s = getParamaters('excitatory')['t_s']
         parameters_length = len(tau_f)
         
         # Loop trhough the parameters
@@ -234,5 +237,4 @@ PSC_self = I_post_synaptic
 #     indexes[k] = "neuron " + str(k)
         
 # v_RT = pd.DataFrame(v.transpose())
-
-# sns.stripplot(data=v_RT, palette="deep")
+    

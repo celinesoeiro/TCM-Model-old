@@ -261,14 +261,14 @@ def TCM_model_parameters():
     pn_m_1 = pinkNoise(qnt_neurons_s, Fs);  pn_m_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
     pn_d_1 = pinkNoise(qnt_neurons_s, Fs);  pn_d_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
     pn_ci_1 = pinkNoise(qnt_neurons_s, Fs);  pn_ci_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
-    pn_tc_1 = pinkNoise(qnt_neurons_s, Fs);  pn_tc_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
+    pn_tn_1 = pinkNoise(qnt_neurons_s, Fs);  pn_tn_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
     pn_tr_1 = pinkNoise(qnt_neurons_s, Fs);  pn_tr_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
     
     pn_S_E = [p_add*pn_s_1, p_add*cn*pn_s_2]
     pn_M_E = [p_add*pn_m_1, p_add*cn*pn_m_2]
     pn_D_E = [p_add*pn_d_1, p_add*cn*pn_d_2]
     pn_CI_I = [p_add*pn_ci_1, p_add*cn*pn_ci_2]
-    pn_Rel_E = [p_add*pn_tc_1, p_add*cn*pn_tc_2]
+    pn_Rel_E = [p_add*pn_tn_1, p_add*cn*pn_tn_2]
     pn_Ret_I = [p_add*pn_tr_1, p_add*cn*pn_tr_2]
     
     noise = {
@@ -346,7 +346,7 @@ def TCM_model_parameters():
     
     return data
 
-def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
+def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tn, n_tr):
     division_factor = facilitating_factor
     
     initial = 0
@@ -360,7 +360,7 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     r_m = initial + interval*np.random.rand(n_m, 1)
     r_d = initial + interval*np.random.rand(n_d, 1)
     r_ci = initial + interval*np.random.rand(n_ci, 1)
-    r_tc = initial + interval*np.random.rand(n_tc, 1)
+    r_tc = initial + interval*np.random.rand(n_tn, 1)
     r_tr = initial + interval*np.random.rand(n_tr, 1)
     
     # =============================================================================
@@ -516,43 +516,43 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
         'W_EE_d': W_EE_d,
         'W_II_ci': W_II_ci,
         'W_II_tr': W_II_ret,
-        'W_EE_tc': W_EE_rel,
+        'W_EE_tn': W_EE_rel,
         'W_EE_s_m': W_EE_s_m,
         'W_EE_s_d': W_EE_s_d,
         'W_EI_s_ci': W_EI_s_ci,
-        'W_EI_s_ret': W_EI_s_ret,
-        'W_EE_s_rel': W_EE_s_rel,
+        'W_EI_s_tr': W_EI_s_ret,
+        'W_EE_s_tn': W_EE_s_rel,
         'W_EE_m_s': W_EE_m_s,
         'W_EE_m_d': W_EE_m_d,
         'W_EI_m_ci': W_EI_m_ci,
         'W_EI_m_tr': W_EI_m_ret,
-        'W_EE_m_tc': W_EE_m_rel,
+        'W_EE_m_tn': W_EE_m_rel,
         'W_EE_d_s': W_EE_d_s,
         'W_EE_d_m': W_EE_d_m,
         'W_EI_d_ci': W_EI_d_ci,
         'W_EI_d_tr': W_EI_d_ret,
-        'W_EE_d_tc': W_EE_d_rel,
+        'W_EE_d_tn': W_EE_d_rel,
         'W_IE_ci_s': W_IE_ci_s,
         'W_IE_ci_m': W_IE_ci_m,
         'W_IE_ci_d': W_IE_ci_d,
         'W_II_ci_tr': W_II_ci_ret,
-        'W_IE_ci_tc': W_IE_ci_rel,
-        'W_EE_tc_s': W_EE_rel_s,
-        'W_EE_tc_m': W_EE_rel_m,
-        'W_EE_tc_d': W_EE_rel_d,
-        'W_EI_tc_ic': W_EI_rel_ci,
-        'W_EI_tc_tr': W_EI_rel_ret,
+        'W_IE_ci_tn': W_IE_ci_rel,
+        'W_EE_tn_s': W_EE_rel_s,
+        'W_EE_tn_m': W_EE_rel_m,
+        'W_EE_tn_d': W_EE_rel_d,
+        'W_EI_tn_ic': W_EI_rel_ci,
+        'W_EI_tn_tr': W_EI_rel_ret,
         'W_IE_tr_s': W_IE_ret_s,
         'W_IE_tr_m': W_IE_ret_m,
         'W_IE_tr_d': W_IE_ret_d,
         'W_II_tr_ci': W_II_ret_ci,
-        'W_IE_tr_tc': W_IE_ret_rel,
+        'W_IE_tr_tn': W_IE_ret_rel,
         }
     
     return { 'matrix': matrix, 'weights': weights }
     
     
-def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
+def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tn, n_tr):
     division_factor = facilitating_factor
     
     initial = 0
@@ -566,7 +566,7 @@ def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
     r_m = initial + interval*np.random.rand(n_m, 1)
     r_d = initial + interval*np.random.rand(n_d, 1)
     r_ci = initial + interval*np.random.rand(n_ci, 1)
-    r_tc = initial + interval*np.random.rand(n_tc, 1)
+    r_tc = initial + interval*np.random.rand(n_tn, 1)
     r_tr = initial + interval*np.random.rand(n_tr, 1)
     
     # =============================================================================

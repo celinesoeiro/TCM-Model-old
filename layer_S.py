@@ -51,7 +51,7 @@ Receive inhibitory stimulus from:
 
 Receive excitatory stimulus from:
     - Deep Layer (D)
-    - Medium Layer (M)
+    - Granular Layer (M)
 
 Send inhibitory stimulus to:
     - None
@@ -59,7 +59,7 @@ Send inhibitory stimulus to:
 Send excitatory stimulus to:
     - Deep Layer (D)
     - Cortical Interneurons (CI)
-    - Medium Layer (M)
+    - Granular Layer (M)
 """
 
 import numpy as np
@@ -94,7 +94,7 @@ n = neuron_quantities['S']
 n_m = neuron_quantities['M']
 n_d = neuron_quantities['D']
 n_ci = neuron_quantities['CI']
-n_tc = neuron_quantities['TC']
+n_tn = neuron_quantities['TC']
 n_tr = neuron_quantities['TR']
 
 neuron_params = neuron_params['S1']
@@ -111,7 +111,14 @@ PSC_TR = np.zeros((1,sim_steps))
 PSC_TN = np.zeros((1,sim_steps))
 PSC_CI = np.zeros((1,sim_steps))
 
-W_N = coupling_matrix_normal(facilitating_factor_N, n, n_m, n_d, n_ci, n_tc, n_tr)['weights']
+W_N = coupling_matrix_normal(    
+    facilitating_factor = facilitating_factor_N, 
+    n_s = n, 
+    n_m = n, 
+    n_d = n_d, 
+    n_ci = n_ci, 
+    n_tn = n_tn, 
+    n_tr = n_tr)['weights']
 
 SW_self = W_N['W_EE_s']
 SW_M = W_N['W_EE_s_m']

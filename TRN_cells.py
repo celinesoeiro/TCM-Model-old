@@ -111,7 +111,14 @@ PSC_D = np.zeros((1,sim_steps))
 PSC_TR = np.zeros((1,sim_steps))
 PSC_CI = np.zeros((1,sim_steps))
 
-W_N = coupling_matrix_normal(facilitating_factor_N, n_s, n_m, n_d, n_ci, n, n_tr)['weights']
+W_N = coupling_matrix_normal(    
+    facilitating_factor = facilitating_factor_N, 
+    n_s = n_s, 
+    n_m = n, 
+    n_d = n_d, 
+    n_ci = n_ci, 
+    n_tn = n, 
+    n_tr = n_tr)['weights']
 
 SW_self = W_N['W_EE_tc']
 SW_S = W_N['W_EE_tc_s']
