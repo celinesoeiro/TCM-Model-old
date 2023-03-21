@@ -61,7 +61,7 @@ def TCM_model_parameters():
     qnt_neurons_m = 100         # Excitatory
     qnt_neurons_d = 100         # Excitatory
     qnt_neurons_ci = 100        # Excitatory
-    qnt_neurons_tc = 100        # Inhibitory
+    qnt_neurons_tn = 100        # Inhibitory
     qnt_neurons_tr = 40         # Inhibitory
     
     neuron_quantities = {
@@ -69,10 +69,10 @@ def TCM_model_parameters():
         'M': qnt_neurons_m,                      # Number of neurons in Medium layer
         'D': qnt_neurons_d,                      # Number of neurons in Deep layer
         'CI': qnt_neurons_ci,                    # Number of IC neurons
-        'TC': qnt_neurons_tc,                    # Number of neurons in TCR
+        'TN': qnt_neurons_tn,                    # Number of neurons in TCR
         'TR': qnt_neurons_tr,                    # Number of neurons in TRN
         'HD': qnt_neurons_d*hyperdirect_neurons, # Number of hyperdirect neurons
-        'total': qnt_neurons_s + qnt_neurons_m + qnt_neurons_d + qnt_neurons_ci + qnt_neurons_tc + qnt_neurons_tr,
+        'total': qnt_neurons_s + qnt_neurons_m + qnt_neurons_d + qnt_neurons_ci + qnt_neurons_tn + qnt_neurons_tr,
         }
     
     # Impact of DBS on the other cortical structures via D PNs axons:
@@ -91,7 +91,7 @@ def TCM_model_parameters():
         'S': nS*hyperdirect_neurons*qnt_neurons_s,   # percentage of S neurons that have synaptic contact with hyperdirect neurons axon arbors
         'M': nM*hyperdirect_neurons*qnt_neurons_m,   # percentage of M neurons that have synaptic contact with hyperdirect neurons axon arbors
         'TR': nR*hyperdirect_neurons*qnt_neurons_tr, # percentage of R neurons that have synaptic contact with hyperdirect neurons axon arbors
-        'TC': nN*hyperdirect_neurons*qnt_neurons_tc, # percentage of N neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'TN': nN*hyperdirect_neurons*qnt_neurons_tn, # percentage of N neurons that have synaptic contact with hyperdirect neurons axon arbors
         }
     
     # Distribution of neurons in each structure
@@ -105,8 +105,8 @@ def TCM_model_parameters():
     neurons_ci_2 = int(0.5*qnt_neurons_ci)
     neurons_tcr_tr_1 = int(0.5*qnt_neurons_tr)
     neurons_tcr_tr_2 = int(0.5*qnt_neurons_tr)
-    neurons_tcr_tc_1 = int(0.7*qnt_neurons_tc)
-    neurons_tcr_tc_2 = int(0.3*qnt_neurons_tc)
+    neurons_tcr_tn_1 = int(0.7*qnt_neurons_tn)
+    neurons_tcr_tn_2 = int(0.3*qnt_neurons_tn)
     
     neuron_per_structure = {
         'neurons_s_1': neurons_s_1,             # Regular Spiking
@@ -117,8 +117,8 @@ def TCM_model_parameters():
         'neurons_d_2': neurons_d_2,             # Intrinsically_bursting
         'neurons_ci_1': neurons_ci_1,           # Fast spiking
         'neurons_ci_2': neurons_ci_2,           # Low threshold_spiking
-        'neurons_tcr_tc_1': neurons_tcr_tc_1,   # Reley
-        'neurons_tcr_tc_2': neurons_tcr_tc_2,   # Relay
+        'neurons_tcr_tn_1': neurons_tcr_tn_1,   # Reley
+        'neurons_tcr_tn_2': neurons_tcr_tn_2,   # Relay
         'neurons_tcr_tr_1': neurons_tcr_tr_1,   # Reticular
         'neurons_tcr_tr_2': neurons_tcr_tr_2,   # Reticular
         }
@@ -200,13 +200,13 @@ def TCM_model_parameters():
             'c': c[7],
             'd': d[7],
             },
-        'TC1': {
+        'TN1': {
             'a': a[5],
             'b': b[5],
             'c': c[5],
             'd': d[5],
             },
-        'TC2': {
+        'TN2': {
             'a': a[5],
             'b': b[5],
             'c': c[5],
@@ -247,15 +247,15 @@ def TCM_model_parameters():
     kisi_M_E = [w_g_n_add*np.random.rand(qnt_neurons_m, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_m, sim_steps-Fs)]
     kisi_D_E = [w_g_n_add*np.random.rand(qnt_neurons_d, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_d, sim_steps-Fs)]
     kisi_CI_I = [w_g_n_add*np.random.rand(qnt_neurons_ci, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_ci, sim_steps-Fs)]
-    kisi_Rel_E = [w_g_n_add*np.random.rand(qnt_neurons_tc, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_tc, sim_steps-Fs)]
-    kisi_Ret_I = [w_g_n_add*np.random.rand(qnt_neurons_tr, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_tr, sim_steps-Fs)]    
+    kisi_TN_E = [w_g_n_add*np.random.rand(qnt_neurons_tn, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_tn, sim_steps-Fs)]
+    kisi_TR_I = [w_g_n_add*np.random.rand(qnt_neurons_tr, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_tr, sim_steps-Fs)]    
     
     zeta_S_E = [w_g_n_thr*np.random.rand(qnt_neurons_s, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_s, sim_steps-Fs)]
     zeta_M_E = [w_g_n_thr*np.random.rand(qnt_neurons_m, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_m, sim_steps-Fs)]
     zeta_D_E = [w_g_n_thr*np.random.rand(qnt_neurons_d, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_d, sim_steps-Fs)]
     zeta_CI_I = [w_g_n_thr*np.random.rand(qnt_neurons_ci, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_ci, sim_steps-Fs)]
-    zeta_Rel_E = [w_g_n_thr*np.random.rand(qnt_neurons_tc, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_tc, sim_steps-Fs)]
-    zeta_Ret_I = [w_g_n_thr*np.random.rand(qnt_neurons_tr, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_tr, sim_steps-Fs)]   
+    zeta_TN_E = [w_g_n_thr*np.random.rand(qnt_neurons_tn, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_tn, sim_steps-Fs)]
+    zeta_TR_I = [w_g_n_thr*np.random.rand(qnt_neurons_tr, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_tr, sim_steps-Fs)]   
     
     pn_s_1 = pinkNoise(qnt_neurons_s, Fs);  pn_s_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
     pn_m_1 = pinkNoise(qnt_neurons_s, Fs);  pn_m_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
@@ -268,28 +268,28 @@ def TCM_model_parameters():
     pn_M_E = [p_add*pn_m_1, p_add*cn*pn_m_2]
     pn_D_E = [p_add*pn_d_1, p_add*cn*pn_d_2]
     pn_CI_I = [p_add*pn_ci_1, p_add*cn*pn_ci_2]
-    pn_Rel_E = [p_add*pn_tn_1, p_add*cn*pn_tn_2]
-    pn_Ret_I = [p_add*pn_tr_1, p_add*cn*pn_tr_2]
+    pn_TN_E = [p_add*pn_tn_1, p_add*cn*pn_tn_2]
+    pn_TR_I = [p_add*pn_tr_1, p_add*cn*pn_tr_2]
     
     noise = {
         'kisi_S_E': kisi_S_E,
         'kisi_M_E': kisi_M_E,
         'kisi_D_E': kisi_D_E,
         'kisi_CI_I': kisi_CI_I,
-        'kisi_Rel_E': kisi_Rel_E,
-        'kisi_Ret_I': kisi_Ret_I,
+        'kisi_TN_E': kisi_TN_E,
+        'kisi_TR_I': kisi_TR_I,
         'zeta_S_E': zeta_S_E,
         'zeta_M_E': zeta_M_E,
         'zeta_D_E': zeta_D_E,
         'zeta_CI_I': zeta_CI_I,
-        'zeta_Rel_E': zeta_Rel_E,
-        'zeta_Ret_I': zeta_Ret_I,
+        'zeta_TN_E': zeta_TN_E,
+        'zeta_TR_I': zeta_TR_I,
         'pn_S_E': pn_S_E,
         'pn_M_E': pn_M_E,
         'pn_D_E': pn_D_E,
         'pn_CI_I': pn_CI_I,
-        'pn_Rel_E': pn_Rel_E,
-        'pn_Ret_I': pn_Ret_I,
+        'pn_TN_E': pn_TN_E,
+        'pn_TR_I': pn_TR_I,
         }
     
     # Bias currents (Subthreshold CTX and Suprethreshold THM) - Will be used in the neurons

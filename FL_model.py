@@ -22,6 +22,9 @@ from tsodyks_markram_synapse import TM_Synapse
 from izhikevich_neuron import izhikevich_neuron
 from dbs import DBS
 
+import TR_cells as tr_nucleos
+ 
+
 # =============================================================================
 # IMPORT PARAMETERS
 # =============================================================================
@@ -215,55 +218,7 @@ ax1.grid()
 # =============================================================================
 # SETTING INITIAL SIMULATION VALUES
 # =============================================================================
-vr = TCM_model['vr']
 
-# Voltages
-v_E_s = vr*np.ones((n_s, n_sim));     u_E_s = 0*v_E_s;
-v_E_m = vr*np.ones((n_m, n_sim));     u_E_m = 0*v_E_m;
-v_E_d = vr*np.ones((n_d, n_sim));     u_E_d = 0*v_E_d;
-v_I_s = vr*np.ones((n_s, n_sim));     u_I_s = 0*v_I_s;
-v_ret = vr*np.ones((n_tr, n_sim));    u_ret = 0*v_ret;
-v_rel = vr*np.ones((n_tc, n_sim));    u_rel = 0*v_rel;
-
-# Post Synaptic Current
-E_PSC_s = np.zeros((1, n_sim))
-E_PSC_m = np.zeros((1, n_sim))
-E_PSC_d = np.zeros((1, n_sim))
-E_PSC_d_F = np.zeros((1, n_sim))
-E_PSC_d_D = np.zeros((1, n_sim))
-E_PSC_rel = np.zeros((1, n_sim))
-E_PSC_rel_D = np.zeros((1, n_sim))
-I_PSC_CI_s = np.zeros((1, n_sim))
-I_PSC_ret = np.zeros((1, n_sim))
-
-# Synapse 
-r_E_s = np.zeros((3,1))
-r_E_m = np.zeros((3,1))
-r_E_d = np.zeros((3,1))
-r_E_rel = np.zeros((3,1))
-r_I_CI = np.zeros((3,1))
-r_I_ret = np.zeros((3,1))
-
-x_E_s = np.ones((3,1))
-x_E_m = np.ones((3,1))
-x_E_d = np.ones((3,1))
-x_E_rel = np.ones((3,1))
-x_I_CI = np.ones((3,1))
-x_I_ret = np.ones((3,1))
-
-I_s_E_s = np.zeros((3,1))
-I_s_E_m = np.zeros((3,1))
-I_s_E_d = np.zeros((3,1))
-I_s_E_rel = np.zeros((3,1))
-I_s_I_CI = np.zeros((3,1))
-I_s_I_ret = np.zeros((3,1))
-
-r_E_d_F = np.zeros((3,1))
-x_E_d_F = np.zeros((3,1))
-I_s_E_d_F = np.zeros((3,1))
-r_E_rel_D = np.zeros((3,1))
-x_E_rel_D = np.zeros((3,1))
-I_s_E_rel_D = np.zeros((3,1))
 
 # =============================================================================
 # RUN THE SIMULATION
@@ -271,46 +226,9 @@ I_s_E_rel_D = np.zeros((3,1))
 
 # Thalamic Reticular Nucleus (TRN) cells
 
+
+
 # =============================================================================
-## Valores de saida
-# Inh_AP = vRet(:,i+1)
-# Inh_Aux = uRet(:,i+1)
-# r = rI
-# x = xI
-# Is =IsI
-# IPSC = IPSC_ret(i+1)
-#
-## Valores de entrada
-# a = aIret
-# b = bIret
-# c = cIret
-# d = dIret
-# n = nIret
-# v = vRet(:,i)
-# u = uRet(:,i)
-# r = rIret
-# x = xIret
-# Is = IsIret
-# IPSC = IPSC_ret(i-td_wL-td_syn)
-# EPSCs = EPSCs(i-td_CT-td_syn)
-# EPSCm = EPSCm(i-td_CT-td_syn)
-# EPSCd = EPSCdF(i-td_CT-td_syn)
-# IPSC_in = IPSC_INs(i-td_CT-td_syn)
-# EPSC_rel = EPSC_rel(i-td_L-td_syn)
-# W_II = W_IIret
-# W_IErs = W_IE_Ret_s
-# W_IErm = W_IE_Ret_m
-# W_IErd = W_IE_Ret_d
-# W_II_IN = W_II_Ret_INs
-# W_IE_rel = W_IE_Ret_Rel
-# I_psE = 0*I_ps(5,1,i-td_wL-td_syn)
-# I_psI = 0*I_ps(5,2,i-td_wL-td_syn)
-# kisi = kisiIret(:,i)+pnIret(:,i)
-# zeta = zetaIret(:,i)
-# Idc = Idc_Ret
-# Idbs = fidN*I_dbs(2,i)
-# n_affected = n_conn_N
-# dt = dt
-# =============================================================================
+
 
 

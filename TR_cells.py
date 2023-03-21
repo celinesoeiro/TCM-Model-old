@@ -106,13 +106,13 @@ PSC_self = np.zeros((1,sim_steps))
 PSC_S = np.zeros((1,sim_steps))
 PSC_M = np.zeros((1,sim_steps))
 PSC_D = np.zeros((1,sim_steps))
-PSC_TC = np.zeros((1,sim_steps))
+PSC_TN = np.zeros((1,sim_steps))
 PSC_CI = np.zeros((1,sim_steps))
 
 W_N = coupling_matrix_normal(    
     facilitating_factor = facilitating_factor_N, 
     n_s = n_s, 
-    n_m = n, 
+    n_m = n_m, 
     n_d = n_d, 
     n_ci = n_ci, 
     n_tn = n_tn, 
@@ -122,7 +122,7 @@ SW_self = W_N['W_II_tr']
 SW_S = W_N['W_IE_tr_s']
 SW_M = W_N['W_IE_tr_m']
 SW_D = W_N['W_IE_tr_d']
-SW_TC = W_N['W_IE_tr_tc']
+SW_TN = W_N['W_IE_tr_tn']
 SW_CI = W_N['W_II_tr_ci']
 
 Ib = currents['I_TR_1'] + Idc*np.ones(n)
@@ -194,11 +194,11 @@ for t in range(1, len(time)):
             layer_S = SW_S[k][0]*PSC_S[0][t]/n
             layer_M = SW_M[k][0]*PSC_M[0][t]/n
             layer_D = SW_D[k][0]*PSC_D[0][t]/n
-            layer_TC = SW_TC[k][0]*PSC_TC[0][t]/n
+            layer_TN = SW_TN[k][0]*PSC_TN[0][t]/n
             layer_CI = SW_CI[k][0]*PSC_CI[0][t]/n
             noise = 0
             
-            v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_S + layer_M + layer_D + layer_TC + layer_CI + noise)
+            v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_S + layer_M + layer_D + layer_TN + layer_CI + noise)
             u[k][t] = u_aux + dt*dudt(v_aux, u_aux, neuron_params['a'], neuron_params['b'])
             
         # TM parameters

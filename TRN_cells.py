@@ -120,7 +120,7 @@ W_N = coupling_matrix_normal(
     n_tn = n, 
     n_tr = n_tr)['weights']
 
-SW_self = W_N['W_EE_tc']
+SW_self = W_N['W_EE_tn']
 SW_S = W_N['W_EE_tc_s']
 SW_M = W_N['W_EE_tc_m']
 SW_D = W_N['W_EE_tc_d']
@@ -237,5 +237,7 @@ PSC_self = I_post_synaptic
         
 # v_RT = pd.DataFrame(v.transpose())
     
+
+
     
     

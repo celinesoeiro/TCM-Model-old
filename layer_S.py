@@ -124,8 +124,8 @@ SW_self = W_N['W_EE_s']
 SW_M = W_N['W_EE_s_m']
 SW_D = W_N['W_EE_s_d']
 SW_CI = W_N['W_EI_s_ci']
-SW_TR = W_N['W_EI_s_ret']
-SW_TN = W_N['W_EE_s_rel']
+SW_TR = W_N['W_EI_s_tr']
+SW_TN = W_N['W_EE_s_tn']
 
 Ib = currents['I_S_1'] + Idc*np.ones(n)
 
