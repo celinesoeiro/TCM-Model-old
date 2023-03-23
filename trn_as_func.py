@@ -7,7 +7,6 @@ Created on Mon Mar 20 21:24:07 2023
 import numpy as np
 import pandas as pd
 
-
 def trn_cells(
         time_vector, 
         number_neurons, 
@@ -32,22 +31,21 @@ def trn_cells(
         PSC_TN,
         PSC_CI,
     ):
-    neuron_params = neuron_params['TC1']
-
+    
     v = vr*np.ones((number_neurons,simulation_steps))
     u = 0*v
     r = np.zeros((3,len(time_vector)))
     x = np.ones((3,len(time_vector)))
     I = np.zeros((3,len(time_vector)))
     
-    SW_self = coupling_matrix['W_EE_tn']
-    SW_S = coupling_matrix['W_EE_tn_s']
-    SW_M = coupling_matrix['W_EE_tn_m']
-    SW_D = coupling_matrix['W_EE_tn_d']
-    SW_TR = coupling_matrix['W_EI_tn_tr']
-    SW_CI = coupling_matrix['W_EI_tn_ic']
+    SW_self = coupling_matrix['W_EE_tc']
+    SW_S = coupling_matrix['W_EE_tc_s']
+    SW_M = coupling_matrix['W_EE_tc_m']
+    SW_D = coupling_matrix['W_EE_tc_d']
+    SW_TR = coupling_matrix['W_EI_tc_tr']
+    SW_CI = coupling_matrix['W_EI_tc_ci']
 
-    Ib = currents['I_TN_1'] + Idc*np.ones(number_neurons)
+    Ib = currents['I_TC_1'] + Idc*np.ones(number_neurons)
     
     AP = np.zeros((1,len(time_vector)))
     
@@ -57,7 +55,6 @@ def trn_cells(
         for k in range(1, number_neurons):       
             v_aux = v[k - 1][t - 1]
             u_aux = u[k - 1][t - 1]
-            
             
             if (v_aux >= vp):
                 AP_aux = 1

@@ -114,20 +114,20 @@ PSC_CI = np.zeros((1,sim_steps))
 W_N = coupling_matrix_normal(    
     facilitating_factor = facilitating_factor_N, 
     n_s = n_s, 
-    n_m = n, 
+    n_m = n_m, 
     n_d = n_d, 
     n_ci = n_ci, 
-    n_tn = n, 
+    n_tc = n, 
     n_tr = n_tr)['weights']
 
-SW_self = W_N['W_EE_tn']
+SW_self = W_N['W_EE_tc']
 SW_S = W_N['W_EE_tc_s']
 SW_M = W_N['W_EE_tc_m']
 SW_D = W_N['W_EE_tc_d']
 SW_TR = W_N['W_EI_tc_tr']
-SW_CI = W_N['W_EI_tc_ic']
+SW_CI = W_N['W_EI_tc_ci']
 
-Ib = currents['I_TN_1'] + Idc*np.ones(n)
+Ib = currents['I_TC_1'] + Idc*np.ones(n)
 
 # =============================================================================
 # CALCULATING THE NEW VALUE
@@ -180,8 +180,9 @@ def getParamaters(synapse_type: str):
 AP = np.zeros((1,len(time)))
 
 for t in range(1, len(time)):
+    print("interaction: %d" %(t))
     AP_aux = AP[0][t]
-    for k in range(1, n):        
+    for k in range(0, n - 1):        
         v_aux = v[k - 1][t - 1]
         u_aux = u[k - 1][t - 1]
         

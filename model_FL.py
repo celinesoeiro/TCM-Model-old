@@ -40,7 +40,7 @@ n_m = neuron_quantities['M']
 n_d = neuron_quantities['D']
 n_ci = neuron_quantities['CI']
 n_tr = neuron_quantities['TR']
-n_tn = neuron_quantities['TC']
+n_tc = neuron_quantities['TC']
 
 W_N = coupling_matrix_normal(    
     facilitating_factor = facilitating_factor_N, 
@@ -48,7 +48,7 @@ W_N = coupling_matrix_normal(
     n_m = n_m, 
     n_d = n_d, 
     n_ci = n_ci, 
-    n_tn = n_tn, 
+    n_tc = n_tc, 
     n_tr = n_tr)['weights']
 
 PSC_S = np.zeros((1,sim_steps))
@@ -106,12 +106,12 @@ def get_parameters(synapse_type: str):
         return 'Invalid synapse_type. Synapse_type must be excitatory or inhibitory.'
     
 
-PSC_TN, AP, v, u, r, x = trn_cells(
+PSC_TN, AP_TN, v_tn, u_tn, r_tn, x_tn = trn_cells(
     time_vector = time, 
-    number_neurons = n_tn, 
+    number_neurons = n_tc, 
     simulation_steps = sim_steps, 
     coupling_matrix = W_N, 
-    neuron_params = neuron_params, 
+    neuron_params = neuron_params['TC1'], 
     currents = currents, 
     vr = vr, 
     vp = vp, 
