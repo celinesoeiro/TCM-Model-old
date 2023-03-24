@@ -1,5 +1,5 @@
 """
-Thalamic Reticular Nucleus (TRN) cells
+Thalamo-Cortical Relay Nucleus (TCN)
 
 @author: Celine Soeiro
 
@@ -97,20 +97,6 @@ n_d = neuron_quantities['D']
 n_ci = neuron_quantities['CI']
 n_tr = neuron_quantities['TR']
 
-neuron_params = neuron_params['TC1']
-
-v = vr*np.ones((n,sim_steps))
-u = 0*v
-r = np.zeros((3,len(time)))
-x = np.ones((3,len(time)))
-I = np.zeros((3,len(time)))
-PSC_self = np.zeros((1,sim_steps))
-PSC_S = np.zeros((1,sim_steps))
-PSC_M = np.zeros((1,sim_steps))
-PSC_D = np.zeros((1,sim_steps))
-PSC_TR = np.zeros((1,sim_steps))
-PSC_CI = np.zeros((1,sim_steps))
-
 W_N = coupling_matrix_normal(    
     facilitating_factor = facilitating_factor_N, 
     n_s = n_s, 
@@ -120,12 +106,27 @@ W_N = coupling_matrix_normal(
     n_tc = n, 
     n_tr = n_tr)['weights']
 
+neuron_params = neuron_params['TC1']
+
+v = vr*np.ones((n,sim_steps))
+u = 0*v
+r = np.zeros((3,len(time)))
+x = np.ones((3,len(time)))
+I = np.zeros((3,len(time)))
+
 SW_self = W_N['W_EE_tc']
 SW_S = W_N['W_EE_tc_s']
 SW_M = W_N['W_EE_tc_m']
 SW_D = W_N['W_EE_tc_d']
 SW_TR = W_N['W_EI_tc_tr']
 SW_CI = W_N['W_EI_tc_ci']
+
+PSC_self = np.zeros((1,sim_steps))
+PSC_S = np.zeros((1,sim_steps))
+PSC_M = np.zeros((1,sim_steps))
+PSC_D = np.zeros((1,sim_steps))
+PSC_TR = np.zeros((1,sim_steps))
+PSC_CI = np.zeros((1,sim_steps))
 
 Ib = currents['I_TC_1'] + Idc*np.ones(n)
 

@@ -5,15 +5,14 @@ Created on Mon Mar 20 21:24:07 2023
 @author: Avell
 """
 import numpy as np
-import pandas as pd
 
-def trn_cells(
+def tc_cells(
         time_vector, 
         number_neurons, 
         simulation_steps, 
         neuron_params, 
         coupling_matrix, 
-        currents, 
+        current, 
         vr, 
         vp,
         dt,
@@ -23,12 +22,12 @@ def trn_cells(
         r_eq,
         x_eq,
         I_eq,
-        get_parameters,
+        synapse_parameters,
         PSC_S,
         PSC_M,
         PSC_D,
         PSC_TR,
-        PSC_TN,
+        PSC_TC,
         PSC_CI,
     ):
     
@@ -45,7 +44,7 @@ def trn_cells(
     SW_TR = coupling_matrix['W_EI_tc_tr']
     SW_CI = coupling_matrix['W_EI_tc_ci']
 
-    Ib = currents['I_TC_1'] + Idc*np.ones(number_neurons)
+    Ib = current + Idc*np.ones(number_neurons)
     
     AP = np.zeros((1,len(time_vector)))
     
@@ -63,7 +62,7 @@ def trn_cells(
                 u[k][t] = u[k][t] + neuron_params['d']
             else:
                 neuron_contribution = dvdt(v_aux, u_aux, Ib[k])
-                self_feedback = SW_self[k][0]*PSC_TN[0][t]/number_neurons
+                self_feedback = SW_self[k][0]*PSC_TC[0][t]/number_neurons
                 layer_S = SW_S[k][0]*PSC_S[0][t]/number_neurons
                 layer_M = SW_M[k][0]*PSC_M[0][t]/number_neurons
                 layer_D = SW_D[k][0]*PSC_D[0][t]/number_neurons
@@ -75,11 +74,11 @@ def trn_cells(
                 u[k][t] = u_aux + dt*dudt(v_aux, u_aux, neuron_params['a'], neuron_params['b'])
                 
             # TM parameters
-            tau_f = get_parameters('excitatory')['t_f']
-            tau_d = get_parameters('excitatory')['t_d']
-            U = get_parameters('excitatory')['U']
-            A = get_parameters('excitatory')['distribution']
-            tau_s = get_parameters('excitatory')['t_s']
+            tau_f = synapse_parameters['t_f']
+            tau_d = synapse_parameters['t_d']
+            U = synapse_parameters['U']
+            A = synapse_parameters['distribution']
+            tau_s = synapse_parameters['t_s']
             parameters_length = len(tau_f)
             
             # Loop trhough the parameters
@@ -99,12 +98,7 @@ def trn_cells(
                 print('NaN or inf in t = ', t)
                 break
 
-    PSC_TN = I_post_synaptic
+    PSC_TC = I_post_synaptic
     
-    return PSC_TN, AP, v, u, r, x
-    
-    
-    
-    
-    
+    return PSC_TC, AP, v, u, r, x
     

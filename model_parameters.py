@@ -447,20 +447,20 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     # Ret. Ret INs couplings
     aii_TRCI = 0/facilitating_factor;     W_II_tr_ci = aii_TRCI*r_tr;
     # Rel. Ret INs couplings
-    aie_TRTN = 1e3/facilitating_factor;   W_IE_tr_tc = aie_TRTN*r_tr;
+    aie_TRTC = 1e3/facilitating_factor;   W_IE_tr_tc = aie_TRTC*r_tr;
     # =============================================================================
     #     Rele
     # =============================================================================
     # S to Rel couplings
-    aee_TNs = 0/facilitating_factor;       W_EE_tc_s = aee_TNs*r_tc;   
+    aee_TCs = 0/facilitating_factor;       W_EE_tc_s = aee_TCs*r_tc;   
     # M to Rel couplings
-    aee_TNm = 0/facilitating_factor;       W_EE_tc_m = aee_TNm*r_tc;
+    aee_TCm = 0/facilitating_factor;       W_EE_tc_m = aee_TCm*r_tc;
     # D to Rel couplings
-    aee_TNd = 7e2/facilitating_factor;     W_EE_tc_d = aee_TNd*r_tc;
+    aee_TCd = 7e2/facilitating_factor;     W_EE_tc_d = aee_TCd*r_tc;
     # INs to Rel couplings
-    aei_TNCIs = 0/facilitating_factor;     W_EI_tc_ci = aei_TNCIs*r_tc;
+    aei_TCCIs = 0/facilitating_factor;     W_EI_tc_ci = aei_TCCIs*r_tc;
     # Ret to Rel couplings
-    aei_TNTR = -5e2/facilitating_factor;  W_EI_tc_tr = aei_TNTR*r_tc;
+    aei_TCTR = -5e2/facilitating_factor;  W_EI_tc_tr = aei_TCTR*r_tc;
     
     # Initialize matrix (6 structures -> 6x6 matrix)
     matrix = np.zeros((6,6))

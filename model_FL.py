@@ -14,7 +14,10 @@ sns.set()
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal
 
-from trn_as_func import trn_cells
+from tr_as_func import tr_cells
+from tc_as_func import tc_cells
+from ci_as_func import ci_cells
+from s_as_func import s_cells
 
 # =============================================================================
 # INITIAL VALUES
@@ -54,7 +57,7 @@ W_N = coupling_matrix_normal(
 PSC_S = np.zeros((1,sim_steps))
 PSC_M = np.zeros((1,sim_steps))
 PSC_D = np.zeros((1,sim_steps))
-PSC_TN = np.zeros((1,sim_steps))
+PSC_TC = np.zeros((1,sim_steps))
 PSC_TR = np.zeros((1,sim_steps))
 PSC_CI = np.zeros((1,sim_steps))
 
@@ -105,14 +108,15 @@ def get_parameters(synapse_type: str):
     else:
         return 'Invalid synapse_type. Synapse_type must be excitatory or inhibitory.'
     
+print("----- Thalamic Reticular Nucleus (TR)")
 
-PSC_TN, AP_TN, v_tn, u_tn, r_tn, x_tn = trn_cells(
+PSC_TR, I_TR, AP_TR, v_tr, u_tr, r_tr, x_tr = tr_cells(
     time_vector = time, 
-    number_neurons = n_tc, 
+    number_neurons = n_tr, 
     simulation_steps = sim_steps, 
     coupling_matrix = W_N, 
-    neuron_params = neuron_params['TC1'], 
-    currents = currents, 
+    neuron_params = neuron_params['TR1'], 
+    current = currents['I_TR_1'], 
     vr = vr, 
     vp = vp, 
     dt = dt, 
@@ -122,10 +126,88 @@ PSC_TN, AP_TN, v_tn, u_tn, r_tn, x_tn = trn_cells(
     r_eq = r_eq, 
     x_eq = x_eq, 
     I_eq = I_eq, 
-    get_parameters = get_parameters, 
+    synapse_parameters = get_parameters('inhibitory'), 
     PSC_S = PSC_S, 
     PSC_M = PSC_M, 
     PSC_D = PSC_D, 
     PSC_TR = PSC_TR, 
-    PSC_TN = PSC_TN, 
+    PSC_TC = PSC_TC, 
+    PSC_CI = PSC_CI)
+
+print("----- Thalamo-Cortical Relay Nucleus (TC)")
+
+PSC_TC, AP_TC, v_tc, u_tc, r_tc, x_tc = tc_cells(
+    time_vector = time, 
+    number_neurons = n_tc, 
+    simulation_steps = sim_steps, 
+    coupling_matrix = W_N, 
+    neuron_params = neuron_params['TC1'], 
+    current = currents['I_TC_1'], 
+    vr = vr, 
+    vp = vp, 
+    dt = dt, 
+    Idc = Idc, 
+    dvdt = dvdt, 
+    dudt = dudt, 
+    r_eq = r_eq, 
+    x_eq = x_eq, 
+    I_eq = I_eq, 
+    synapse_parameters = get_parameters('excitatory'), 
+    PSC_S = PSC_S, 
+    PSC_M = PSC_M, 
+    PSC_D = PSC_D, 
+    PSC_TR = PSC_TR, 
+    PSC_TC = PSC_TC, 
+    PSC_CI = PSC_CI)
+
+print("----- Cortical Interneurons (CI)")
+
+PSC_CI, AP_CI, v_ci, u_ci, r_ci, x_ci = ci_cells(
+    time_vector = time, 
+    number_neurons = n_ci, 
+    simulation_steps = sim_steps, 
+    coupling_matrix = W_N, 
+    neuron_params = neuron_params['CI1'], 
+    current = currents['I_CI_1'], 
+    vr = vr, 
+    vp = vp, 
+    dt = dt, 
+    Idc = Idc, 
+    dvdt = dvdt, 
+    dudt = dudt, 
+    r_eq = r_eq, 
+    x_eq = x_eq, 
+    I_eq = I_eq, 
+    synapse_parameters = get_parameters('excitatory'), 
+    PSC_S = PSC_S, 
+    PSC_M = PSC_M, 
+    PSC_D = PSC_D, 
+    PSC_TR = PSC_TR, 
+    PSC_TC = PSC_TC, 
+    PSC_CI = PSC_CI)
+
+print("----- Superficial layer (S)")
+
+PSC_S, AP_S, v_s, u_s, r_s, x_s = s_cells(
+    time_vector = time, 
+    number_neurons = n_s, 
+    simulation_steps = sim_steps, 
+    coupling_matrix = W_N, 
+    neuron_params = neuron_params['S1'], 
+    current = currents['I_S_1'], 
+    vr = vr, 
+    vp = vp, 
+    dt = dt, 
+    Idc = Idc, 
+    dvdt = dvdt, 
+    dudt = dudt, 
+    r_eq = r_eq, 
+    x_eq = x_eq, 
+    I_eq = I_eq, 
+    synapse_parameters = get_parameters('excitatory'), 
+    PSC_S = PSC_S, 
+    PSC_M = PSC_M, 
+    PSC_D = PSC_D, 
+    PSC_TR = PSC_TR, 
+    PSC_TC = PSC_TC, 
     PSC_CI = PSC_CI)
