@@ -1,5 +1,5 @@
 """
-Cortical Interneurons (CI)
+Cortical Layer M
 
 @author: Celine Soeiro
 
@@ -47,25 +47,22 @@ Valores de entrada
 
 Receive inhibitory stimulus from:
     - Self
+    - Cortical Interneurons (CI)
 
 Receive excitatory stimulus from:
     - Supraganular Layer (S)
-    - Granular Layer (M)
-    - Infragranular Layer (D)
-    - Thalamic Reticular Nucleus (TRN)
 
 Send inhibitory stimulus to:
-    - Supraganular Layer (S)
-    - Granular Layer (M)
-    - Infragranular Layer (D)
+    - None
     
 Send excitatory stimulus to:
-    - None
+    - Cortical Interneurons (CI)
+    - Supraganular Layer (S)
 """
 
 import numpy as np
 
-def ci_cells(
+def m_cells(
     time_vector, 
     number_neurons, 
     simulation_steps, 
@@ -96,12 +93,12 @@ def ci_cells(
     x = np.ones((3,len(time_vector)))
     I = np.zeros((3,len(time_vector)))
     
-    SW_self = coupling_matrix['W_II_ci']
-    SW_S = coupling_matrix['W_IE_ci_s']
-    SW_M = coupling_matrix['W_IE_ci_m']
-    SW_D = coupling_matrix['W_IE_ci_d']
-    SW_TC = coupling_matrix['W_IE_ci_tc']
-    SW_TR = coupling_matrix['W_II_ci_tr']
+    SW_self = coupling_matrix['W_EE_m']
+    SW_S = coupling_matrix['W_EE_m_s']
+    SW_D = coupling_matrix['W_EE_m_d']
+    SW_CI = coupling_matrix['W_EI_m_ci']
+    SW_TC = coupling_matrix['W_EE_m_tc']
+    SW_TR = coupling_matrix['W_EI_m_tr']
  
     Ib = current + Idc*np.ones(number_neurons)
     
@@ -120,15 +117,15 @@ def ci_cells(
                 u[k][t] = u[k][t] + neuron_params['d']
             else:
                 neuron_contribution = dvdt(v_aux, u_aux, Ib[k])
-                self_feedback = SW_self[k][0]*PSC_CI[0][t]/number_neurons
+                self_feedback = SW_self[k][0]*PSC_S[0][t]/number_neurons
+                layer_CI = SW_CI[k][0]*PSC_CI[0][t]/number_neurons
                 layer_S = SW_S[k][0]*PSC_S[0][t]/number_neurons
-                layer_M = SW_M[k][0]*PSC_M[0][t]/number_neurons
                 layer_D = SW_D[k][0]*PSC_D[0][t]/number_neurons
                 layer_TC = SW_TC[k][0]*PSC_TC[0][t]/number_neurons
                 layer_TR = SW_TR[k][0]*PSC_TR[0][t]/number_neurons
                 noise = 0
                 
-                v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_S + layer_M + layer_D + layer_TC + layer_TR + noise)
+                v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_CI + layer_S + layer_D + layer_TC + layer_TR + noise)
                 u[k][t] = u_aux + dt*dudt(v_aux, u_aux, neuron_params['a'], neuron_params['b'])
                 
             # TM parameters
@@ -153,6 +150,6 @@ def ci_cells(
                 print('NaN or inf in t = ', t)
                 break
 
-    PSC_CI = np.sum(I, axis=0).reshape(1,len(time_vector))
+    PSC_M = np.sum(I, axis=0).reshape(1,len(time_vector))
     
-    return PSC_CI, AP, v, u, r, x
+    return PSC_M, AP, v, u, r, x

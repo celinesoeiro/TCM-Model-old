@@ -18,6 +18,8 @@ from tr_as_func import tr_cells
 from tc_as_func import tc_cells
 from ci_as_func import ci_cells
 from s_as_func import s_cells
+from m_as_func import m_cells
+from d_as_func import d_cells
 
 # =============================================================================
 # INITIAL VALUES
@@ -195,6 +197,58 @@ PSC_S, AP_S, v_s, u_s, r_s, x_s = s_cells(
     coupling_matrix = W_N, 
     neuron_params = neuron_params['S1'], 
     current = currents['I_S_1'], 
+    vr = vr, 
+    vp = vp, 
+    dt = dt, 
+    Idc = Idc, 
+    dvdt = dvdt, 
+    dudt = dudt, 
+    r_eq = r_eq, 
+    x_eq = x_eq, 
+    I_eq = I_eq, 
+    synapse_parameters = get_parameters('excitatory'), 
+    PSC_S = PSC_S, 
+    PSC_M = PSC_M, 
+    PSC_D = PSC_D, 
+    PSC_TR = PSC_TR, 
+    PSC_TC = PSC_TC, 
+    PSC_CI = PSC_CI)
+
+print("----- Middle layer (M)")
+
+PSC_M, AP_M, v_m, u_m, r_m, x_m = m_cells(
+    time_vector = time, 
+    number_neurons = n_s, 
+    simulation_steps = sim_steps, 
+    coupling_matrix = W_N, 
+    neuron_params = neuron_params['M1'], 
+    current = currents['I_M_1'], 
+    vr = vr, 
+    vp = vp, 
+    dt = dt, 
+    Idc = Idc, 
+    dvdt = dvdt, 
+    dudt = dudt, 
+    r_eq = r_eq, 
+    x_eq = x_eq, 
+    I_eq = I_eq, 
+    synapse_parameters = get_parameters('excitatory'), 
+    PSC_S = PSC_S, 
+    PSC_M = PSC_M, 
+    PSC_D = PSC_D, 
+    PSC_TR = PSC_TR, 
+    PSC_TC = PSC_TC, 
+    PSC_CI = PSC_CI)
+
+print("----- Deep layer (D)")
+
+PSC_D, AP_D, v_d, u_d, r_d, x_d = d_cells(
+    time_vector = time, 
+    number_neurons = n_s, 
+    simulation_steps = sim_steps, 
+    coupling_matrix = W_N, 
+    neuron_params = neuron_params['D1'], 
+    current = currents['I_D_1'], 
     vr = vr, 
     vp = vp, 
     dt = dt, 

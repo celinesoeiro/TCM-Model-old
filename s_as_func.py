@@ -107,7 +107,6 @@ def s_cells(
     AP = np.zeros((1,len(time_vector)))
     
     for t in range(1, len(time_vector)):
-        print("interaction: %d" %(t))
         AP_aux = AP[0][t]
         for k in range(1, number_neurons):        
             v_aux = v[k - 1][t - 1]
@@ -148,14 +147,11 @@ def s_cells(
                 r[p][t] = r_aux + dt*r_eq(r_aux, tau_f[p], U[p], AP_aux)
                 x[p][t] = x_aux + dt*x_eq(x_aux, tau_d[p], r_aux, U[p], AP_aux)
                 I[p][t] = I_aux + dt*I_eq(I_aux, tau_s, A[p], U[p], x_aux, r_aux, AP_aux)
-                
-            # Concatenate the final current
-            I_post_synaptic = np.concatenate(I, axis=None)
             
             if (np.isnan(v[k][t]) or np.isnan(u[k][t]) or np.isinf(v[k][t]) or np.isinf(u[k][t])):
                 print('NaN or inf in t = ', t)
                 break
 
-    PSC_S = I_post_synaptic
+    PSC_S = np.sum(I, axis=0).reshape(1,len(time_vector))
     
     return PSC_S, AP, v, u, r, x

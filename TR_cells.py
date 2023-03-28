@@ -115,14 +115,14 @@ W_N = coupling_matrix_normal(
     n_m = n_m, 
     n_d = n_d, 
     n_ci = n_ci, 
-    n_tn = n_tn, 
+    n_tc = n_tn, 
     n_tr = n)['weights']
 
 SW_self = W_N['W_II_tr']
 SW_S = W_N['W_IE_tr_s']
 SW_M = W_N['W_IE_tr_m']
 SW_D = W_N['W_IE_tr_d']
-SW_TN = W_N['W_IE_tr_tn']
+SW_TN = W_N['W_IE_tr_tc']
 SW_CI = W_N['W_II_tr_ci']
 
 Ib = currents['I_TR_1'] + Idc*np.ones(n)
@@ -218,15 +218,12 @@ for t in range(1, len(time)):
             r[p][t] = r_aux + dt*r_eq(r_aux, tau_f[p], U[p], AP_aux)
             x[p][t] = x_aux + dt*x_eq(x_aux, tau_d[p], r_aux, U[p], AP_aux)
             I[p][t] = I_aux + dt*I_eq(I_aux, tau_s, A[p], U[p], x_aux, r_aux, AP_aux)
-            
-        # Concatenate the final current
-        I_post_synaptic = np.concatenate(I, axis=None)
         
         if (np.isnan(v[k][t]) or np.isnan(u[k][t]) or np.isinf(v[k][t]) or np.isinf(u[k][t])):
             print('NaN or inf in t = ', t)
             break
-
-PSC_self = I_post_synaptic
+        
+PSC_self = np.sum(I, axis=0).reshape(1,len(time))
     
 # Plotting
 # indexes = np.arange(0,40, dtype=object)
