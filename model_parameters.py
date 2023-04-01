@@ -387,15 +387,15 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     #     S
     # =============================================================================
     # M to S coupling
-    aee_sm = 1e1/division_factor;           W_EE_s_m = aee_sm*r_s;
+    aee_sm = 1e1/division_factor;          W_EE_s_m = aee_sm*r_s;
     # D to S coupling
-    aee_ds = 5e2/division_factor;           W_EE_s_d = aee_ds*r_s;
+    aee_sd = 5e2/division_factor;          W_EE_s_d = aee_sd*r_s;
     # CI (INs) to S coupling
-    aei_sINs = -5e2/division_factor;        W_EI_s_ci = aei_sINs*r_s;
+    aei_sci = -5e2/division_factor;        W_EI_s_ci = aei_sci*r_s;
     # Reticular to S coupling
-    aei_sTR = 0/division_factor;           W_EI_s_tr = aei_sTR*r_s;
+    aei_str = 0/division_factor;           W_EI_s_tr = aei_str*r_s;
     # Rel. to S couplings
-    aee_sTC = 0/division_factor;           W_EE_s_tc = aee_sTC*r_s;     
+    aee_stc = 0/division_factor;           W_EE_s_tc = aee_stc*r_s;     
     # =============================================================================
     #     M
     # =============================================================================
@@ -404,11 +404,11 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     # D to M couplings
     aee_md = 0/facilitating_factor;         W_EE_m_d = aee_md*r_m;            
     # INs to M couplings
-    aei_mINs = -3e2/facilitating_factor;    W_EI_m_ci = aei_mINs*r_m;
+    aei_mci = -3e2/facilitating_factor;     W_EI_m_ci = aei_mci*r_m;
     # Ret. to M couplings    
-    aei_mTR = 0/facilitating_factor;       W_EI_m_tr = aei_mTR*r_m;
+    aei_mtr = 0/facilitating_factor;        W_EI_m_tr = aei_mtr*r_m;
     # Rel. to M couplings
-    aee_mTC = 0/facilitating_factor;       W_EE_m_tc = aee_mTC*r_m;
+    aee_mtc = 0/facilitating_factor;        W_EE_m_tc = aee_mtc*r_m;
     # =============================================================================
     #     D
     # =============================================================================
@@ -417,11 +417,11 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     # M to D couplings
     aee_dm = 0/facilitating_factor;         W_EE_d_m = aee_dm*r_d;
     # INs to D couplings
-    aei_dINs = -7.5e3/facilitating_factor;  W_EI_d_ci = aei_dINs*r_d;
+    aei_dci = -7.5e3/facilitating_factor;   W_EI_d_ci = aei_dci*r_d;
     # Ret. to D couplings
-    aei_dTR = 0/facilitating_factor;       W_EI_d_tr = aei_dTR*r_d;
+    aei_dtr = 0/facilitating_factor;        W_EI_d_tr = aei_dtr*r_d;
     # Rel. to D couplings
-    aee_dTC = 1e1/facilitating_factor;     W_EE_d_tc = aee_dTC*r_d;
+    aee_dtc = 1e1/facilitating_factor;      W_EE_d_tc = aee_dtc*r_d;
     # =============================================================================
     #     INs (CI)
     # =============================================================================
@@ -432,35 +432,35 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     # D to CIs couplings
     aie_CId = 2e2/facilitating_factor;     W_IE_ci_d = aie_CId*r_ci;
     # Ret. to CIs couplings
-    aii_CITR = 0/facilitating_factor;     W_II_ci_tr = aii_CITR*r_ci;
+    aii_CITR = 0/facilitating_factor;      W_II_ci_tr = aii_CITR*r_ci;
     # Rel. to CIs couplings
-    aie_CITC = 1e1/facilitating_factor;   W_IE_ci_tc = aie_CITC*r_ci;
+    aie_CITC = 1e1/facilitating_factor;    W_IE_ci_tc = aie_CITC*r_ci;
     # =============================================================================
     #     Reticular
     # =============================================================================
     # S to Ret couplings
-    aie_TRs = 0/facilitating_factor;       W_IE_tr_s = aie_TRs*r_tr;
+    aie_trs = 0/facilitating_factor;       W_IE_tr_s = aie_trs*r_tr;
     # M to Ret couplings
-    aie_TRm = 0/facilitating_factor;       W_IE_tr_m = aie_TRm*r_tr;
+    aie_trm = 0/facilitating_factor;       W_IE_tr_m = aie_trm*r_tr;
     # D to Ret couplings
-    aie_TRd = 7e2/facilitating_factor;     W_IE_tr_d = aie_TRd*r_tr;
+    aie_trd = 7e2/facilitating_factor;     W_IE_tr_d = aie_trd*r_tr;
     # Ret. Ret INs couplings
-    aii_TRCI = 0/facilitating_factor;     W_II_tr_ci = aii_TRCI*r_tr;
+    aii_trci = 0/facilitating_factor;      W_II_tr_ci = aii_trci*r_tr;
     # Rel. Ret INs couplings
-    aie_TRTC = 1e3/facilitating_factor;   W_IE_tr_tc = aie_TRTC*r_tr;
+    aie_trtc = 1e1/facilitating_factor;    W_IE_tr_tc = aie_trtc*r_tr;
     # =============================================================================
     #     Rele
     # =============================================================================
     # S to Rel couplings
-    aee_TCs = 0/facilitating_factor;       W_EE_tc_s = aee_TCs*r_tc;   
+    aee_tcs = 0/facilitating_factor;       W_EE_tc_s = aee_tcs*r_tc;   
     # M to Rel couplings
-    aee_TCm = 0/facilitating_factor;       W_EE_tc_m = aee_TCm*r_tc;
+    aee_tcm = 0/facilitating_factor;       W_EE_tc_m = aee_tcm*r_tc;
     # D to Rel couplings
-    aee_TCd = 7e2/facilitating_factor;     W_EE_tc_d = aee_TCd*r_tc;
+    aee_tcd = 7e2/facilitating_factor;     W_EE_tc_d = aee_tcd*r_tc;
     # INs to Rel couplings
-    aei_TCCIs = 0/facilitating_factor;     W_EI_tc_ci = aei_TCCIs*r_tc;
+    aei_tcci = 0/facilitating_factor;      W_EI_tc_ci = aei_tcci*r_tc;
     # Ret to Rel couplings
-    aei_TCTR = -5e2/facilitating_factor;  W_EI_tc_tr = aei_TCTR*r_tc;
+    aei_tctr = -5e2/facilitating_factor;   W_EI_tc_tr = aei_tctr*r_tc;
     
     # Initialize matrix (6 structures -> 6x6 matrix)
     matrix = np.zeros((6,6))
@@ -581,17 +581,17 @@ def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
     # II -> Inhibitory to Inhibitory 
     # =============================================================================
     ## Layer S (was -1e-2 for IEEE paper)
-    aee_s = -5e1/division_factor;            W_EE_s = aee_s*r_s;
+    aee_s = -5e1/division_factor;           W_EE_s = aee_s*r_s;
     ## Layer M (was -1e-2 for IEEE paper)
-    aee_m = -5e1/division_factor;            W_EE_m = aee_m*r_m;
+    aee_m = -5e1/division_factor;           W_EE_m = aee_m*r_m;
     ## Layer D (was -1e-2 for IEEE paper)
-    aee_d = -5e1/division_factor;            W_EE_d = aee_d*r_d;
+    aee_d = -5e1/division_factor;           W_EE_d = aee_d*r_d;
     ## INs 
-    aii_INs = -5e1/division_factor;          W_II_ci = aii_INs*r_ci;
+    aii_ci = -5e1/division_factor;          W_II_ci = aii_ci*r_ci;
     ## Reticular cells
-    aii_ret = -5e1/division_factor;          W_II_ret = aii_ret*r_tc;
+    aii_tr = -5e1/division_factor;          W_II_tr = aii_tr*r_tr;
     ## Relay cells
-    aee_rel = 0/division_factor;             W_EE_rel = aee_rel*r_tr;
+    aee_tc = 0/division_factor;             W_EE_tc = aee_tc*r_tc;
     
     # =============================================================================
     #     COUPLING STRENGTHs between structures
@@ -599,15 +599,15 @@ def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
     #     S
     # =============================================================================
     # M to S coupling
-    aee_sm = 3e2/division_factor;           W_EE_s_m = aee_sm*r_s;
+    aee_sm = 3e2/division_factor;          W_EE_s_m = aee_sm*r_s;
     # D to S coupling
-    aee_ds = 5e2/division_factor;           W_EE_s_d = aee_ds*r_s;
+    aee_sd = 5e2/division_factor;          W_EE_s_d = aee_sd*r_s;
     # CI (INs) to S coupling
-    aei_sINs = -7.5e2/division_factor;        W_EI_s_ci = aei_sINs*r_s;
+    aei_sci = -7.5e2/division_factor;      W_EI_s_ci = aei_sci*r_s;
     # Reticular to S coupling
-    aei_sRet = 0/division_factor;           W_EI_s_ret = aei_sRet*r_s;
+    aei_str = 0/division_factor;           W_EI_s_tr = aei_str*r_s;
     # Rel. to S couplings
-    aee_sRel = 0/division_factor;           W_EE_s_rel = aee_sRel*r_s;     
+    aee_stc = 0/division_factor;           W_EE_s_tc = aee_stc*r_s;     
     # =============================================================================
     #     M
     # =============================================================================
@@ -616,11 +616,11 @@ def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
     # D to M couplings
     aee_md = 0/facilitating_factor;         W_EE_m_d = aee_md*r_m;            
     # INs to M couplings
-    aei_mINs = -7.5e2/facilitating_factor;    W_EI_m_ci = aei_mINs*r_m;
+    aei_mci = -7.5e2/facilitating_factor;   W_EI_m_ci = aei_mci*r_m;
     # Ret. to M couplings    
-    aei_mRet = 0/facilitating_factor;       W_EI_m_ret = aei_mRet*r_m;
+    aei_mtr = 0/facilitating_factor;        W_EI_m_tr = aei_mtr*r_m;
     # Rel. to M couplings
-    aee_mRel = 0/facilitating_factor;       W_EE_m_rel = aee_mRel*r_m;
+    aee_mtc = 0/facilitating_factor;        W_EE_m_tc = aee_mtc*r_m;
     # =============================================================================
     #     D
     # =============================================================================
@@ -629,50 +629,50 @@ def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
     # M to D couplings
     aee_dm = 0/facilitating_factor;         W_EE_d_m = aee_dm*r_d;
     # INs to D couplings
-    aei_dINs = -5e3/facilitating_factor;  W_EI_d_ci = aei_dINs*r_d;
+    aei_dci = -5e3/facilitating_factor;     W_EI_d_ci = aei_dci*r_d;
     # Ret. to D couplings
-    aei_dRet = 0/facilitating_factor;       W_EI_d_ret = aei_dRet*r_d;
+    aei_dtr = 0/facilitating_factor;        W_EI_d_tr = aei_dtr*r_d;
     # Rel. to D couplings
-    aee_dRel = 1e3/facilitating_factor;     W_EE_d_rel = aee_dRel*r_d;
+    aee_dtc = 1e3/facilitating_factor;      W_EE_d_tc = aee_dtc*r_d;
     # =============================================================================
     #     INs (CI)
     # =============================================================================
     # S to INs couplings
-    aie_inss = 2e2/facilitating_factor;     W_IE_ci_s = aie_inss*r_ci;
+    aie_cis = 2e2/facilitating_factor;      W_IE_ci_s = aie_cis*r_ci;
     # M to INs couplings
-    aie_insm = 2e2/facilitating_factor;     W_IE_ci_m = aie_insm*r_ci;
+    aie_cim = 2e2/facilitating_factor;      W_IE_ci_m = aie_cim*r_ci;
     # D to INs couplings
-    aie_insd = 2e2/facilitating_factor;     W_IE_ci_d = aie_insd*r_ci;
+    aie_cid = 2e2/facilitating_factor;      W_IE_ci_d = aie_cid*r_ci;
     # Ret. to INs couplings
-    aii_InsRet = 0/facilitating_factor;     W_II_ci_ret = aii_InsRet*r_ci;
+    aii_citr = 0/facilitating_factor;       W_II_ci_tr = aii_citr*r_ci;
     # Rel. to INs couplings
-    aie_InsRel = 1e3/facilitating_factor;   W_IE_ci_rel = aie_InsRel*r_ci;
+    aie_citc = 1e3/facilitating_factor;     W_IE_ci_tc = aie_citc*r_ci;
     # =============================================================================
     #     Reticular
     # =============================================================================
     # S to Ret couplings
-    aie_rets = 0/facilitating_factor;       W_IE_ret_s = aie_rets*r_tr;
+    aie_trs = 0/facilitating_factor;        W_IE_tr_s = aie_trs*r_tr;
     # M to Ret couplings
-    aie_retm = 0/facilitating_factor;       W_IE_ret_m = aie_retm*r_tr;
+    aie_trm = 0/facilitating_factor;        W_IE_tr_m = aie_trm*r_tr;
     # D to Ret couplings
-    aie_retd = 1e2/facilitating_factor;     W_IE_ret_d = aie_retd*r_tr;
+    aie_trd = 1e2/facilitating_factor;      W_IE_tr_d = aie_trd*r_tr;
     # Ret. Ret INs couplings
-    aii_RetIns = 0/facilitating_factor;     W_II_ret_ci = aii_RetIns*r_tr;
+    aii_trci = 0/facilitating_factor;       W_II_tr_ci = aii_trci*r_tr;
     # Rel. Ret INs couplings
-    aie_RetRel = 5e2/facilitating_factor;   W_IE_ret_rel = aie_RetRel*r_tr;
+    aie_trtc = 5e2/facilitating_factor;     W_IE_tr_tc = aie_trtc*r_tr;
     # =============================================================================
     #     Rele
     # =============================================================================
     # S to Rel couplings
-    aee_rels = 0/facilitating_factor;       W_EE_rel_s = aee_rels*r_tc;   
+    aee_tcs = 0/facilitating_factor;       W_EE_tc_s = aee_tcs*r_tc;   
     # M to Rel couplings
-    aee_relm = 0/facilitating_factor;       W_EE_rel_m = aee_relm*r_tc;
+    aee_tcm = 0/facilitating_factor;       W_EE_tc_m = aee_tcm*r_tc;
     # D to Rel couplings
-    aee_reld = 1e2/facilitating_factor;     W_EE_rel_d = aee_reld*r_tc;
+    aee_tcd = 1e2/facilitating_factor;     W_EE_tc_d = aee_tcd*r_tc;
     # INs to Rel couplings
-    aei_RelINs = 0/facilitating_factor;     W_EI_rel_ci = aei_RelINs*r_tc;
+    aei_tcci = 0/facilitating_factor;     W_EI_tc_ci = aei_tcci*r_tc;
     # Ret to Rel couplings
-    aei_RelRet = -2.5*1e3/facilitating_factor;  W_EI_rel_ret = aei_RelRet*r_tc;
+    aei_tctr = -2.5*1e3/facilitating_factor;  W_EI_tc_tr = aei_tctr*r_tc;
     
     # Initialize matrix (6 structures -> 6x6 matrix)
     matrix = np.zeros((6,6))
@@ -683,82 +683,82 @@ def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
     matrix[1][1] = np.mean(W_EE_m)
     matrix[2][2] = np.mean(W_EE_d)
     matrix[3][3] = np.mean(W_II_ci)
-    matrix[4][4] = np.mean(W_EE_rel)
-    matrix[5][5] = np.mean(W_II_ret)
+    matrix[4][4] = np.mean(W_EE_tc)
+    matrix[5][5] = np.mean(W_II_tr)
     # First column - Layer S
     matrix[1][0] = np.mean(W_EE_s_m)
     matrix[2][0] = np.mean(W_EE_s_d)
     matrix[3][0] = np.mean(W_EI_s_ci)
-    matrix[4][0] = np.mean(W_EE_s_rel)
-    matrix[5][0] = np.mean(W_EI_s_ret)
+    matrix[4][0] = np.mean(W_EE_s_tc)
+    matrix[5][0] = np.mean(W_EI_s_tr)
     # Second column - Layer M
     matrix[0][1] = np.mean(W_EE_m_s)
     matrix[2][1] = np.mean(W_EE_m_d)
     matrix[3][1] = np.mean(W_EI_m_ci)
-    matrix[4][1] = np.mean(W_EE_m_rel)
-    matrix[5][1] = np.mean(W_EI_m_ret)
+    matrix[4][1] = np.mean(W_EE_m_tc)
+    matrix[5][1] = np.mean(W_EI_m_tr)
     # Thid column - Layer D
     matrix[0][2] = np.mean(W_EE_d_s)
     matrix[1][2] = np.mean(W_EE_d_m)
     matrix[3][2] = np.mean(W_EI_d_ci)
-    matrix[4][2] = np.mean(W_EE_d_rel)
-    matrix[5][2] = np.mean(W_EI_d_ret)
+    matrix[4][2] = np.mean(W_EE_d_tc)
+    matrix[5][2] = np.mean(W_EI_d_tr)
     # Fourth column - Structure CI
     matrix[0][3] = np.mean(W_IE_ci_s)
     matrix[1][3] = np.mean(W_IE_ci_m)
     matrix[2][3] = np.mean(W_IE_ci_d)
-    matrix[4][3] = np.mean(W_IE_ci_rel)
-    matrix[5][3] = np.mean(W_II_ci_ret)
+    matrix[4][3] = np.mean(W_IE_ci_tc)
+    matrix[5][3] = np.mean(W_II_ci_tr)
     # Fifth column - Structure TCR
-    matrix[0][4] = np.mean(W_EE_rel_s)
-    matrix[1][4] = np.mean(W_EE_rel_m)
-    matrix[2][4] = np.mean(W_EE_rel_d)
-    matrix[3][4] = np.mean(W_EI_rel_ci)
-    matrix[5][4] = np.mean(W_EI_rel_ret)
+    matrix[0][4] = np.mean(W_EE_tc_s)
+    matrix[1][4] = np.mean(W_EE_tc_m)
+    matrix[2][4] = np.mean(W_EE_tc_d)
+    matrix[3][4] = np.mean(W_EI_tc_ci)
+    matrix[5][4] = np.mean(W_EI_tc_tr)
     # Sixth column - Structure TRN
-    matrix[0][5] = np.mean(W_IE_ret_s)
-    matrix[1][5] = np.mean(W_IE_ret_m)
-    matrix[2][5] = np.mean(W_IE_ret_d)
-    matrix[3][5] = np.mean(W_II_ret_ci)
-    matrix[4][5] = np.mean(W_IE_ret_rel)
+    matrix[0][5] = np.mean(W_IE_tr_s)
+    matrix[1][5] = np.mean(W_IE_tr_m)
+    matrix[2][5] = np.mean(W_IE_tr_d)
+    matrix[3][5] = np.mean(W_II_tr_ci)
+    matrix[4][5] = np.mean(W_IE_tr_tc)
     
     weights = {
         'W_EE_s': W_EE_s,
         'W_EE_m': W_EE_m,
         'W_EE_d': W_EE_d,
         'W_II_ci': W_II_ci,
-        'W_II_tr': W_II_ret,
-        'W_EE_tc': W_EE_rel,
+        'W_II_tr': W_II_tr,
+        'W_EE_tc': W_EE_tc,
         'W_EE_s_m': W_EE_s_m,
         'W_EE_s_d': W_EE_s_d,
         'W_EI_s_ci': W_EI_s_ci,
-        'W_EI_s_tr': W_EI_s_ret,
-        'W_EE_s_tc': W_EE_s_rel,
+        'W_EI_s_tr': W_EI_s_tr,
+        'W_EE_s_tc': W_EE_s_tc,
         'W_EE_m_s': W_EE_m_s,
         'W_EE_m_d': W_EE_m_d,
         'W_EI_m_ci': W_EI_m_ci,
-        'W_EI_m_tr': W_EI_m_ret,
-        'W_EE_m_tc': W_EE_m_rel,
+        'W_EI_m_tr': W_EI_m_tr,
+        'W_EE_m_tc': W_EE_m_tc,
         'W_EE_d_s': W_EE_d_s,
         'W_EE_d_m': W_EE_d_m,
         'W_EI_d_ci': W_EI_d_ci,
-        'W_EI_d_tr': W_EI_d_ret,
-        'W_EE_d_tc': W_EE_d_rel,
+        'W_EI_d_tr': W_EI_d_tr,
+        'W_EE_d_tc': W_EE_d_tc,
         'W_IE_ic_s': W_IE_ci_s,
         'W_IE_ic_m': W_IE_ci_m,
         'W_IE_ic_d': W_IE_ci_d,
-        'W_II_ic_tr': W_II_ci_ret,
-        'W_IE_ic_tc': W_IE_ci_rel,
-        'W_IE_tr_s': W_IE_ret_s,
-        'W_IE_tr_m': W_IE_ret_m,
-        'W_IE_tr_d': W_IE_ret_d,
-        'W_II_tr_ic': W_II_ret_ci,
-        'W_IE_tr_tc': W_IE_ret_rel,
-        'W_EE_tc_s': W_EE_rel_s,
-        'W_EE_tc_m': W_EE_rel_m,
-        'W_EE_tc_d': W_EE_rel_d,
-        'W_EI_tc_ci': W_EI_rel_ci,
-        'W_EI_tc_tr': W_EI_rel_ret,
+        'W_II_ic_tr': W_II_ci_tr,
+        'W_IE_ic_tc': W_IE_ci_tc,
+        'W_IE_tr_s': W_IE_tr_s,
+        'W_IE_tr_m': W_IE_tr_m,
+        'W_IE_tr_d': W_IE_tr_d,
+        'W_II_tr_ic': W_II_tr_ci,
+        'W_IE_tr_tc': W_IE_tr_tc,
+        'W_EE_tc_s': W_EE_tc_s,
+        'W_EE_tc_m': W_EE_tc_m,
+        'W_EE_tc_d': W_EE_tc_d,
+        'W_EI_tc_ci': W_EI_tc_ci,
+        'W_EI_tc_tr': W_EI_tc_tr,
         }
     
     return { 'matrix': matrix, 'weights': weights }

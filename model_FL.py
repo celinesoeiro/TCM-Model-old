@@ -12,7 +12,7 @@ import seaborn as sns
 
 sns.set()
 
-from model_parameters import TCM_model_parameters, coupling_matrix_normal
+from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 
 from tr_as_func import tr_cells
 from tc_as_func import tc_cells
@@ -24,10 +24,13 @@ from d_as_func import d_cells
 # =============================================================================
 # INITIAL VALUES
 # =============================================================================
+print("-- Initializing the global values")
+
 global_parameters = TCM_model_parameters()['model_global_parameters']
 neuron_quantities = TCM_model_parameters()['neuron_quantities']
 neuron_params = TCM_model_parameters()['neuron_paramaters']
 currents = TCM_model_parameters()['currents_per_structure']
+TCM_model = TCM_model_parameters()['model_global_parameters']
 
 facilitating_factor_N = global_parameters['connectivity_factor_normal_condition']
 facilitating_factor_PD = global_parameters['connectivity_factor_PD_condition']
@@ -40,6 +43,7 @@ vp = global_parameters['vp']
 chop_till = global_parameters['chop_till']
 Idc = global_parameters['Idc']
 
+# Neuron quantities
 n_s = neuron_quantities['S']
 n_m = neuron_quantities['M']
 n_d = neuron_quantities['D']
@@ -47,6 +51,7 @@ n_ci = neuron_quantities['CI']
 n_tr = neuron_quantities['TR']
 n_tc = neuron_quantities['TC']
 
+# Weight Matrix Normal Condition
 W_N = coupling_matrix_normal(    
     facilitating_factor = facilitating_factor_N, 
     n_s = n_s, 
@@ -56,12 +61,93 @@ W_N = coupling_matrix_normal(
     n_tc = n_tc, 
     n_tr = n_tr)['weights']
 
+# Weight Matrix Parkinsonian Desease Condition
+W_PD = coupling_matrix_PD(
+    facilitating_factor = facilitating_factor_PD, 
+    n_s = n_s, 
+    n_m = n_m, 
+    n_d = n_d, 
+    n_ci = n_ci, 
+    n_tc = n_tc, 
+    n_tr = n_tr)['weights']
+
+# Post Synaptic Current
 PSC_S = np.zeros((1,sim_steps))
 PSC_M = np.zeros((1,sim_steps))
 PSC_D = np.zeros((1,sim_steps))
 PSC_TC = np.zeros((1,sim_steps))
 PSC_TR = np.zeros((1,sim_steps))
 PSC_CI = np.zeros((1,sim_steps))
+
+# =============================================================================
+# COUPLING MATRIXES
+# =============================================================================
+# Weight Matrix Normal Condition
+Z_N = coupling_matrix_normal(    
+    facilitating_factor = facilitating_factor_N, 
+    n_s = n_s, 
+    n_m = n_m, 
+    n_d = n_d, 
+    n_ci = n_ci, 
+    n_tc = n_tc, 
+    n_tr = n_tr)['matrix']
+
+# Weight Matrix Parkinsonian Desease Condition
+Z_PD = coupling_matrix_PD(
+    facilitating_factor = facilitating_factor_PD, 
+    n_s = n_s, 
+    n_m = n_m, 
+    n_d = n_d, 
+    n_ci = n_ci, 
+    n_tc = n_tc, 
+    n_tr = n_tr)['matrix']
+
+# normalizing Normal coupling matrix
+Z_N_norm = Z_N/np.linalg.norm(Z_N)
+
+# normalizing PD coupling matrix
+Z_PD_norm = Z_PD/np.linalg.norm(Z_PD)
+
+# =============================================================================
+# Graphs - Coupling Matrixes - Normal vs Parkinsonian
+# =============================================================================
+print("-- Printing the coupling matrixes")
+
+fig, (ax1, ax2) = plt.subplots(1,2, figsize=(17,7))
+
+fig.subplots_adjust(wspace=0.3)
+fig.suptitle('Matriz de conexão')
+
+CM_Normal = pd.DataFrame(Z_N_norm, columns=['S', 'M', 'D', 'CI', 'TC', 'TR'])
+CM_PD = pd.DataFrame(Z_PD_norm, columns=['S', 'M', 'D', 'CI', 'TC', 'TR'])
+
+sns.heatmap(CM_Normal, 
+            vmin=-1, vmax=1, 
+            yticklabels=['S', 'M', 'D', 'CI', 'TC', 'TR'], 
+            annot=True, 
+            fmt=".3f", 
+            linewidth=.75,
+            cmap=sns.color_palette("coolwarm", as_cmap=True),
+            ax=ax1,
+            )
+ax1.set(xlabel="", ylabel="")
+ax1.xaxis.tick_top()
+ax1.set_title('Condição normal')
+
+sns.heatmap(CM_PD, 
+            vmin=-1, vmax=1, 
+            yticklabels=['S', 'M', 'D', 'CI', 'TC', 'TR'], 
+            annot=True, 
+            fmt=".3f", 
+            linewidth=.75,
+            cmap=sns.color_palette("coolwarm", as_cmap=True),
+            ax=ax2,
+            )
+ax2.set(xlabel="", ylabel="")
+ax2.xaxis.tick_top()
+ax2.set_title('Condição parkinsoniana')
+
+plt.show()
 
 # =============================================================================
 # EQUATIONS
@@ -109,6 +195,8 @@ def get_parameters(synapse_type: str):
     
     else:
         return 'Invalid synapse_type. Synapse_type must be excitatory or inhibitory.'
+    
+print("-- Initializing model")
     
 print("----- Thalamic Reticular Nucleus (TR)")
 
@@ -218,7 +306,7 @@ print("----- Middle layer (M)")
 
 PSC_M, AP_M, v_m, u_m, r_m, x_m = m_cells(
     time_vector = time, 
-    number_neurons = n_s, 
+    number_neurons = n_m, 
     simulation_steps = sim_steps, 
     coupling_matrix = W_N, 
     neuron_params = neuron_params['M1'], 
@@ -244,7 +332,7 @@ print("----- Deep layer (D)")
 
 PSC_D, AP_D, v_d, u_d, r_d, x_d = d_cells(
     time_vector = time, 
-    number_neurons = n_s, 
+    number_neurons = n_d, 
     simulation_steps = sim_steps, 
     coupling_matrix = W_N, 
     neuron_params = neuron_params['D1'], 
