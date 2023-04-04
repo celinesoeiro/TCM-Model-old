@@ -86,7 +86,9 @@ def s_cells(
     PSC_D,
     PSC_TR,
     PSC_TC,
-    PSC_CI,         
+    PSC_CI,
+    neuron_type,
+    random_factor,
     ):
     
     v = vr*np.ones((number_neurons,simulation_steps))
@@ -106,6 +108,19 @@ def s_cells(
     
     AP = np.zeros((1,len(time_vector)))
     
+    if (neuron_type == 'excitatory' or 'excit'):
+        a = neuron_params['a']
+        b = neuron_params['b']
+        c = neuron_params['c'] + 15*random_factor**2
+        d = neuron_params['d'] - 6*random_factor**2
+    elif (neuron_type == 'inhibitory' or 'inhib'):
+        a = neuron_params['a'] + 0.08*random_factor
+        b = neuron_params['b'] - 0.05*random_factor
+        c = neuron_params['c']
+        d = neuron_params['d']
+    else:
+        return 'Neuron type must be excitatory or inhibitory'
+    
     for t in range(1, len(time_vector)):
         AP_aux = AP[0][t]
         for k in range(1, number_neurons):        
@@ -115,8 +130,8 @@ def s_cells(
             if (v_aux >= vp):
                 AP_aux = 1
                 v[k][t] = vp
-                v[k][t] = neuron_params['c']
-                u[k][t] = u[k][t] + neuron_params['d']
+                v[k][t] = c
+                u[k][t] = u[k][t] + d
             else:
                 neuron_contribution = dvdt(v_aux, u_aux, Ib[k])
                 self_feedback = SW_self[k][0]*PSC_S[0][t]/number_neurons
@@ -128,7 +143,7 @@ def s_cells(
                 noise = 0
                 
                 v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_CI + layer_M + layer_D + layer_TC + layer_TR + noise)
-                u[k][t] = u_aux + dt*dudt(v_aux, u_aux, neuron_params['a'], neuron_params['b'])
+                u[k][t] = u_aux + dt*dudt(v_aux, u_aux, a, b)
                 
             # TM parameters
             tau_f = synapse_parameters['t_f']

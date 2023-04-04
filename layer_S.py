@@ -78,6 +78,7 @@ global_parameters = TCM_model_parameters()['model_global_parameters']
 neuron_quantities = TCM_model_parameters()['neuron_quantities']
 neuron_params = TCM_model_parameters()['neuron_paramaters']
 currents = TCM_model_parameters()['currents_per_structure']
+random_factor = TCM_model_parameters()['random_factor']
 
 facilitating_factor_N = global_parameters['connectivity_factor_normal_condition']
 facilitating_factor_PD = global_parameters['connectivity_factor_PD_condition']
@@ -88,13 +89,13 @@ time = global_parameters['time_vector']
 vr = global_parameters['vr']
 vp = global_parameters['vp']
 chop_till = global_parameters['chop_till']
-Idc = global_parameters['Idc']
+Idc_tune = global_parameters['Idc_tune']
 
 n = neuron_quantities['S']
 n_m = neuron_quantities['M']
 n_d = neuron_quantities['D']
 n_ci = neuron_quantities['CI']
-n_tn = neuron_quantities['TC']
+n_tc = neuron_quantities['TC']
 n_tr = neuron_quantities['TR']
 
 neuron_params = neuron_params['S1']
@@ -108,7 +109,7 @@ PSC_self = np.zeros((1,sim_steps))
 PSC_M = np.zeros((1,sim_steps))
 PSC_D = np.zeros((1,sim_steps))
 PSC_TR = np.zeros((1,sim_steps))
-PSC_TN = np.zeros((1,sim_steps))
+PSC_TC = np.zeros((1,sim_steps))
 PSC_CI = np.zeros((1,sim_steps))
 
 W_N = coupling_matrix_normal(    
@@ -117,7 +118,7 @@ W_N = coupling_matrix_normal(
     n_m = n, 
     n_d = n_d, 
     n_ci = n_ci, 
-    n_tn = n_tn, 
+    n_tc = n_tc, 
     n_tr = n_tr)['weights']
 
 SW_self = W_N['W_EE_s']
@@ -125,9 +126,9 @@ SW_M = W_N['W_EE_s_m']
 SW_D = W_N['W_EE_s_d']
 SW_CI = W_N['W_EI_s_ci']
 SW_TR = W_N['W_EI_s_tr']
-SW_TN = W_N['W_EE_s_tn']
+SW_TC = W_N['W_EE_s_tc']
 
-Ib = currents['I_S_1'] + Idc*np.ones(n)
+Ib = neuron_params['Idc'] + Idc_tune*np.ones(n)
 
 # =============================================================================
 # CALCULATING THE NEW VALUE
@@ -176,7 +177,11 @@ def getParamaters(synapse_type: str):
     else:
         return 'Invalid synapse_type. Synapse_type must be excitatory or inhibitory.'
     
-
+a = neuron_params['a']
+b = neuron_params['b']
+c = neuron_params['c'] + 15*random_factor**2
+d = neuron_params['d'] - 6*random_factor**2
+    
 AP = np.zeros((1,len(time)))
 
 for t in range(1, len(time)):
@@ -188,20 +193,20 @@ for t in range(1, len(time)):
         if (v_aux >= vp):
             AP_aux = 1
             v[k][t] = vp
-            v[k][t] = neuron_params['c']
-            u[k][t] = u[k][t] + neuron_params['d']
+            v[k][t] = c
+            u[k][t] = u[k][t] + d
         else:
             neuron_contribution = dvdt(v_aux, u_aux, Ib[k])
             self_feedback = SW_self[k][0]*PSC_self[0][t]/n
             layer_M = SW_M[k][0]*PSC_M[0][t]/n
             layer_D = SW_D[k][0]*PSC_D[0][t]/n
             layer_TR = SW_TR[k][0]*PSC_TR[0][t]/n
-            layer_TN = SW_TN[k][0]*PSC_TN[0][t]/n
+            layer_TC = SW_TC[k][0]*PSC_TC[0][t]/n
             layer_CI = SW_CI[k][0]*PSC_CI[0][t]/n
             noise = 0
             
-            v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_M + layer_D + layer_TR + layer_TN + layer_CI + noise)
-            u[k][t] = u_aux + dt*dudt(v_aux, u_aux, neuron_params['a'], neuron_params['b'])
+            v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_M + layer_D + layer_TR + layer_TC + layer_CI + noise)
+            u[k][t] = u_aux + dt*dudt(v_aux, u_aux, a, b)
             
         # TM parameters
         tau_f = getParamaters('excitatory')['t_f']
@@ -231,9 +236,9 @@ for t in range(1, len(time)):
 PSC_self = I_post_synaptic
     
 # Plotting
-# indexes = np.arange(0,40, dtype=object)
-# for k in range(n):
-#     indexes[k] = "neuron " + str(k)
+indexes = np.arange(0,n, dtype=object)
+for k in range(n):
+    indexes[k] = "neuron " + str(k)
         
-# v_RT = pd.DataFrame(v.transpose())
+v_RT = pd.DataFrame(v.transpose())
     

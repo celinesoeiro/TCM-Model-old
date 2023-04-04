@@ -2,6 +2,7 @@
 @author: Celine Soeiro
 
 @description: Thalamo-Cortical microcircuit by AmirAli Farokhniaee and Madeleine M. Lowery - 2021
+This info was found in the IEEE conference paper provided by the authors
 
 # Abreviations:
     PD: Parkinson Desease
@@ -13,6 +14,49 @@
     TR: Thalamic Reticular Nucleus (TR)
     PD: Poissonian Distribution 
     DBS: Deep Brain Stimulation
+    
+    This model consists of populations of excitatory and inhibitory point-like spiking neurns in the motor cortex
+and thalamus.
+    The excitatory neurons in the motor cortex were divided into 3 layers of pyramidal neurons (PN), surface (S),
+middle (M) and deep (D).
+    The inhibitory neurons in the motor cortex were considered as a single population of cortical interneurons (CI).
+    The excitatory neurons in the thalamus formed the thalamocortical relay nucleus (TCR) and the inhibitory neurons
+comprised the thalamic retcular nucleus (TRN).
+
+S: Excitatory 
+M: Excitatory
+D: Excitatory
+CI: Inhibitory
+TCR: Excitatory
+TRN: Inhibitory
+
+# NEURONS PER STRUCTURE
+Layer S:
+    - Regular Spiking (RS)
+    - Intrinsically Bursting (IB)
+Layer M:
+    - Regular Spiking (RS)
+Layer D:
+    - Regular Spiking (RS)
+    - Intrinsically Bursting (IB)
+CI:
+    - Fast spiking (FS)
+    - Low Threshold Spiking (LTS)
+TCR:
+    - Thalamocortical (TC)
+TRN:
+    - Thalamic Reticular (TR)
+    
+# SYNAPTIC INPUTS
+    Connections between the neurons in the network modal were considered as a combination of Facilitating (F),
+Depressing (D) and Pseudo-Linear (P) synapses with distribution:
+    F: 8%
+    D: 75%
+    P: 15%
+    Connection between layer D and Thamalus -> Pure Facilitating
+    Connection between TCR and Layer D -> Pure Depressing
+    
+# NETWORK CONNECTIONS
 """
 
 import numpy as np
@@ -30,7 +74,7 @@ def TCM_model_parameters():
     dbs_on = 5*67                               # value of synaptic fidelity when DBS on
     dbs_off = 0                                 # value of synaptic fidelity when DBS off
     synaptic_fidelity = dbs_off                 # synaptic fidelity
-    simulation_time = 5                        # simulation time in seconds
+    simulation_time = 5                        # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
     sim_time_ms = (simulation_time + 1)*1000    # Simulation time in ms with 1 extra second to reach the steady state and trash later
     sim_steps = int(np.round(sim_time_ms/dt))   # number of simulation steps
     chop_till = 1*Fs;                           # Cut the first 1 seconds of the simulation
@@ -60,8 +104,8 @@ def TCM_model_parameters():
     qnt_neurons_s = 100         # Excitatory
     qnt_neurons_m = 100         # Excitatory
     qnt_neurons_d = 100         # Excitatory
-    qnt_neurons_ci = 100        # Excitatory
-    qnt_neurons_tc = 100        # Inhibitory
+    qnt_neurons_ci = 100        # Inhibitory
+    qnt_neurons_tc = 100        # Excitatory
     qnt_neurons_tr = 40         # Inhibitory
     
     neuron_quantities = {
@@ -77,36 +121,38 @@ def TCM_model_parameters():
     
     # Impact of DBS on the other cortical structures via D PNs axons:
     synaptic_fidelity_per_structure = {
-        'CI': 1*synaptic_fidelity, # the synaptic fidelity, for dbs carriers (to be used to invade CIs)
-        'M': 0*synaptic_fidelity, # the synaptic fidelity, for dbs carriers (to be used to invade layer M)
         'S': 1*synaptic_fidelity, # the synaptic fidelity, for dbs carriers (to be used to invade layer S)
+        'M': 0*synaptic_fidelity, # the synaptic fidelity, for dbs carriers (to be used to invade layer M)
+        'CI': 1*synaptic_fidelity, # the synaptic fidelity, for dbs carriers (to be used to invade CIs)
         'TC': 1*synaptic_fidelity,# the synaptic fidelity, for dbs carriers (to be used to invade layer TCR)
         'TR': 1*synaptic_fidelity,# the synaptic fidelity, for dbs carriers (to be used to invade layer TRN)
         }
     
-    nCI = 1; nS = 1; nR = 1; nN = 1; nM = 0;
+    nS = 1; nM = 0; nCI = 1; nTC = 1; nTR = 1;
     # Percentage of neurons that have synaptic contact with hyperdirect neurons axon arbors
     neurons_connected_with_hyperdirect_neurons = {
-        'CI': nCI*hyperdirect_neurons*qnt_neurons_ci,# percentage of CI neurons that have synaptic contact with hyperdirect neurons axon arbors
         'S': nS*hyperdirect_neurons*qnt_neurons_s,   # percentage of S neurons that have synaptic contact with hyperdirect neurons axon arbors
         'M': nM*hyperdirect_neurons*qnt_neurons_m,   # percentage of M neurons that have synaptic contact with hyperdirect neurons axon arbors
-        'TR': nR*hyperdirect_neurons*qnt_neurons_tr, # percentage of R neurons that have synaptic contact with hyperdirect neurons axon arbors
-        'TC': nN*hyperdirect_neurons*qnt_neurons_tc, # percentage of N neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'CI': nCI*hyperdirect_neurons*qnt_neurons_ci,# percentage of CI neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'TR': nTR*hyperdirect_neurons*qnt_neurons_tr, # percentage of R neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'TC': nTC*hyperdirect_neurons*qnt_neurons_tc, # percentage of N neurons that have synaptic contact with hyperdirect neurons axon arbors
         }
     
+    hyperdirect_neurons_qnt = qnt_neurons_d*hyperdirect_neurons
+    
     # Distribution of neurons in each structure
-    neurons_s_1 = int(0.5*qnt_neurons_s)
-    neurons_s_2 = int(0.5*qnt_neurons_s)
-    neurons_m_1 = int(1*qnt_neurons_m)
-    neurons_m_2 = int(0*qnt_neurons_m)
-    neurons_d_1 = int(0.7*qnt_neurons_d)
-    neurons_d_2 = int(0.3*qnt_neurons_d)
-    neurons_ci_1 = int(0.5*qnt_neurons_ci)
-    neurons_ci_2 = int(0.5*qnt_neurons_ci)
-    neurons_tcr_tr_1 = int(0.5*qnt_neurons_tr)
-    neurons_tcr_tr_2 = int(0.5*qnt_neurons_tr)
-    neurons_tcr_tc_1 = int(0.7*qnt_neurons_tc)
-    neurons_tcr_tc_2 = int(0.3*qnt_neurons_tc)
+    neurons_s_1 = int(0.5*qnt_neurons_s)        # RS neurons
+    neurons_s_2 = int(0.5*qnt_neurons_s)        # IB neurons
+    neurons_m_1 = int(1*qnt_neurons_m)          # RS neurons
+    neurons_m_2 = int(0*qnt_neurons_m)          # IB neurons
+    neurons_d_1 = int(0.7*qnt_neurons_d)        # RS neurons
+    neurons_d_2 = int(0.3*qnt_neurons_d)        # IB neurons
+    neurons_ci_1 = int(0.5*qnt_neurons_ci)      # FS neurons
+    neurons_ci_2 = int(0.5*qnt_neurons_ci)      # LTS neurons
+    neurons_tr_1 = int(0.5*qnt_neurons_tr)      # TC neurons
+    neurons_tr_2 = int(0.5*qnt_neurons_tr)      # TC neurons
+    neurons_tc_1 = int(0.7*qnt_neurons_tc)      # TR neurons
+    neurons_tc_2 = int(0.3*qnt_neurons_tc)      # TR neurons
     
     neuron_per_structure = {
         'neurons_s_1': neurons_s_1,             # Regular Spiking
@@ -114,30 +160,29 @@ def TCM_model_parameters():
         'neurons_m_1': neurons_m_1,             # Regular Spiking
         'neurons_m_2': neurons_m_2,             # Regular Spiking
         'neurons_d_1': neurons_d_1,             # Regular Spiking
-        'neurons_d_2': neurons_d_2,             # Intrinsically_bursting
+        'neurons_d_2': neurons_d_2,             # Intrinsically bursting
         'neurons_ci_1': neurons_ci_1,           # Fast spiking
-        'neurons_ci_2': neurons_ci_2,           # Low threshold_spiking
-        'neurons_tcr_tc_1': neurons_tcr_tc_1,   # Reley
-        'neurons_tcr_tc_2': neurons_tcr_tc_2,   # Relay
-        'neurons_tcr_tr_1': neurons_tcr_tr_1,   # Reticular
-        'neurons_tcr_tr_2': neurons_tcr_tr_2,   # Reticular
+        'neurons_ci_2': neurons_ci_2,           # Low threshold spiking
+        'neurons_tc_1': neurons_tc_1,           # Reley
+        'neurons_tc_2': neurons_tc_2,           # Relay
+        'neurons_tr_1': neurons_tr_1,           # Reticular
+        'neurons_tr_2': neurons_tr_2,           # Reticular
         }
     
     # Neuron parameters to model Izhikevich Neurons
     # 0 - RS - Regular Spiking
     # 1 - IB - Intrinsically Bursting
-    # 2 - CH - Chattering
-    # 3 - FS - Fast Spiking
-    # 4 - LTS - Low Threshold Spiking
-    # 5 - TC (rel) - Thalamo-Cortical Relay
-    # 6 - CH (rel) - 
-    # 7 - TR - Thalamic Reticular
+    # 2 - FS - Fast Spiking
+    # 3 - LTS - Low Threshold Spiking
+    # 4 - TC (rel) - Thalamo-Cortical Relay
+    # 5 - TR - Thalamic Reticular
 
-        # 0-RS 1-IB  2-CH 3-FS 4-LTS 5-TC  6-CH  7-TR 
-    a = [0.02, 0.02, 0.5, 0.1, 0.02, 0.02, 0.02, 0.02]
-    b = [0.2,  0.2,  0.2, 0.2, 0.25, 0.25, 0.25, 0.25]
-    c = [-65,  -55,  -50, -65, -65,  -65,  -65,  -65]
-    d = [8,    4,    2,   2,   2,    0.05, 0.05, 2.05]
+    #    0-RS  1-IB  2-FS 3-LTS 4-TC  5-TR 
+    a = [0.02, 0.02, 0.1, 0.02, 0.02, 0.02]
+    b = [0.2,  0.2,  0.2, 0.25, 0.25, 0.25]
+    c = [-65,  -55,  -65, -65,   -65,  -65]
+    d = [8,    4,      2,   2,  0.05, 2.05]
+    I = [2.5, 2.5, 3.2,   0,     0,    0]
     
     neuron_params = {
         'S1': {
@@ -145,72 +190,84 @@ def TCM_model_parameters():
             'b': b[0],
             'c': c[0],
             'd': d[0],
+            'I': I[0],
             },
         'S2': {
             'a': a[1],
             'b': b[1],
             'c': c[1],
             'd': d[1],
+            'I': I[1],
             },
         'M1': {
             'a': a[0],
             'b': b[0],
             'c': c[0],
             'd': d[0],
+            'I': I[0],
             },
         'M2': {
-            'a': a[0],
-            'b': b[0],
-            'c': c[0],
-            'd': d[0],
+            'a': a[1],
+            'b': b[1],
+            'c': c[1],
+            'd': d[1],
+            'I': I[1],
             },
         'D1': {
             'a': a[0],
             'b': b[0],
             'c': c[0],
             'd': d[0],
+            'I': I[0],
             },
         'D2': {
             'a': a[1],
             'b': b[1],
             'c': c[1],
             'd': d[1],
+            'I': I[1],
             },
         'CI1': {
+            'a': a[2],
+            'b': b[2],
+            'c': c[2],
+            'd': d[2],
+            'I': I[2],
+            },
+        'CI2': {
             'a': a[3],
             'b': b[3],
             'c': c[3],
             'd': d[3],
+            'I': I[3],
             },
-        'CI2': {
+        'TR1': {
+            'a': a[5],
+            'b': b[5],
+            'c': c[5],
+            'd': d[5],
+            'I': I[5],
+            },
+        'TR2': {
+            'a': a[5],
+            'b': b[5],
+            'c': c[5],
+            'd': d[5],
+            'I': I[5],
+            },
+        'TC1': {
             'a': a[4],
             'b': b[4],
             'c': c[4],
             'd': d[4],
-            },
-        'TR1': {
-            'a': a[7],
-            'b': b[7],
-            'c': c[7],
-            'd': d[7],
-            },
-        'TR2': {
-            'a': a[7],
-            'b': b[7],
-            'c': c[7],
-            'd': d[7],
-            },
-        'TC1': {
-            'a': a[5],
-            'b': b[5],
-            'c': c[5],
-            'd': d[5],
+            'I': I[4],
             },
         'TC2': {
-            'a': a[5],
-            'b': b[5],
-            'c': c[5],
-            'd': d[5],
+            'a': a[4],
+            'b': b[4],
+            'c': c[4],
+            'd': d[4],
+            'I': I[4],
             },
         }
 
@@ -224,17 +281,17 @@ def TCM_model_parameters():
         'sampling_frequency': fs, # in Hz
         'simulation_steps': sim_steps,
         'chop_till': chop_till, # cut the first 1s of simulation
-        'time_delay_between_layers': 8,
-        'time_delay_within_layers': 1,
-        'time_delay_thalamus_cortex': 15,
-        'time_delay_cortex_thalamus': 20,
-        'transmission_delay_synapse': 1,
+        'time_delay_between_layers': td_layers,
+        'time_delay_within_layers': td_within_layers,
+        'time_delay_thalamus_cortex': td_thalamus_cortex,
+        'time_delay_cortex_thalamus': td_cortex_thalamus,
+        'transmission_delay_synapse': td_synapse,
         'time_vector': t_vec,
         'connectivity_factor_normal_condition': connectivity_factor_normal,
         'connectivity_factor_PD_condition': connectivity_factor_PD,
         'vr': vr,
         'vp': vp,
-        'Idc': Idc_tune,
+        'Idc_tune': Idc_tune,
         }
     
     # Noise terms
@@ -299,10 +356,10 @@ def TCM_model_parameters():
     I_S_2 = Idc[1]
     I_M_1 = Idc[0]
     I_M_2 = Idc[0]
-    I_D_1 = Idc[5]
+    I_D_1 = Idc[0]
     I_D_2 = Idc[1]
-    I_CI_1 = Idc[3]
-    I_CI_2 = Idc[4]
+    I_CI_1 = Idc[2]
+    I_CI_2 = Idc[3]
     I_TR_1 = Idc[7]
     I_TR_2 = Idc[7]
     I_TC_1 = Idc[5]
@@ -347,8 +404,6 @@ def TCM_model_parameters():
     return data
 
 def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
-    division_factor = facilitating_factor
-    
     initial = 0
     final = 1
     interval = final - initial
@@ -356,12 +411,12 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     # =============================================================================
     #     These are to restrict the normalized distribution variance or deviation from the mean
     # =============================================================================
-    r_s = initial + interval*np.random.rand(n_s, 1)
-    r_m = initial + interval*np.random.rand(n_m, 1)
-    r_d = initial + interval*np.random.rand(n_d, 1)
-    r_ci = initial + interval*np.random.rand(n_ci, 1)
-    r_tr = initial + interval*np.random.rand(n_tr, 1)
-    r_tc = initial + interval*np.random.rand(n_tc, 1)
+    r_s = initial + interval*np.random.rand(1, n_s)
+    r_m = initial + interval*np.random.rand(1, n_m)
+    r_d = initial + interval*np.random.rand(1, n_d)
+    r_ci = initial + interval*np.random.rand(1, n_ci)
+    r_tr = initial + interval*np.random.rand(1, n_tr)
+    r_tc = initial + interval*np.random.rand(1, n_tc)
     
     # =============================================================================
     #     COUPLING STRENGTHs within each structure (The same in Normal and PD)
@@ -369,17 +424,17 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     # II -> Inhibitory to Inhibitory 
     # =============================================================================
     ## Layer S (was -1e-2 for IEEE paper)
-    aee_s = -1e1/division_factor;            W_EE_s = aee_s*r_s;
+    aee_s = -1e1/facilitating_factor;            W_EE_s = aee_s*r_s;
     ## Layer M (was -1e-2 for IEEE paper)
-    aee_m = -1e1/division_factor;            W_EE_m = aee_m*r_m;
+    aee_m = -1e1/facilitating_factor;            W_EE_m = aee_m*r_m;
     ## Layer D (was -1e-2 for IEEE paper)
-    aee_d = -1e1/division_factor;            W_EE_d = aee_d*r_d;
+    aee_d = -1e1/facilitating_factor;            W_EE_d = aee_d*r_d;
     ## INs 
-    aii_INs = -5e2/division_factor;          W_II_ci = aii_INs*r_ci;
+    aii_INs = -5e2/facilitating_factor;          W_II_ci = aii_INs*r_ci;
     ## Reticular cells
-    aii_tr = -5e1/division_factor;          W_II_tr = aii_tr*r_tr;
+    aii_tr = -5e1/facilitating_factor;          W_II_tr = aii_tr*r_tr;
     ## Relay cells
-    aee_tc = 0/division_factor;             W_EE_tc = aee_tc*r_tc;
+    aee_tc = 0/facilitating_factor;             W_EE_tc = aee_tc*r_tc;
     
     # =============================================================================
     #     COUPLING STRENGTHs between structures
@@ -387,15 +442,15 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     #     S
     # =============================================================================
     # M to S coupling
-    aee_sm = 1e1/division_factor;          W_EE_s_m = aee_sm*r_s;
+    aee_sm = 1e1/facilitating_factor;          W_EE_s_m = aee_sm*r_s;
     # D to S coupling
-    aee_sd = 5e2/division_factor;          W_EE_s_d = aee_sd*r_s;
-    # CI (INs) to S coupling
-    aei_sci = -5e2/division_factor;        W_EI_s_ci = aei_sci*r_s;
+    aee_sd = 5e2/facilitating_factor;          W_EE_s_d = aee_sd*r_s;
+    # CI to S coupling
+    aei_sci = -5e2/facilitating_factor;        W_EI_s_ci = aei_sci*r_s;
     # Reticular to S coupling
-    aei_str = 0/division_factor;           W_EI_s_tr = aei_str*r_s;
+    aei_str = 0/facilitating_factor;           W_EI_s_tr = aei_str*r_s;
     # Rel. to S couplings
-    aee_stc = 0/division_factor;           W_EE_s_tc = aee_stc*r_s;     
+    aee_stc = 0/facilitating_factor;           W_EE_s_tc = aee_stc*r_s;     
     # =============================================================================
     #     M
     # =============================================================================
@@ -403,7 +458,7 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     aee_ms = 3e2/facilitating_factor;       W_EE_m_s = aee_ms*r_m; 
     # D to M couplings
     aee_md = 0/facilitating_factor;         W_EE_m_d = aee_md*r_m;            
-    # INs to M couplings
+    # CI to M couplings
     aei_mci = -3e2/facilitating_factor;     W_EI_m_ci = aei_mci*r_m;
     # Ret. to M couplings    
     aei_mtr = 0/facilitating_factor;        W_EI_m_tr = aei_mtr*r_m;
@@ -416,14 +471,14 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     aee_ds = 3e2/facilitating_factor;       W_EE_d_s = aee_ds*r_d;
     # M to D couplings
     aee_dm = 0/facilitating_factor;         W_EE_d_m = aee_dm*r_d;
-    # INs to D couplings
+    # CI to D couplings
     aei_dci = -7.5e3/facilitating_factor;   W_EI_d_ci = aei_dci*r_d;
     # Ret. to D couplings
     aei_dtr = 0/facilitating_factor;        W_EI_d_tr = aei_dtr*r_d;
     # Rel. to D couplings
     aee_dtc = 1e1/facilitating_factor;      W_EE_d_tc = aee_dtc*r_d;
     # =============================================================================
-    #     INs (CI)
+    #     CI
     # =============================================================================
     # S to CIs couplings
     aie_CIs = 2e2/facilitating_factor;     W_IE_ci_s = aie_CIs*r_ci;
@@ -436,7 +491,7 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     # Rel. to CIs couplings
     aie_CITC = 1e1/facilitating_factor;    W_IE_ci_tc = aie_CITC*r_ci;
     # =============================================================================
-    #     Reticular
+    #     TR
     # =============================================================================
     # S to Ret couplings
     aie_trs = 0/facilitating_factor;       W_IE_tr_s = aie_trs*r_tr;
@@ -444,12 +499,12 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     aie_trm = 0/facilitating_factor;       W_IE_tr_m = aie_trm*r_tr;
     # D to Ret couplings
     aie_trd = 7e2/facilitating_factor;     W_IE_tr_d = aie_trd*r_tr;
-    # Ret. Ret INs couplings
+    # CI to Ret couplings
     aii_trci = 0/facilitating_factor;      W_II_tr_ci = aii_trci*r_tr;
-    # Rel. Ret INs couplings
-    aie_trtc = 1e1/facilitating_factor;    W_IE_tr_tc = aie_trtc*r_tr;
+    # Rel. to Ret couplings
+    aie_trtc = 1e3/facilitating_factor;    W_IE_tr_tc = aie_trtc*r_tr;
     # =============================================================================
-    #     Rele
+    #     TC
     # =============================================================================
     # S to Rel couplings
     aee_tcs = 0/facilitating_factor;       W_EE_tc_s = aee_tcs*r_tc;   
@@ -457,7 +512,7 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     aee_tcm = 0/facilitating_factor;       W_EE_tc_m = aee_tcm*r_tc;
     # D to Rel couplings
     aee_tcd = 7e2/facilitating_factor;     W_EE_tc_d = aee_tcd*r_tc;
-    # INs to Rel couplings
+    # CI to Rel couplings
     aei_tcci = 0/facilitating_factor;      W_EI_tc_ci = aei_tcci*r_tc;
     # Ret to Rel couplings
     aei_tctr = -5e2/facilitating_factor;   W_EI_tc_tr = aei_tctr*r_tc;
@@ -466,49 +521,55 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     matrix = np.zeros((6,6))
     
     # Populating the matrix
+    # 0 -> Layer S
+    # 1 -> Layer M
+    # 2 -> Layer D
+    # 3 -> CI
+    # 4 -> TR
+    # 5 -> TC
     # Main Diagonal
     matrix[0][0] = np.mean(W_EE_s)
     matrix[1][1] = np.mean(W_EE_m)
     matrix[2][2] = np.mean(W_EE_d)
     matrix[3][3] = np.mean(W_II_ci)
-    matrix[4][4] = np.mean(W_II_tr)
-    matrix[5][5] = np.mean(W_EE_tc)
+    matrix[4][4] = np.mean(W_EE_tc)
+    matrix[5][5] = np.mean(W_II_tr)
     # First column - Layer S
     matrix[1][0] = np.mean(W_EE_s_m)
     matrix[2][0] = np.mean(W_EE_s_d)
     matrix[3][0] = np.mean(W_EI_s_ci)
-    matrix[4][0] = np.mean(W_EI_s_tr)
-    matrix[5][0] = np.mean(W_EE_s_tc)
+    matrix[4][0] = np.mean(W_EE_s_tc)
+    matrix[5][0] = np.mean(W_EI_s_tr)
     # Second column - Layer M
     matrix[0][1] = np.mean(W_EE_m_s)
     matrix[2][1] = np.mean(W_EE_m_d)
     matrix[3][1] = np.mean(W_EI_m_ci)
-    matrix[4][1] = np.mean(W_EI_m_tr)
-    matrix[5][1] = np.mean(W_EE_m_tc)
+    matrix[4][1] = np.mean(W_EE_m_tc)
+    matrix[5][1] = np.mean(W_EI_m_tr)
     # Thid column - Layer D
     matrix[0][2] = np.mean(W_EE_d_s)
     matrix[1][2] = np.mean(W_EE_d_m)
     matrix[3][2] = np.mean(W_EI_d_ci)
-    matrix[4][2] = np.mean(W_EI_d_tr)
-    matrix[5][2] = np.mean(W_EE_d_tc)
+    matrix[4][2] = np.mean(W_EE_d_tc)
+    matrix[5][2] = np.mean(W_EI_d_tr)
     # Fourth column - Structure CI
     matrix[0][3] = np.mean(W_IE_ci_s)
     matrix[1][3] = np.mean(W_IE_ci_m)
     matrix[2][3] = np.mean(W_IE_ci_d)
-    matrix[4][3] = np.mean(W_II_ci_tr)
-    matrix[5][3] = np.mean(W_IE_ci_tc)
-    # Fifth column - Structure TCR
-    matrix[0][4] = np.mean(W_IE_tr_s)
-    matrix[1][4] = np.mean(W_IE_tr_m)
-    matrix[2][4] = np.mean(W_IE_tr_d)
-    matrix[3][4] = np.mean(W_II_tr_ci)
-    matrix[5][4] = np.mean(W_IE_tr_tc)
-    # Sixth column - Structure TRN
-    matrix[0][5] = np.mean(W_EE_tc_s)
-    matrix[1][5] = np.mean(W_EE_tc_m)
-    matrix[2][5] = np.mean(W_EE_tc_d)
-    matrix[3][5] = np.mean(W_EI_tc_ci)
-    matrix[4][5] = np.mean(W_EI_tc_tr)
+    matrix[4][3] = np.mean(W_IE_ci_tc)
+    matrix[5][3] = np.mean(W_II_ci_tr)
+    # Fifth column - Structure TC
+    matrix[0][4] = np.mean(W_EE_tc_s)
+    matrix[1][4] = np.mean(W_EE_tc_m)
+    matrix[2][4] = np.mean(W_EE_tc_d)
+    matrix[3][4] = np.mean(W_EI_tc_ci)
+    matrix[5][4] = np.mean(W_EI_tc_tr)
+    # Sixth column - Structure TR
+    matrix[0][5] = np.mean(W_IE_tr_s)
+    matrix[1][5] = np.mean(W_IE_tr_m)
+    matrix[2][5] = np.mean(W_IE_tr_d)
+    matrix[3][5] = np.mean(W_II_tr_ci)
+    matrix[4][5] = np.mean(W_IE_tr_tc)
     
     weights = {
         'W_EE_s': W_EE_s,
@@ -558,9 +619,7 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     return { 'matrix': matrix, 'weights': weights }
     
     
-def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
-    division_factor = facilitating_factor
-    
+def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):    
     initial = 0
     final = 1
     interval = final - initial
@@ -568,12 +627,12 @@ def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
     # =============================================================================
     #     These are to restrict the normalized distribution variance or deviation from the mean
     # =============================================================================
-    r_s = initial + interval*np.random.rand(n_s, 1)
-    r_m = initial + interval*np.random.rand(n_m, 1)
-    r_d = initial + interval*np.random.rand(n_d, 1)
-    r_ci = initial + interval*np.random.rand(n_ci, 1)
-    r_tc = initial + interval*np.random.rand(n_tc, 1)
-    r_tr = initial + interval*np.random.rand(n_tr, 1)
+    r_s = initial + interval*np.random.rand(1, n_s)
+    r_m = initial + interval*np.random.rand(1, n_m)
+    r_d = initial + interval*np.random.rand(1, n_d)
+    r_ci = initial + interval*np.random.rand(1, n_ci)
+    r_tr = initial + interval*np.random.rand(1, n_tr)
+    r_tc = initial + interval*np.random.rand(1, n_tc)
     
     # =============================================================================
     #     COUPLING STRENGTHs within each structure (The same in Normal and PD)
@@ -581,17 +640,17 @@ def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
     # II -> Inhibitory to Inhibitory 
     # =============================================================================
     ## Layer S (was -1e-2 for IEEE paper)
-    aee_s = -5e1/division_factor;           W_EE_s = aee_s*r_s;
+    aee_s = -5e1/facilitating_factor;           W_EE_s = aee_s*r_s;
     ## Layer M (was -1e-2 for IEEE paper)
-    aee_m = -5e1/division_factor;           W_EE_m = aee_m*r_m;
+    aee_m = -5e1/facilitating_factor;           W_EE_m = aee_m*r_m;
     ## Layer D (was -1e-2 for IEEE paper)
-    aee_d = -5e1/division_factor;           W_EE_d = aee_d*r_d;
+    aee_d = -5e1/facilitating_factor;           W_EE_d = aee_d*r_d;
     ## INs 
-    aii_ci = -5e1/division_factor;          W_II_ci = aii_ci*r_ci;
+    aii_ci = -5e1/facilitating_factor;          W_II_ci = aii_ci*r_ci;
     ## Reticular cells
-    aii_tr = -5e1/division_factor;          W_II_tr = aii_tr*r_tr;
+    aii_tr = -5e1/facilitating_factor;          W_II_tr = aii_tr*r_tr;
     ## Relay cells
-    aee_tc = 0/division_factor;             W_EE_tc = aee_tc*r_tc;
+    aee_tc = 0/facilitating_factor;             W_EE_tc = aee_tc*r_tc;
     
     # =============================================================================
     #     COUPLING STRENGTHs between structures
@@ -599,15 +658,15 @@ def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
     #     S
     # =============================================================================
     # M to S coupling
-    aee_sm = 3e2/division_factor;          W_EE_s_m = aee_sm*r_s;
+    aee_sm = 3e2/facilitating_factor;          W_EE_s_m = aee_sm*r_s;
     # D to S coupling
-    aee_sd = 5e2/division_factor;          W_EE_s_d = aee_sd*r_s;
+    aee_sd = 5e2/facilitating_factor;          W_EE_s_d = aee_sd*r_s;
     # CI (INs) to S coupling
-    aei_sci = -7.5e2/division_factor;      W_EI_s_ci = aei_sci*r_s;
+    aei_sci = -7.5e2/facilitating_factor;      W_EI_s_ci = aei_sci*r_s;
     # Reticular to S coupling
-    aei_str = 0/division_factor;           W_EI_s_tr = aei_str*r_s;
+    aei_str = 0/facilitating_factor;           W_EI_s_tr = aei_str*r_s;
     # Rel. to S couplings
-    aee_stc = 0/division_factor;           W_EE_s_tc = aee_stc*r_s;     
+    aee_stc = 0/facilitating_factor;           W_EE_s_tc = aee_stc*r_s;     
     # =============================================================================
     #     M
     # =============================================================================
@@ -672,7 +731,7 @@ def coupling_matrix_PD(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr):
     # INs to Rel couplings
     aei_tcci = 0/facilitating_factor;     W_EI_tc_ci = aei_tcci*r_tc;
     # Ret to Rel couplings
-    aei_tctr = -2.5*1e3/facilitating_factor;  W_EI_tc_tr = aei_tctr*r_tc;
+    aei_tctr = -2.5e3/facilitating_factor;  W_EI_tc_tr = aei_tctr*r_tc;
     
     # Initialize matrix (6 structures -> 6x6 matrix)
     matrix = np.zeros((6,6))
