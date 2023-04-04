@@ -76,12 +76,12 @@ def tc_cells(
                 u[k][t] = u[k][t] + d
             else:
                 neuron_contribution = dvdt(v_aux, u_aux, Ib[k])
-                self_feedback = SW_self[k][0]*PSC_TC[0][t]/number_neurons
-                layer_S = SW_S[k][0]*PSC_S[0][t]/number_neurons
-                layer_M = SW_M[k][0]*PSC_M[0][t]/number_neurons
-                layer_D = SW_D[k][0]*PSC_D[0][t]/number_neurons
-                layer_TR = SW_TR[k][0]*PSC_TR[0][t]/number_neurons
-                layer_CI = SW_CI[k][0]*PSC_CI[0][t]/number_neurons
+                self_feedback = SW_self[0][k]*PSC_TC[0][t]/number_neurons
+                layer_S = SW_S[0][k]*PSC_S[0][t]/number_neurons
+                layer_M = SW_M[0][k]*PSC_M[0][t]/number_neurons
+                layer_D = SW_D[0][k]*PSC_D[0][t]/number_neurons
+                layer_TR = SW_TR[0][k]*PSC_TR[0][t]/number_neurons
+                layer_CI = SW_CI[0][k]*PSC_CI[0][t]/number_neurons
                 noise = 0
                 
                 v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_S + layer_M + layer_D + layer_TR + layer_CI + noise)

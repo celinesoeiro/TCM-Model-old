@@ -33,6 +33,9 @@ currents = TCM_model_parameters()['currents_per_structure']
 TCM_model = TCM_model_parameters()['model_global_parameters']
 random_factor = TCM_model_parameters()['random_factor']
 
+tm_synapse_params_inhibitory = TCM_model_parameters()['tm_synapse_params_inhibitory']
+tm_synapse_params_excitatory = TCM_model_parameters()['tm_synapse_params_excitatory']
+
 facilitating_factor_N = global_parameters['connectivity_factor_normal_condition']
 facilitating_factor_PD = global_parameters['connectivity_factor_PD_condition']
 
@@ -173,202 +176,179 @@ def x_eq(x, t_d, r, U, fired):
 def I_eq(I, t_s, A, U, x, r, fired):
     # post-synaptic current
     return -(I/t_s) + A*(r + U*(1 - r))*x*fired
-
-def get_parameters(synapse_type: str):
-    if (synapse_type == 'excitatory'):
-        return {
-            # [Facilitating, Depressing, Pseudo-linear]
-            't_f': [670, 17, 326],
-            't_d': [138, 671, 329],
-            'U': [0.09, 0.5, 0.29],
-            'distribution': [0.2, 0.63, 0.17],
-            't_s': 11,
-        };
-    elif (synapse_type == 'inhibitory'):
-        return {
-            # [Facilitating, Depressing, Pseudo-linear]
-            't_f': [376, 21, 62],
-            't_d': [45, 706, 144],
-            'U': [0.016, 0.25, 0.32],
-            'distribution': [0.08, 0.75, 0.17],
-            't_s': 11,
-        };
-    
-    else:
-        return 'Invalid synapse_type. Synapse_type must be excitatory or inhibitory.'
     
 print("-- Initializing model")
     
-# print("----- Thalamic Reticular Nucleus (TR)")
+print("----- Thalamic Reticular Nucleus (TR)")
 
-# PSC_TR, I_TR, AP_TR, v_tr, u_tr, r_tr, x_tr = tr_cells(
-#     time_vector = time, 
-#     number_neurons = n_tr, 
-#     simulation_steps = sim_steps, 
-#     coupling_matrix = W_N, 
-#     neuron_params = neuron_params['TR1'], 
-#     current = currents['I_TR_1'], 
-#     vr = vr, 
-#     vp = vp, 
-#     dt = dt, 
-#     Idc = Idc, 
-#     dvdt = dvdt, 
-#     dudt = dudt, 
-#     r_eq = r_eq, 
-#     x_eq = x_eq, 
-#     I_eq = I_eq, 
-#     synapse_parameters = get_parameters('inhibitory'), 
-#     PSC_S = PSC_S, 
-#     PSC_M = PSC_M, 
-#     PSC_D = PSC_D, 
-#     PSC_TR = PSC_TR, 
-#     PSC_TC = PSC_TC, 
-#     PSC_CI = PSC_CI,
-#     neuron_type = "inhibitory",
-#     random_factor = random_factor
-#     )
+PSC_TR, I_TR, AP_TR, v_tr, u_tr, r_tr, x_tr = tr_cells(
+    time_vector = time, 
+    number_neurons = n_tr, 
+    simulation_steps = sim_steps, 
+    coupling_matrix = W_N, 
+    neuron_params = neuron_params['TR1'], 
+    current = currents['I_TR'], 
+    vr = vr, 
+    vp = vp, 
+    dt = dt, 
+    Idc_tune = Idc_tune, 
+    dvdt = dvdt, 
+    dudt = dudt, 
+    r_eq = r_eq, 
+    x_eq = x_eq, 
+    I_eq = I_eq, 
+    synapse_parameters = tm_synapse_params_inhibitory, 
+    PSC_S = PSC_S, 
+    PSC_M = PSC_M, 
+    PSC_D = PSC_D, 
+    PSC_TR = PSC_TR, 
+    PSC_TC = PSC_TC, 
+    PSC_CI = PSC_CI,
+    neuron_type = "inhibitory",
+    random_factor = random_factor
+    )
 
-# print("----- Thalamo-Cortical Relay Nucleus (TC)")
+print("----- Thalamo-Cortical Relay Nucleus (TC)")
 
-# PSC_TC, AP_TC, v_tc, u_tc, r_tc, x_tc = tc_cells(
-#     time_vector = time, 
-#     number_neurons = n_tc, 
-#     simulation_steps = sim_steps, 
-#     coupling_matrix = W_N, 
-#     neuron_params = neuron_params['TC1'], 
-#     current = currents['I_TC_1'], 
-#     vr = vr, 
-#     vp = vp, 
-#     dt = dt, 
-#     Idc = Idc, 
-#     dvdt = dvdt, 
-#     dudt = dudt, 
-#     r_eq = r_eq, 
-#     x_eq = x_eq, 
-#     I_eq = I_eq, 
-#     synapse_parameters = get_parameters('excitatory'), 
-#     PSC_S = PSC_S, 
-#     PSC_M = PSC_M, 
-#     PSC_D = PSC_D, 
-#     PSC_TR = PSC_TR, 
-#     PSC_TC = PSC_TC, 
-#     PSC_CI = PSC_CI,
-#     neuron_type = "excitatory",
-#     random_factor = random_factor
-#     )
+PSC_TC, AP_TC, v_tc, u_tc, r_tc, x_tc = tc_cells(
+    time_vector = time, 
+    number_neurons = n_tc, 
+    simulation_steps = sim_steps, 
+    coupling_matrix = W_N, 
+    neuron_params = neuron_params['TC1'], 
+    current = currents['I_TC'], 
+    vr = vr, 
+    vp = vp, 
+    dt = dt, 
+    Idc = Idc_tune, 
+    dvdt = dvdt, 
+    dudt = dudt, 
+    r_eq = r_eq, 
+    x_eq = x_eq, 
+    I_eq = I_eq, 
+    synapse_parameters = tm_synapse_params_excitatory, 
+    PSC_S = PSC_S, 
+    PSC_M = PSC_M, 
+    PSC_D = PSC_D, 
+    PSC_TR = PSC_TR, 
+    PSC_TC = PSC_TC, 
+    PSC_CI = PSC_CI,
+    neuron_type = "excitatory",
+    random_factor = random_factor
+    )
 
-# print("----- Cortical Interneurons (CI)")
+print("----- Cortical Interneurons (CI)")
 
-# PSC_CI, AP_CI, v_ci, u_ci, r_ci, x_ci = ci_cells(
-#     time_vector = time, 
-#     number_neurons = n_ci, 
-#     simulation_steps = sim_steps, 
-#     coupling_matrix = W_N, 
-#     neuron_params = neuron_params['CI1'], 
-#     current = currents['I_CI_1'], 
-#     vr = vr, 
-#     vp = vp, 
-#     dt = dt, 
-#     Idc = Idc, 
-#     dvdt = dvdt, 
-#     dudt = dudt, 
-#     r_eq = r_eq, 
-#     x_eq = x_eq, 
-#     I_eq = I_eq, 
-#     synapse_parameters = get_parameters('inhibitory'), 
-#     PSC_S = PSC_S, 
-#     PSC_M = PSC_M, 
-#     PSC_D = PSC_D, 
-#     PSC_TR = PSC_TR, 
-#     PSC_TC = PSC_TC, 
-#     PSC_CI = PSC_CI,
-#     neuron_type = "inhibitory",
-#     random_factor = random_factor
-#     )
+PSC_CI, AP_CI, v_ci, u_ci, r_ci, x_ci = ci_cells(
+    time_vector = time, 
+    number_neurons = n_ci, 
+    simulation_steps = sim_steps, 
+    coupling_matrix = W_N, 
+    neuron_params = neuron_params['CI1'], 
+    current = currents['I_CI_1'], 
+    vr = vr, 
+    vp = vp, 
+    dt = dt, 
+    Idc = Idc_tune, 
+    dvdt = dvdt, 
+    dudt = dudt, 
+    r_eq = r_eq, 
+    x_eq = x_eq, 
+    I_eq = I_eq, 
+    synapse_parameters = tm_synapse_params_inhibitory, 
+    PSC_S = PSC_S, 
+    PSC_M = PSC_M, 
+    PSC_D = PSC_D, 
+    PSC_TR = PSC_TR, 
+    PSC_TC = PSC_TC, 
+    PSC_CI = PSC_CI,
+    neuron_type = "inhibitory",
+    random_factor = random_factor
+    )
 
-# print("----- Superficial layer (S)")
+print("----- Superficial layer (S)")
 
-# PSC_S, AP_S, v_s, u_s, r_s, x_s = s_cells(
-#     time_vector = time, 
-#     number_neurons = n_s, 
-#     simulation_steps = sim_steps, 
-#     coupling_matrix = W_N, 
-#     neuron_params = neuron_params['S1'], 
-#     current = currents['I_S_1'], 
-#     vr = vr, 
-#     vp = vp, 
-#     dt = dt, 
-#     Idc = Idc, 
-#     dvdt = dvdt, 
-#     dudt = dudt, 
-#     r_eq = r_eq, 
-#     x_eq = x_eq, 
-#     I_eq = I_eq, 
-#     synapse_parameters = get_parameters('excitatory'), 
-#     PSC_S = PSC_S, 
-#     PSC_M = PSC_M, 
-#     PSC_D = PSC_D, 
-#     PSC_TR = PSC_TR, 
-#     PSC_TC = PSC_TC, 
-#     PSC_CI = PSC_CI,
-#     neuron_type = "excitatory",
-#     random_factor = random_factor
-#     )
+PSC_S, AP_S, v_s, u_s, r_s, x_s = s_cells(
+    time_vector = time, 
+    number_neurons = n_s, 
+    simulation_steps = sim_steps, 
+    coupling_matrix = W_N, 
+    neuron_params = neuron_params['S1'], 
+    current = currents['I_S'], 
+    vr = vr, 
+    vp = vp, 
+    dt = dt, 
+    Idc = Idc_tune, 
+    dvdt = dvdt, 
+    dudt = dudt, 
+    r_eq = r_eq, 
+    x_eq = x_eq, 
+    I_eq = I_eq, 
+    synapse_parameters = tm_synapse_params_excitatory, 
+    PSC_S = PSC_S, 
+    PSC_M = PSC_M, 
+    PSC_D = PSC_D, 
+    PSC_TR = PSC_TR, 
+    PSC_TC = PSC_TC, 
+    PSC_CI = PSC_CI,
+    neuron_type = "excitatory",
+    random_factor = random_factor
+    )
 
-# print("----- Middle layer (M)")
+print("----- Middle layer (M)")
 
-# PSC_M, AP_M, v_m, u_m, r_m, x_m = m_cells(
-#     time_vector = time, 
-#     number_neurons = n_m, 
-#     simulation_steps = sim_steps, 
-#     coupling_matrix = W_N, 
-#     neuron_params = neuron_params['M1'], 
-#     current = currents['I_M_1'], 
-#     vr = vr, 
-#     vp = vp, 
-#     dt = dt, 
-#     Idc = Idc, 
-#     dvdt = dvdt, 
-#     dudt = dudt, 
-#     r_eq = r_eq, 
-#     x_eq = x_eq, 
-#     I_eq = I_eq, 
-#     synapse_parameters = get_parameters('excitatory'), 
-#     PSC_S = PSC_S, 
-#     PSC_M = PSC_M, 
-#     PSC_D = PSC_D, 
-#     PSC_TR = PSC_TR, 
-#     PSC_TC = PSC_TC, 
-#     PSC_CI = PSC_CI,
-#     neuron_type = "excitatory",
-#     random_factor = random_factor
-#     )
+PSC_M, AP_M, v_m, u_m, r_m, x_m = m_cells(
+    time_vector = time, 
+    number_neurons = n_m, 
+    simulation_steps = sim_steps, 
+    coupling_matrix = W_N, 
+    neuron_params = neuron_params['M1'], 
+    current = currents['I_M'], 
+    vr = vr, 
+    vp = vp, 
+    dt = dt, 
+    Idc = Idc_tune, 
+    dvdt = dvdt, 
+    dudt = dudt, 
+    r_eq = r_eq, 
+    x_eq = x_eq, 
+    I_eq = I_eq, 
+    synapse_parameters = tm_synapse_params_excitatory, 
+    PSC_S = PSC_S, 
+    PSC_M = PSC_M, 
+    PSC_D = PSC_D, 
+    PSC_TR = PSC_TR, 
+    PSC_TC = PSC_TC, 
+    PSC_CI = PSC_CI,
+    neuron_type = "excitatory",
+    random_factor = random_factor
+    )
 
-# print("----- Deep layer (D)")
+print("----- Deep layer (D)")
 
-# PSC_D, AP_D, v_d, u_d, r_d, x_d = d_cells(
-#     time_vector = time, 
-#     number_neurons = n_d, 
-#     simulation_steps = sim_steps, 
-#     coupling_matrix = W_N, 
-#     neuron_params = neuron_params['D1'], 
-#     current = currents['I_D_1'], 
-#     vr = vr, 
-#     vp = vp, 
-#     dt = dt, 
-#     Idc = Idc, 
-#     dvdt = dvdt, 
-#     dudt = dudt, 
-#     r_eq = r_eq, 
-#     x_eq = x_eq, 
-#     I_eq = I_eq, 
-#     synapse_parameters = get_parameters('excitatory'), 
-#     PSC_S = PSC_S, 
-#     PSC_M = PSC_M, 
-#     PSC_D = PSC_D, 
-#     PSC_TR = PSC_TR, 
-#     PSC_TC = PSC_TC, 
-#     PSC_CI = PSC_CI,
-#     neuron_type = "excitatory",
-#     random_factor = random_factor
-#     )
+PSC_D, AP_D, v_d, u_d, r_d, x_d = d_cells(
+    time_vector = time, 
+    number_neurons = n_d, 
+    simulation_steps = sim_steps, 
+    coupling_matrix = W_N, 
+    neuron_params = neuron_params['D1'], 
+    current = currents['I_D'], 
+    vr = vr, 
+    vp = vp, 
+    dt = dt, 
+    Idc = Idc_tune, 
+    dvdt = dvdt, 
+    dudt = dudt, 
+    r_eq = r_eq, 
+    x_eq = x_eq, 
+    I_eq = I_eq, 
+    synapse_parameters = tm_synapse_params_excitatory, 
+    PSC_S = PSC_S, 
+    PSC_M = PSC_M, 
+    PSC_D = PSC_D, 
+    PSC_TR = PSC_TR, 
+    PSC_TC = PSC_TC, 
+    PSC_CI = PSC_CI,
+    neuron_type = "excitatory",
+    random_factor = random_factor
+    )

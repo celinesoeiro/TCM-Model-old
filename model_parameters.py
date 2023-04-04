@@ -365,12 +365,12 @@ def TCM_model_parameters():
     I_TC_1 = Idc[5]
     I_TC_2 = Idc[5]
     
-    # I_S = [Idc[0][0]*np.ones((50, 1)), Idc[0][1]*np.ones((50, 1))]
-    # I_M = [Idc[0][0]*np.ones((50, 1)), Idc[0][0]*np.ones((50, 1))]
-    # I_D = [Idc[0][0]*np.ones((50, 1)), Idc[0][1]*np.ones((50, 1))]
-    # I_CI = [Idc[0][3]*np.ones((50, 1)), Idc[0][4]*np.ones((50, 1))]
-    # I_Ret = [Idc[0][7]*np.ones((50, 1)), Idc[0][7]*np.ones((50, 1))]
-    # I_Rel = [Idc[0][5]*np.ones((20, 1)), Idc[0][5]*np.ones((20, 1))]
+    I_S = np.concatenate((I_S_1*np.ones((1, neurons_s_1)), I_S_2*np.ones((1, neurons_s_2))), axis=None)
+    I_M = np.concatenate((I_M_1*np.ones((1, neurons_m_1)), I_M_2*np.ones((1, neurons_m_2))), axis=None)
+    I_D = np.concatenate((I_D_1*np.ones((1, neurons_d_1)), I_D_2*np.ones((1, neurons_d_2))), axis=None)
+    I_CI = np.concatenate((I_CI_1*np.ones((1, neurons_ci_1)), I_CI_2*np.ones((1, neurons_ci_2))), axis=None)
+    I_TR = np.concatenate((I_TR_1*np.ones((1, neurons_tr_1)), I_TR_2*np.ones((1, neurons_tr_2))), axis=None)
+    I_TC = np.concatenate((I_TC_1*np.ones((1, neurons_tc_1)), I_TC_2*np.ones((1, neurons_tc_2))), axis=None)
     
     currents_per_structure = {
         'I_S_1': I_S_1,
@@ -385,6 +385,28 @@ def TCM_model_parameters():
         'I_CI_2': I_CI_2,
         'I_TR_2': I_TR_2,
         'I_TC_2': I_TC_2,
+        'I_S': I_S,
+        'I_M': I_M,
+        'I_D': I_D,
+        'I_CI': I_CI,
+        'I_TR': I_TR,
+        'I_TC': I_TC,
+        }
+    
+    tm_synapse_params_excitatory = {
+        't_f': [670, 17, 326],
+        't_d': [138, 671, 329],
+        'U': [0.09, 0.5, 0.29],
+        'distribution': [0.2, 0.63, 0.17],
+        't_s': 3,
+        }
+    
+    tm_synapse_params_inhibitory = {
+        't_f': [376, 21, 62],
+        't_d': [45, 706, 144],
+        'U': [0.016, 0.25, 0.32],
+        'distribution': [0.08, 0.75, 0.17],
+        't_s': 11,
         }
     
     # Export all dictionaries
@@ -399,6 +421,8 @@ def TCM_model_parameters():
         'currents_per_structure': currents_per_structure,
         'noise': noise,
         'random_factor': random_factor,
+        'tm_synapse_params_excitatory': tm_synapse_params_excitatory,
+        'tm_synapse_params_inhibitory': tm_synapse_params_inhibitory,
         }
     
     return data

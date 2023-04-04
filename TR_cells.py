@@ -77,6 +77,9 @@ neuron_quantities = TCM_model_parameters()['neuron_quantities']
 neuron_params = TCM_model_parameters()['neuron_paramaters']
 currents = TCM_model_parameters()['currents_per_structure']
 
+tm_synapse_params_inhibitory = TCM_model_parameters()['tm_synapse_params_inhibitory']
+tm_synapse_params_excitatory = TCM_model_parameters()['tm_synapse_params_excitatory']
+
 facilitating_factor_N = global_parameters['connectivity_factor_normal_condition']
 facilitating_factor_PD = global_parameters['connectivity_factor_PD_condition']
 
@@ -86,7 +89,7 @@ time = global_parameters['time_vector']
 vr = global_parameters['vr']
 vp = global_parameters['vp']
 chop_till = global_parameters['chop_till']
-Idc = global_parameters['Idc']
+Idc_tune = global_parameters['Idc_tune']
 
 n = neuron_quantities['TR']
 n_s = neuron_quantities['S']
@@ -125,7 +128,7 @@ SW_D = W_N['W_IE_tr_d']
 SW_TN = W_N['W_IE_tr_tc']
 SW_CI = W_N['W_II_tr_ci']
 
-Ib = currents['I_TR_1'] + Idc*np.ones(n)
+Ib = currents['I_TR'] + Idc_tune*np.ones(n)
 
 # =============================================================================
 # CALCULATING THE NEW VALUE
@@ -150,29 +153,6 @@ def x_eq(x, t_d, r, U, fired):
 def I_eq(I, t_s, A, U, x, r, fired):
     # post-synaptic current
     return -(I/t_s) + A*(r + U*(1 - r))*x*fired
-
-def getParamaters(synapse_type: str):
-    if (synapse_type == 'excitatory'):
-        return {
-            # [Facilitating, Depressing, Pseudo-linear]
-            't_f': [670, 17, 326],
-            't_d': [138, 671, 329],
-            'U': [0.09, 0.5, 0.29],
-            'distribution': [0.2, 0.63, 0.17],
-            't_s': 11,
-        };
-    elif (synapse_type == 'inhibitory'):
-        return {
-            # [Facilitating, Depressing, Pseudo-linear]
-            't_f': [376, 21, 62],
-            't_d': [45, 706, 144],
-            'U': [0.016, 0.25, 0.32],
-            'distribution': [0.08, 0.75, 0.17],
-            't_s': 11,
-        };
-    
-    else:
-        return 'Invalid synapse_type. Synapse_type must be excitatory or inhibitory.'
     
 
 AP = np.zeros((1,len(time)))
@@ -190,23 +170,23 @@ for t in range(1, len(time)):
             u[k][t] = u[k][t] + neuron_params['d']
         else:
             neuron_contribution = dvdt(v_aux, u_aux, Ib[k])
-            self_feedback = SW_self[k][0]*PSC_self[0][t]/n
-            layer_S = SW_S[k][0]*PSC_S[0][t]/n
-            layer_M = SW_M[k][0]*PSC_M[0][t]/n
-            layer_D = SW_D[k][0]*PSC_D[0][t]/n
-            layer_TN = SW_TN[k][0]*PSC_TN[0][t]/n
-            layer_CI = SW_CI[k][0]*PSC_CI[0][t]/n
+            self_feedback = SW_self[0][k]*PSC_self[0][t]/n
+            layer_S = SW_S[0][k]*PSC_S[0][t]/n
+            layer_M = SW_M[0][k]*PSC_M[0][t]/n
+            layer_D = SW_D[0][k]*PSC_D[0][t]/n
+            layer_TN = SW_TN[0][k]*PSC_TN[0][t]/n
+            layer_CI = SW_CI[0][k]*PSC_CI[0][t]/n
             noise = 0
             
             v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_S + layer_M + layer_D + layer_TN + layer_CI + noise)
             u[k][t] = u_aux + dt*dudt(v_aux, u_aux, neuron_params['a'], neuron_params['b'])
             
         # TM parameters
-        tau_f = getParamaters('inhibitory')['t_f']
-        tau_d = getParamaters('inhibitory')['t_d']
-        U = getParamaters('inhibitory')['U']
-        A = getParamaters('inhibitory')['distribution']
-        tau_s = getParamaters('inhibitory')['t_s']
+        tau_f = tm_synapse_params_inhibitory['t_f']
+        tau_d = tm_synapse_params_inhibitory['t_d']
+        U = tm_synapse_params_inhibitory['U']
+        A = tm_synapse_params_inhibitory['distribution']
+        tau_s = tm_synapse_params_inhibitory['t_s']
         parameters_length = len(tau_f)
         
         # Loop trhough the parameters

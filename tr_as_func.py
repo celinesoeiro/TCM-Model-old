@@ -72,7 +72,7 @@ def tr_cells(
        vr, 
        vp,
        dt,
-       Idc,
+       Idc_tune,
        dvdt,
        dudt,
        r_eq,
@@ -102,7 +102,7 @@ def tr_cells(
     SW_TC = coupling_matrix['W_IE_tr_tc']
     SW_CI = coupling_matrix['W_II_tr_ci']
  
-    Ib = current + Idc*np.ones(number_neurons)
+    Ib = current + Idc_tune*np.ones(number_neurons)
     
     AP = np.zeros((1,len(time_vector)))
     
@@ -132,12 +132,12 @@ def tr_cells(
                 u[k][t] = u[k][t] + d
             else:
                 neuron_contribution = dvdt(v_aux, u_aux, Ib[k])
-                self_feedback = SW_self[k][0]*PSC_TR[0][t]/number_neurons
-                layer_S = SW_S[k][0]*PSC_S[0][t]/number_neurons
-                layer_M = SW_M[k][0]*PSC_M[0][t]/number_neurons
-                layer_D = SW_D[k][0]*PSC_D[0][t]/number_neurons
-                layer_TC = SW_TC[k][0]*PSC_TC[0][t]/number_neurons
-                layer_CI = SW_CI[k][0]*PSC_CI[0][t]/number_neurons
+                self_feedback = SW_self[0][k]*PSC_TR[0][t]/number_neurons
+                layer_S = SW_S[0][k]*PSC_S[0][t]/number_neurons
+                layer_M = SW_M[0][k]*PSC_M[0][t]/number_neurons
+                layer_D = SW_D[0][k]*PSC_D[0][t]/number_neurons
+                layer_TC = SW_TC[0][k]*PSC_TC[0][t]/number_neurons
+                layer_CI = SW_CI[0][k]*PSC_CI[0][t]/number_neurons
                 noise = 0
                 
                 v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_S + layer_M + layer_D + layer_TC + layer_CI + noise)
