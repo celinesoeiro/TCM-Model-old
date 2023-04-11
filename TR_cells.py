@@ -100,11 +100,6 @@ n_tn = neuron_quantities['TC']
 
 neuron_params = neuron_params['TR1']
 
-v = vr*np.ones((n,sim_steps))
-u = 0*v
-r = np.zeros((3,len(time)))
-x = np.ones((3,len(time)))
-I = np.zeros((3,len(time)))
 PSC_self = np.zeros((1,sim_steps))
 PSC_S = np.zeros((1,sim_steps))
 PSC_M = np.zeros((1,sim_steps))
@@ -128,7 +123,20 @@ SW_D = W_N['W_IE_tr_d']
 SW_TN = W_N['W_IE_tr_tc']
 SW_CI = W_N['W_II_tr_ci']
 
-Ib = currents['I_TR'] + Idc_tune*np.ones(n)
+Idc = currents['TR'] + Idc_tune*np.ones(n)
+
+# TM parameters
+tau_s = tm_synapse_params_inhibitory['t_s']
+tau_f = tm_synapse_params_inhibitory['t_f']
+tau_d = tm_synapse_params_inhibitory['t_d']
+U = tm_synapse_params_inhibitory['U']
+A = tm_synapse_params_inhibitory['distribution']
+r = np.zeros((3,len(time)))
+x = np.ones((3,len(time)))
+Is = np.zeros((3,len(time)))
+
+v = vr*np.ones((n,sim_steps))
+u = 0*v
 
 # =============================================================================
 # CALCULATING THE NEW VALUE
@@ -155,55 +163,75 @@ def I_eq(I, t_s, A, U, x, r, fired):
     return -(I/t_s) + A*(r + U*(1 - r))*x*fired
     
 
+def tm_synapse(r, x, Is, AP, tau_f, tau_d, tau_s, U, A):
+    for p in range(1, 3):
+        r_aux = r[p - 1]
+        x_aux = x[p - 1]
+        Is_aux = Is[p - 1]
+        # Solve EDOs using Euler method
+        r[p] = r_aux + dt*r_eq(r_aux, tau_f[p - 1], U[p - 1], AP)
+        x[p] = x_aux + dt*x_eq(x_aux, tau_d[p - 1], r_aux, U[p - 1], AP)
+        Is[p] = Is_aux + dt*I_eq(Is_aux, tau_s, A[p - 1], U[p - 1], x_aux, r_aux, AP)
+        
+    r_new = r
+    x_new = x
+    Isyn = Is
+    Ipost = np.sum(Is, axis=0).reshape(1,len(Is[0]))
+        
+    return r_new, x_new, Isyn, Ipost
+
 AP = np.zeros((1,len(time)))
+
+Isi = []
 
 for t in range(1, len(time)):
     AP_aux = AP[0][t]
     for k in range(1, n):        
         v_aux = v[k - 1][t - 1]
         u_aux = u[k - 1][t - 1]
+        Idc_aux = Idc[k - 1]
         
         if (v_aux >= vp):
-            AP_aux = 1
-            v[k][t] = vp
+            v_aux = v[k][t]
             v[k][t] = neuron_params['c']
-            u[k][t] = u[k][t] + neuron_params['d']
+            u[k][t] = u_aux + neuron_params['d']
+            AP_aux = 1
         else:
-            neuron_contribution = dvdt(v_aux, u_aux, Ib[k])
-            self_feedback = SW_self[0][k]*PSC_self[0][t]/n
-            layer_S = SW_S[0][k]*PSC_S[0][t]/n
-            layer_M = SW_M[0][k]*PSC_M[0][t]/n
-            layer_D = SW_D[0][k]*PSC_D[0][t]/n
-            layer_TN = SW_TN[0][k]*PSC_TN[0][t]/n
-            layer_CI = SW_CI[0][k]*PSC_CI[0][t]/n
+            neuron_contribution = dvdt(v_aux, u_aux, Idc_aux)
+            self_feedback = SW_self[0][k - 1]*PSC_self[0][t - 1]/n
+            layer_S = SW_S[0][k - 1]*PSC_S[0][t - 1]/n
+            layer_M = SW_M[0][k - 1]*PSC_M[0][t - 1]/n
+            layer_D = SW_D[0][k - 1]*PSC_D[0][t - 1]/n
+            layer_TN = SW_TN[0][k - 1]*PSC_TN[0][t - 1]/n
+            layer_CI = SW_CI[0][k - 1]*PSC_CI[0][t - 1]/n
             noise = 0
             
-            v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_S + layer_M + layer_D + layer_TN + layer_CI + noise)
-            u[k][t] = u_aux + dt*dudt(v_aux, u_aux, neuron_params['a'], neuron_params['b'])
+            dv = neuron_contribution + self_feedback + layer_S + layer_M + layer_D + layer_TN + layer_CI + noise
+            du = dudt(v_aux, u_aux, neuron_params['a'], neuron_params['b'])
             
-        # TM parameters
-        tau_f = tm_synapse_params_inhibitory['t_f']
-        tau_d = tm_synapse_params_inhibitory['t_d']
-        U = tm_synapse_params_inhibitory['U']
-        A = tm_synapse_params_inhibitory['distribution']
-        tau_s = tm_synapse_params_inhibitory['t_s']
-        parameters_length = len(tau_f)
+            v[k][t] = v_aux + dv*dt
+            u[k][t] = u_aux + du*dt
+            
+        # print('v = ', v[k][t])
+        # print('u = ', u[k][t])
         
-        # Loop trhough the parameters
-        for p in range(1, parameters_length):
-            r_aux = r[p - 1][t - 1]
-            x_aux = x[p - 1][t - 1]
-            I_aux = I[p - 1][t - 1]
-            # Solve EDOs using Euler method
-            r[p][t] = r_aux + dt*r_eq(r_aux, tau_f[p], U[p], AP_aux)
-            x[p][t] = x_aux + dt*x_eq(x_aux, tau_d[p], r_aux, U[p], AP_aux)
-            I[p][t] = I_aux + dt*I_eq(I_aux, tau_s, A[p], U[p], x_aux, r_aux, AP_aux)
+        [rs, xs, Isyn, Ipost] = tm_synapse(r, x, Is, AP, tau_f, tau_d, tau_s, U, A)
+        r = rs
+        x = xs
+        Is = Isyn
+        
+        print('rs = ', rs)
+        print('xs = ', xs)
+        print('Is = ', Is)
+        print('Ipost = ', Ipost)
         
         if (np.isnan(v[k][t]) or np.isnan(u[k][t]) or np.isinf(v[k][t]) or np.isinf(u[k][t])):
             print('NaN or inf in t = ', t)
             break
         
-PSC_self = np.sum(I, axis=0).reshape(1,len(time))
+        Isi.append(Ipost) 
+        
+    PSC_self = np.sum(Isi, axis=0).reshape(1,len(Is[0]))
     
 # Plotting
 # indexes = np.arange(0,40, dtype=object)

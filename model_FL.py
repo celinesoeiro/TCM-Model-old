@@ -176,6 +176,23 @@ def x_eq(x, t_d, r, U, fired):
 def I_eq(I, t_s, A, U, x, r, fired):
     # post-synaptic current
     return -(I/t_s) + A*(r + U*(1 - r))*x*fired
+
+def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A):
+    for p in range(1, 3):
+        r_aux = r[p - 1]
+        x_aux = x[p - 1]
+        Is_aux = Is[p - 1]
+        # Solve EDOs using Euler method
+        r[p] = r_aux + dt*r_eq(r_aux, tau_f[p - 1], U[p - 1], AP)
+        x[p] = x_aux + dt*x_eq(x_aux, tau_d[p - 1], r_aux, U[p - 1], AP)
+        Is[p] = Is_aux + dt*I_eq(Is_aux, tau_s, A[p - 1], U[p - 1], x_aux, r_aux, AP)
+        
+    r_new = r
+    x_new = x
+    Isyn = Is
+    Ipost = np.sum(Is, axis=0).reshape(1,len(Is[0]))
+        
+    return r_new, x_new, Isyn, Ipost
     
 print("-- Initializing model")
     
@@ -187,7 +204,7 @@ PSC_TR, I_TR, AP_TR, v_tr, u_tr, r_tr, x_tr = tr_cells(
     simulation_steps = sim_steps, 
     coupling_matrix = W_N, 
     neuron_params = neuron_params['TR1'], 
-    current = currents['I_TR'], 
+    current = currents['TR'], 
     vr = vr, 
     vp = vp, 
     dt = dt, 
@@ -197,6 +214,7 @@ PSC_TR, I_TR, AP_TR, v_tr, u_tr, r_tr, x_tr = tr_cells(
     r_eq = r_eq, 
     x_eq = x_eq, 
     I_eq = I_eq, 
+    tm_synapse_eq = tm_synapse_eq,
     synapse_parameters = tm_synapse_params_inhibitory, 
     PSC_S = PSC_S, 
     PSC_M = PSC_M, 
@@ -210,13 +228,13 @@ PSC_TR, I_TR, AP_TR, v_tr, u_tr, r_tr, x_tr = tr_cells(
 
 print("----- Thalamo-Cortical Relay Nucleus (TC)")
 
-PSC_TC, AP_TC, v_tc, u_tc, r_tc, x_tc = tc_cells(
+PSC_TC, I_TC, AP_TC, v_tc, u_tc, r_tc, x_tc = tc_cells(
     time_vector = time, 
     number_neurons = n_tc, 
     simulation_steps = sim_steps, 
     coupling_matrix = W_N, 
     neuron_params = neuron_params['TC1'], 
-    current = currents['I_TC'], 
+    current = currents['TC'], 
     vr = vr, 
     vp = vp, 
     dt = dt, 
@@ -226,6 +244,7 @@ PSC_TC, AP_TC, v_tc, u_tc, r_tc, x_tc = tc_cells(
     r_eq = r_eq, 
     x_eq = x_eq, 
     I_eq = I_eq, 
+    tm_synapse_eq = tm_synapse_eq,
     synapse_parameters = tm_synapse_params_excitatory, 
     PSC_S = PSC_S, 
     PSC_M = PSC_M, 
@@ -239,13 +258,13 @@ PSC_TC, AP_TC, v_tc, u_tc, r_tc, x_tc = tc_cells(
 
 print("----- Cortical Interneurons (CI)")
 
-PSC_CI, AP_CI, v_ci, u_ci, r_ci, x_ci = ci_cells(
+PSC_CI, I_CI, AP_CI, v_ci, u_ci, r_ci, x_ci = ci_cells(
     time_vector = time, 
     number_neurons = n_ci, 
     simulation_steps = sim_steps, 
     coupling_matrix = W_N, 
     neuron_params = neuron_params['CI1'], 
-    current = currents['I_CI_1'], 
+    current = currents['CI'], 
     vr = vr, 
     vp = vp, 
     dt = dt, 
@@ -255,6 +274,7 @@ PSC_CI, AP_CI, v_ci, u_ci, r_ci, x_ci = ci_cells(
     r_eq = r_eq, 
     x_eq = x_eq, 
     I_eq = I_eq, 
+    tm_synapse_eq = tm_synapse_eq,
     synapse_parameters = tm_synapse_params_inhibitory, 
     PSC_S = PSC_S, 
     PSC_M = PSC_M, 
@@ -268,13 +288,13 @@ PSC_CI, AP_CI, v_ci, u_ci, r_ci, x_ci = ci_cells(
 
 print("----- Superficial layer (S)")
 
-PSC_S, AP_S, v_s, u_s, r_s, x_s = s_cells(
+PSC_S, I_S, AP_S, v_s, u_s, r_s, x_s = s_cells(
     time_vector = time, 
     number_neurons = n_s, 
     simulation_steps = sim_steps, 
     coupling_matrix = W_N, 
     neuron_params = neuron_params['S1'], 
-    current = currents['I_S'], 
+    current = currents['S'], 
     vr = vr, 
     vp = vp, 
     dt = dt, 
@@ -284,6 +304,7 @@ PSC_S, AP_S, v_s, u_s, r_s, x_s = s_cells(
     r_eq = r_eq, 
     x_eq = x_eq, 
     I_eq = I_eq, 
+    tm_synapse_eq = tm_synapse_eq,
     synapse_parameters = tm_synapse_params_excitatory, 
     PSC_S = PSC_S, 
     PSC_M = PSC_M, 
@@ -297,13 +318,13 @@ PSC_S, AP_S, v_s, u_s, r_s, x_s = s_cells(
 
 print("----- Middle layer (M)")
 
-PSC_M, AP_M, v_m, u_m, r_m, x_m = m_cells(
+PSC_M, I_M, AP_M, v_m, u_m, r_m, x_m = m_cells(
     time_vector = time, 
     number_neurons = n_m, 
     simulation_steps = sim_steps, 
     coupling_matrix = W_N, 
     neuron_params = neuron_params['M1'], 
-    current = currents['I_M'], 
+    current = currents['M'], 
     vr = vr, 
     vp = vp, 
     dt = dt, 
@@ -313,6 +334,7 @@ PSC_M, AP_M, v_m, u_m, r_m, x_m = m_cells(
     r_eq = r_eq, 
     x_eq = x_eq, 
     I_eq = I_eq, 
+    tm_synapse_eq = tm_synapse_eq,
     synapse_parameters = tm_synapse_params_excitatory, 
     PSC_S = PSC_S, 
     PSC_M = PSC_M, 
@@ -326,13 +348,13 @@ PSC_M, AP_M, v_m, u_m, r_m, x_m = m_cells(
 
 print("----- Deep layer (D)")
 
-PSC_D, AP_D, v_d, u_d, r_d, x_d = d_cells(
+PSC_D, I_D, AP_D, v_d, u_d, r_d, x_d = d_cells(
     time_vector = time, 
     number_neurons = n_d, 
     simulation_steps = sim_steps, 
     coupling_matrix = W_N, 
     neuron_params = neuron_params['D1'], 
-    current = currents['I_D'], 
+    current = currents['D'], 
     vr = vr, 
     vp = vp, 
     dt = dt, 
@@ -342,6 +364,7 @@ PSC_D, AP_D, v_d, u_d, r_d, x_d = d_cells(
     r_eq = r_eq, 
     x_eq = x_eq, 
     I_eq = I_eq, 
+    tm_synapse_eq = tm_synapse_eq,
     synapse_parameters = tm_synapse_params_excitatory, 
     PSC_S = PSC_S, 
     PSC_M = PSC_M, 

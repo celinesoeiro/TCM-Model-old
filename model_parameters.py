@@ -74,7 +74,7 @@ def TCM_model_parameters():
     dbs_on = 5*67                               # value of synaptic fidelity when DBS on
     dbs_off = 0                                 # value of synaptic fidelity when DBS off
     synaptic_fidelity = dbs_off                 # synaptic fidelity
-    simulation_time = 5                        # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
+    simulation_time = 0.5                     # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
     sim_time_ms = (simulation_time + 1)*1000    # Simulation time in ms with 1 extra second to reach the steady state and trash later
     sim_steps = int(np.round(sim_time_ms/dt))   # number of simulation steps
     chop_till = 1*Fs;                           # Cut the first 1 seconds of the simulation
@@ -350,7 +350,7 @@ def TCM_model_parameters():
         }
     
     # Bias currents (Subthreshold CTX and Suprethreshold THM) - Will be used in the neurons
-    Idc=[3.5,3.6,3.5,3.8,0.4,0.6,0.5,0.6]
+    Idc = [3.5, 3.6, 3.8, 0.4, 0.6]
     
     I_S_1 = Idc[0]
     I_S_2 = Idc[1]
@@ -360,10 +360,10 @@ def TCM_model_parameters():
     I_D_2 = Idc[1]
     I_CI_1 = Idc[2]
     I_CI_2 = Idc[3]
-    I_TR_1 = Idc[7]
-    I_TR_2 = Idc[7]
-    I_TC_1 = Idc[5]
-    I_TC_2 = Idc[5]
+    I_TR_1 = Idc[4]
+    I_TR_2 = Idc[4]
+    I_TC_1 = Idc[4]
+    I_TC_2 = Idc[4]
     
     I_S = np.concatenate((I_S_1*np.ones((1, neurons_s_1)), I_S_2*np.ones((1, neurons_s_2))), axis=None)
     I_M = np.concatenate((I_M_1*np.ones((1, neurons_m_1)), I_M_2*np.ones((1, neurons_m_2))), axis=None)
@@ -385,12 +385,12 @@ def TCM_model_parameters():
         'I_CI_2': I_CI_2,
         'I_TR_2': I_TR_2,
         'I_TC_2': I_TC_2,
-        'I_S': I_S,
-        'I_M': I_M,
-        'I_D': I_D,
-        'I_CI': I_CI,
-        'I_TR': I_TR,
-        'I_TC': I_TC,
+        'S': I_S,
+        'M': I_M,
+        'D': I_D,
+        'CI': I_CI,
+        'TR': I_TR,
+        'TC': I_TC,
         }
     
     tm_synapse_params_excitatory = {

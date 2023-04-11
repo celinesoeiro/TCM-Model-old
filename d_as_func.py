@@ -81,6 +81,7 @@ def d_cells(
     r_eq,
     x_eq,
     I_eq,
+    tm_synapse_eq,
     synapse_parameters,
     PSC_S,
     PSC_M,
@@ -96,7 +97,7 @@ def d_cells(
     u = 0*v
     r = np.zeros((3,len(time_vector)))
     x = np.ones((3,len(time_vector)))
-    I = np.zeros((3,len(time_vector)))
+    Is = np.zeros((3,len(time_vector)))
     
     SW_self = coupling_matrix['W_EE_d']
     SW_S = coupling_matrix['W_EE_d_s']
@@ -104,7 +105,8 @@ def d_cells(
     SW_CI = coupling_matrix['W_EI_d_ci']
     SW_TC = coupling_matrix['W_EE_d_tc']
     SW_TR = coupling_matrix['W_EI_d_tr']
- 
+    
+    Isi = []
     Ib = current + Idc*np.ones(number_neurons)
     
     AP = np.zeros((1,len(time_vector)))
@@ -152,22 +154,18 @@ def d_cells(
             U = synapse_parameters['U']
             A = synapse_parameters['distribution']
             tau_s = synapse_parameters['t_s']
-            parameters_length = len(tau_f)
             
-            # Loop trhough the parameters
-            for p in range(1, parameters_length):
-                r_aux = r[p - 1][t - 1]
-                x_aux = x[p - 1][t - 1]
-                I_aux = I[p - 1][t - 1]
-                # Solve EDOs using Euler method
-                r[p][t] = r_aux + dt*r_eq(r_aux, tau_f[p], U[p], AP_aux)
-                x[p][t] = x_aux + dt*x_eq(x_aux, tau_d[p], r_aux, U[p], AP_aux)
-                I[p][t] = I_aux + dt*I_eq(I_aux, tau_s, A[p], U[p], x_aux, r_aux, AP_aux)
+            [rs, xs, Isyn, Ipost] = tm_synapse_eq(r, x, Is, AP_aux, tau_f, tau_d, tau_s, U, A)
+            r = rs
+            x = xs
+            Is = Isyn
             
             if (np.isnan(v[k][t]) or np.isnan(u[k][t]) or np.isinf(v[k][t]) or np.isinf(u[k][t])):
                 print('NaN or inf in t = ', t)
                 break
 
-    PSC_M = np.sum(I, axis=0).reshape(1,len(time_vector))
+            Isi.append(Ipost) 
     
-    return PSC_M, AP, v, u, r, x
+        PSC_D = np.sum(Isi, axis=0).reshape(1,len(time_vector))
+    
+    return PSC_D, Is, AP, v, u, r, x

@@ -128,7 +128,7 @@ SW_CI = W_N['W_EI_s_ci']
 SW_TR = W_N['W_EI_s_tr']
 SW_TC = W_N['W_EE_s_tc']
 
-Ib = neuron_params['Idc'] + Idc_tune*np.ones(n)
+Ib = currents['S'] + Idc_tune*np.ones(n)
 
 # =============================================================================
 # CALCULATING THE NEW VALUE
@@ -197,12 +197,12 @@ for t in range(1, len(time)):
             u[k][t] = u[k][t] + d
         else:
             neuron_contribution = dvdt(v_aux, u_aux, Ib[k])
-            self_feedback = SW_self[k][0]*PSC_self[0][t]/n
-            layer_M = SW_M[k][0]*PSC_M[0][t]/n
-            layer_D = SW_D[k][0]*PSC_D[0][t]/n
-            layer_TR = SW_TR[k][0]*PSC_TR[0][t]/n
-            layer_TC = SW_TC[k][0]*PSC_TC[0][t]/n
-            layer_CI = SW_CI[k][0]*PSC_CI[0][t]/n
+            self_feedback = SW_self[0][k]*PSC_self[0][t]/n
+            layer_M = SW_M[0][k]*PSC_M[0][t]/n
+            layer_D = SW_D[0][k]*PSC_D[0][t]/n
+            layer_TR = SW_TR[0][k]*PSC_TR[0][t]/n
+            layer_TC = SW_TC[0][k]*PSC_TC[0][t]/n
+            layer_CI = SW_CI[0][k]*PSC_CI[0][t]/n
             noise = 0
             
             v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_M + layer_D + layer_TR + layer_TC + layer_CI + noise)
