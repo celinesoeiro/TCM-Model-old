@@ -211,9 +211,6 @@ for t in range(1, len(time)):
             
             v[k][t] = v_aux + dv*dt
             u[k][t] = u_aux + du*dt
-            
-        # print('v = ', v[k][t])
-        # print('u = ', u[k][t])
         
         [rs, xs, Isyn, Ipost] = tm_synapse(r, x, Is, AP, tau_f, tau_d, tau_s, U, A)
         r = rs

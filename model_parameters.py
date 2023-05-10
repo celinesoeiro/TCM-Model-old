@@ -27,8 +27,8 @@ S: Excitatory
 M: Excitatory
 D: Excitatory
 CI: Inhibitory
-TCR: Excitatory
-TRN: Inhibitory
+TC: Excitatory
+TR: Inhibitory
 
 # NEURONS PER STRUCTURE
 Layer S:
@@ -61,22 +61,20 @@ Depressing (D) and Pseudo-Linear (P) synapses with distribution:
 
 import numpy as np
 from utils import pinkNoise
-from random import seed, random
 
 def TCM_model_parameters():
-    seed(1)
-    random_factor = random()
+    random_factor = np.round(np.random.sample(),2)
     
     number_trials = 1                           # number of trials
-    dt = 0.1                                    # time step in ms
+    dt = 0.5                                    # time step in ms
     fs = 1000/dt                                # sampling frequency in Hz
     Fs = int(np.round(fs))                      # 
     dbs_on = 5*67                               # value of synaptic fidelity when DBS on
     dbs_off = 0                                 # value of synaptic fidelity when DBS off
     synaptic_fidelity = dbs_off                 # synaptic fidelity
-    simulation_time = 0.5                     # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
-    sim_time_ms = (simulation_time + 1)*1000    # Simulation time in ms with 1 extra second to reach the steady state and trash later
-    sim_steps = int(np.round(sim_time_ms/dt))   # number of simulation steps
+    simulation_time = 3                         # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
+    T = (simulation_time + 1)*1000              # Simulation time in ms with 1 extra second to reach the steady state and trash later
+    sim_steps = int(np.round(T/dt))             # number of simulation steps
     chop_till = 1*Fs;                           # Cut the first 1 seconds of the simulation
 
     td_synapse = 1                              # Synaptic transmission delay (fixed for all synapses in the TCM)
@@ -101,12 +99,12 @@ def TCM_model_parameters():
         t_vec = np.arange(td_cortex_thalamus + td_synapse + 1, sim_steps)
         
     # Neuron quantities
-    qnt_neurons_s = 100         # Excitatory
-    qnt_neurons_m = 100         # Excitatory
-    qnt_neurons_d = 100         # Excitatory
-    qnt_neurons_ci = 100        # Inhibitory
-    qnt_neurons_tc = 100        # Excitatory
-    qnt_neurons_tr = 40         # Inhibitory
+    qnt_neurons_s = 50         # Excitatory
+    qnt_neurons_m = 50         # Excitatory
+    qnt_neurons_d = 50         # Excitatory
+    qnt_neurons_ci = 50        # Inhibitory
+    qnt_neurons_tc = 50        # Excitatory
+    qnt_neurons_tr = 20         # Inhibitory
     
     neuron_quantities = {
         'S': qnt_neurons_s,                      # Number of neurons in Superficial layer
@@ -184,91 +182,61 @@ def TCM_model_parameters():
     d = [8,    4,      2,   2,  0.05, 2.05]
     I = [2.5, 2.5, 3.2,   0,     0,    0]
     
+    a_S = np.c_[a[0]*np.ones((1, neurons_s_1)), a[1]*np.ones((1, neurons_s_2))]
+    b_S = np.c_[b[0]*np.ones((1, neurons_s_1)), b[1]*np.ones((1, neurons_s_2))]
+    c_S = np.c_[c[0]*np.ones((1, neurons_s_1)), c[1]*np.ones((1, neurons_s_2))] + 15*random_factor**2
+    d_S = np.c_[d[0]*np.ones((1, neurons_s_1)), d[1]*np.ones((1, neurons_s_2))] - 6*random_factor**2
+    
+    a_M = np.c_[a[0]*np.ones((1, neurons_m_1)), a[1]*np.ones((1, neurons_m_2))]
+    b_M = np.c_[b[0]*np.ones((1, neurons_m_1)), b[1]*np.ones((1, neurons_m_2))]
+    c_M = np.c_[c[0]*np.ones((1, neurons_m_1)), c[1]*np.ones((1, neurons_m_2))] + 15*random_factor**2
+    d_M = np.c_[d[0]*np.ones((1, neurons_m_1)), d[1]*np.ones((1, neurons_m_2))] - 6*random_factor**2
+    
+    a_D = np.c_[a[0]*np.ones((1, neurons_d_1)), a[1]*np.ones((1, neurons_d_2))]
+    b_D = np.c_[b[0]*np.ones((1, neurons_d_1)), b[1]*np.ones((1, neurons_d_2))]
+    c_D = np.c_[c[0]*np.ones((1, neurons_d_1)), c[1]*np.ones((1, neurons_d_2))] + 15*random_factor**2
+    d_D = np.c_[d[0]*np.ones((1, neurons_d_1)), d[1]*np.ones((1, neurons_d_2))] - 6*random_factor**2
+        
+    a_CI = np.c_[a[2]*np.ones((1, neurons_ci_1)), a[3]*np.ones((1, neurons_ci_2))] + 0.08*random_factor
+    b_CI = np.c_[b[2]*np.ones((1, neurons_ci_1)), b[3]*np.ones((1, neurons_ci_2))] - 0.05*random_factor
+    c_CI = np.c_[c[2]*np.ones((1, neurons_ci_1)), c[3]*np.ones((1, neurons_ci_2))]
+    d_CI = np.c_[d[2]*np.ones((1, neurons_ci_1)), d[3]*np.ones((1, neurons_ci_2))]
+    
+    a_TR = np.c_[a[5]*np.ones((1, neurons_tr_1)), a[5]*np.ones((1, neurons_tr_2))] + 0.08*random_factor
+    b_TR = np.c_[b[5]*np.ones((1, neurons_tr_1)), b[5]*np.ones((1, neurons_tr_2))] - 0.05*random_factor
+    c_TR = np.c_[c[5]*np.ones((1, neurons_tr_1)), c[5]*np.ones((1, neurons_tr_2))]
+    d_TR = np.c_[d[5]*np.ones((1, neurons_tr_1)), d[5]*np.ones((1, neurons_tr_2))]
+    
+    a_TC = np.c_[a[4]*np.ones((1, neurons_tc_1)), a[4]*np.ones((1, neurons_tc_2))]
+    b_TC = np.c_[b[4]*np.ones((1, neurons_tc_1)), b[4]*np.ones((1, neurons_tc_2))]
+    c_TC = np.c_[c[4]*np.ones((1, neurons_tc_1)), c[4]*np.ones((1, neurons_tc_2))] + 15*random_factor**2
+    d_TC = np.c_[d[4]*np.ones((1, neurons_tc_1)), d[4]*np.ones((1, neurons_tc_2))] - 6*random_factor**2
+        
     neuron_params = {
-        'S1': {
-            'a': a[0],
-            'b': b[0],
-            'c': c[0],
-            'd': d[0],
-            'I': I[0],
-            },
-        'S2': {
-            'a': a[1],
-            'b': b[1],
-            'c': c[1],
-            'd': d[1],
-            'I': I[1],
-            },
-        'M1': {
-            'a': a[0],
-            'b': b[0],
-            'c': c[0],
-            'd': d[0],
-            'I': I[0],
-            },
-        'M2': {
-            'a': a[1],
-            'b': b[1],
-            'c': c[1],
-            'd': d[1],
-            'I': I[1],
-            },
-        'D1': {
-            'a': a[0],
-            'b': b[0],
-            'c': c[0],
-            'd': d[0],
-            'I': I[0],
-            },
-        'D2': {
-            'a': a[1],
-            'b': b[1],
-            'c': c[1],
-            'd': d[1],
-            'I': I[1],
-            },
-        'CI1': {
-            'a': a[2],
-            'b': b[2],
-            'c': c[2],
-            'd': d[2],
-            'I': I[2],
-            },
-        'CI2': {
-            'a': a[3],
-            'b': b[3],
-            'c': c[3],
-            'd': d[3],
-            'I': I[3],
-            },
-        'TR1': {
-            'a': a[5],
-            'b': b[5],
-            'c': c[5],
-            'd': d[5],
-            'I': I[5],
-            },
-        'TR2': {
-            'a': a[5],
-            'b': b[5],
-            'c': c[5],
-            'd': d[5],
-            'I': I[5],
-            },
-        'TC1': {
-            'a': a[4],
-            'b': b[4],
-            'c': c[4],
-            'd': d[4],
-            'I': I[4],
-            },
-        'TC2': {
-            'a': a[4],
-            'b': b[4],
-            'c': c[4],
-            'd': d[4],
-            'I': I[4],
-            },
+        'a_S': a_S,
+        'b_S': b_S,
+        'c_S': c_S,
+        'd_S': d_S,
+        'a_M': a_M,
+        'b_M': b_M, 
+        'c_M': c_M,
+        'd_M': d_M,
+        'a_D': a_D,
+        'b_D': b_D,
+        'c_D': c_D,
+        'd_D': d_D,
+        'a_CI': a_CI,
+        'b_CI': b_CI,
+        'c_CI': c_CI,
+        'd_CI': d_CI,
+        'a_TR': a_TR,
+        'b_TR': b_TR,
+        'c_TR': c_TR,
+        'd_TR': d_TR,
+        'a_TC': a_TC,
+        'b_TC': b_TC,
+        'c_TC': c_TC,
+        'd_TC': d_TC,
         }
 
     model_global_parameters = {
@@ -276,9 +244,9 @@ def TCM_model_parameters():
         'synaptic_fidelity': synaptic_fidelity, # DBS off - To turn DBS on set this value to 5*67
         'hyperdirect_neurons': hyperdirect_neurons, # Percentage of PNs affected in D by DBS
         'simulation_time': simulation_time, # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
-        'simulation_time_ms': sim_time_ms,
+        'simulation_time_ms': T,
         'dt': dt, # time step
-        'sampling_frequency': fs, # in Hz
+        'sampling_frequency': Fs, # in Hz
         'simulation_steps': sim_steps,
         'chop_till': chop_till, # cut the first 1s of simulation
         'time_delay_between_layers': td_layers,
@@ -294,39 +262,39 @@ def TCM_model_parameters():
         'Idc_tune': Idc_tune,
         }
     
-    # Noise terms
-    w_g_n_add = 1.5 # additive white Gaussian noise strength
-    w_g_n_thr = 0.5 # additive white Gaussian noise strength
-    cn = 1
-    p_add = 0.0 # additive pink noise strength
+    # =============================================================================
+    #     Noise terms
+    # =============================================================================
+    white_gaussian_add = 1.5; cn = 1 # additive white Gaussian noise strength
+    white_gaussian_thr = 0.5 # threshold white Gaussian noise strength
+
+    random_S = np.random.rand(qnt_neurons_s, Fs)
+    random_M = np.random.rand(qnt_neurons_m, Fs)
+    random_D = np.random.rand(qnt_neurons_d, Fs)
+    random_CI = np.random.rand(qnt_neurons_ci, Fs)
+    random_TR = np.random.rand(qnt_neurons_tr, Fs)
+    random_TC = np.random.rand(qnt_neurons_tc, Fs)
     
-    kisi_S_E = [w_g_n_add*np.random.rand(qnt_neurons_s, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_s, sim_steps-Fs)]
-    kisi_M_E = [w_g_n_add*np.random.rand(qnt_neurons_m, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_m, sim_steps-Fs)]
-    kisi_D_E = [w_g_n_add*np.random.rand(qnt_neurons_d, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_d, sim_steps-Fs)]
-    kisi_CI_I = [w_g_n_add*np.random.rand(qnt_neurons_ci, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_ci, sim_steps-Fs)]
-    kisi_TC_E = [w_g_n_add*np.random.rand(qnt_neurons_tc, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_tc, sim_steps-Fs)]
-    kisi_TR_I = [w_g_n_add*np.random.rand(qnt_neurons_tr, Fs), w_g_n_add*cn*np.random.rand(qnt_neurons_tr, sim_steps-Fs)]    
+    random_S_diff = np.random.rand(qnt_neurons_s, sim_steps - Fs)
+    random_M_diff = np.random.rand(qnt_neurons_m, sim_steps - Fs)
+    random_D_diff = np.random.rand(qnt_neurons_d, sim_steps - Fs)
+    random_CI_diff = np.random.rand(qnt_neurons_ci, sim_steps - Fs)
+    random_TR_diff = np.random.rand(qnt_neurons_tr, sim_steps - Fs)
+    random_TC_diff = np.random.rand(qnt_neurons_tc, sim_steps - Fs)
+
+    zeta_S_E = white_gaussian_thr*np.c_[ random_S, cn*random_S_diff ]
+    zeta_M_E = white_gaussian_thr*np.c_[ random_M, cn*random_M_diff ]    
+    zeta_D_E = white_gaussian_thr*np.c_[random_D, cn*random_D_diff ]
+    zeta_CI_I = white_gaussian_thr*np.c_[random_CI, cn*random_CI_diff ]
+    zeta_TR_I = white_gaussian_thr*np.c_[random_TR, cn*random_TR_diff ]
+    zeta_TC_E = white_gaussian_thr*np.c_[random_TC, cn*random_TC_diff ]
     
-    zeta_S_E = [w_g_n_thr*np.random.rand(qnt_neurons_s, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_s, sim_steps-Fs)]
-    zeta_M_E = [w_g_n_thr*np.random.rand(qnt_neurons_m, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_m, sim_steps-Fs)]
-    zeta_D_E = [w_g_n_thr*np.random.rand(qnt_neurons_d, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_d, sim_steps-Fs)]
-    zeta_CI_I = [w_g_n_thr*np.random.rand(qnt_neurons_ci, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_ci, sim_steps-Fs)]
-    zeta_TC_E = [w_g_n_thr*np.random.rand(qnt_neurons_tc, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_tc, sim_steps-Fs)]
-    zeta_TR_I = [w_g_n_thr*np.random.rand(qnt_neurons_tr, Fs), w_g_n_thr*cn*np.random.rand(qnt_neurons_tr, sim_steps-Fs)]   
-    
-    pn_s_1 = pinkNoise(qnt_neurons_s, Fs);  pn_s_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
-    pn_m_1 = pinkNoise(qnt_neurons_s, Fs);  pn_m_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
-    pn_d_1 = pinkNoise(qnt_neurons_s, Fs);  pn_d_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
-    pn_ci_1 = pinkNoise(qnt_neurons_s, Fs);  pn_ci_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
-    pn_tc_1 = pinkNoise(qnt_neurons_s, Fs);  pn_tc_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
-    pn_tr_1 = pinkNoise(qnt_neurons_s, Fs);  pn_tr_2 = pinkNoise(qnt_neurons_s, sim_steps-Fs);
-    
-    pn_S_E = [p_add*pn_s_1, p_add*cn*pn_s_2]
-    pn_M_E = [p_add*pn_m_1, p_add*cn*pn_m_2]
-    pn_D_E = [p_add*pn_d_1, p_add*cn*pn_d_2]
-    pn_CI_I = [p_add*pn_ci_1, p_add*cn*pn_ci_2]
-    pn_TC_E = [p_add*pn_tc_1, p_add*cn*pn_tc_2]
-    pn_TR_I = [p_add*pn_tr_1, p_add*cn*pn_tr_2]
+    kisi_S_E = white_gaussian_add*np.c_[ random_S, cn*random_S_diff ]
+    kisi_M_E = white_gaussian_add*np.c_[ random_M, cn*random_M_diff ]    
+    kisi_D_E = white_gaussian_add*np.c_[random_D, cn*random_D_diff ]
+    kisi_CI_I = white_gaussian_add*np.c_[ random_CI, cn*random_CI_diff ]
+    kisi_TC_E = white_gaussian_add*np.c_[ random_TC, cn*random_TC_diff ]
+    kisi_TR_I = white_gaussian_add*np.c_[ random_TR, cn*random_TR_diff ]
     
     noise = {
         'kisi_S_E': kisi_S_E,
@@ -341,16 +309,10 @@ def TCM_model_parameters():
         'zeta_CI_I': zeta_CI_I,
         'zeta_TC_E': zeta_TC_E,
         'zeta_TR_I': zeta_TR_I,
-        'pn_S_E': pn_S_E,
-        'pn_M_E': pn_M_E,
-        'pn_D_E': pn_D_E,
-        'pn_CI_I': pn_CI_I,
-        'pn_TC_E': pn_TC_E,
-        'pn_TR_I': pn_TR_I,
         }
     
     # Bias currents (Subthreshold CTX and Suprethreshold THM) - Will be used in the neurons
-    Idc = [3.5, 3.6, 3.8, 0.4, 0.6]
+    Idc = [3.6, 3.7, 3.9, 0.5, 0.7]
     
     I_S_1 = Idc[0]
     I_S_2 = Idc[1]
@@ -373,18 +335,6 @@ def TCM_model_parameters():
     I_TC = np.concatenate((I_TC_1*np.ones((1, neurons_tc_1)), I_TC_2*np.ones((1, neurons_tc_2))), axis=None)
     
     currents_per_structure = {
-        'I_S_1': I_S_1,
-        'I_M_1': I_M_1,
-        'I_D_1': I_D_1,
-        'I_CI_1': I_CI_1,
-        'I_TR_1': I_TR_1,
-        'I_TC_1': I_TC_1,
-        'I_S_2': I_S_2,
-        'I_M_2': I_M_2,
-        'I_D_2': I_D_2,
-        'I_CI_2': I_CI_2,
-        'I_TR_2': I_TR_2,
-        'I_TC_2': I_TC_2,
         'S': I_S,
         'M': I_M,
         'D': I_D,
@@ -435,12 +385,12 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     # =============================================================================
     #     These are to restrict the normalized distribution variance or deviation from the mean
     # =============================================================================
-    r_s = initial + interval*np.random.rand(1, n_s)
-    r_m = initial + interval*np.random.rand(1, n_m)
-    r_d = initial + interval*np.random.rand(1, n_d)
-    r_ci = initial + interval*np.random.rand(1, n_ci)
-    r_tr = initial + interval*np.random.rand(1, n_tr)
-    r_tc = initial + interval*np.random.rand(1, n_tc)
+    r_s = initial + interval*np.random.rand(n_s, 1)
+    r_m = initial + interval*np.random.rand(n_m, 1)
+    r_d = initial + interval*np.random.rand(n_d, 1)
+    r_ci = initial + interval*np.random.rand(n_ci, 1)
+    r_tr = initial + interval*np.random.rand(n_tr, 1)
+    r_tc = initial + interval*np.random.rand(n_tc, 1)
     
     # =============================================================================
     #     COUPLING STRENGTHs within each structure (The same in Normal and PD)
@@ -454,7 +404,7 @@ def coupling_matrix_normal(facilitating_factor, n_s, n_m, n_d, n_ci, n_tc, n_tr)
     ## Layer D (was -1e-2 for IEEE paper)
     aee_d = -1e1/facilitating_factor;            W_EE_d = aee_d*r_d;
     ## INs 
-    aii_INs = -5e2/facilitating_factor;          W_II_ci = aii_INs*r_ci;
+    aii_ci = -5e2/facilitating_factor;          W_II_ci = aii_ci*r_ci;
     ## Reticular cells
     aii_tr = -5e1/facilitating_factor;          W_II_tr = aii_tr*r_tr;
     ## Relay cells
