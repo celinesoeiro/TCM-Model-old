@@ -15,6 +15,9 @@ sns.set()
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 
+from model_functions import izhikevich_dvdt, izhikevich_dudt
+from model_functions import tm_synapse_eq, tm_synapse_dbs_eq, DBS_delta
+
 # from tr_as_func import tr_cells
 # from tc_as_func import tc_cells
 # from ci_as_func import ci_cells
@@ -70,7 +73,7 @@ n_TC = neuron_quantities['TC']
 n_TR_affected = neurons_connected_with_hyperdirect_neurons['TR']
 
 # =============================================================================
-# SYNAPTIC WEIGHTS
+# SYNAPTIC WEIGHTS AND PARAMETERS
 # =============================================================================
 # Weight Matrix Normal Condition
 W_N = coupling_matrix_normal(    
@@ -96,6 +99,12 @@ W_PD = coupling_matrix_PD(
 x_TR = synapse_initial_values['x_TR']
 r_TR = synapse_initial_values['r_TR']
 I_syn_TR = synapse_initial_values['I_syn_TR']
+
+tau_f = tm_synapse_params_inhibitory['t_f']
+tau_d = tm_synapse_params_inhibitory['t_d']
+U = tm_synapse_params_inhibitory['U']
+A = tm_synapse_params_inhibitory['distribution']
+tau_s = tm_synapse_params_inhibitory['t_s']
 
 # =============================================================================
 # NOISE TERMS
@@ -268,87 +277,6 @@ d_TR = neuron_params['d_TR']
 # b_TC = neuron_params['b_TC']
 # c_TC = neuron_params['c_TC']
 # d_TC = neuron_params['d_TC']
-
-# =============================================================================
-# EQUATIONS
-# =============================================================================
-
-# Izhikevich neuron equations
-def dvdt(v, u, I):
-    return 0.04*v**2 + 5*v + 140 - u + I
-
-def dudt(v, u, a, b):
-    return a*(b*v - u)
-
-# TM synapse
-def r_eq(r, t_f, U, fired):
-    # fraction of available neurotransmitter resources ready to be used
-    return -(r/t_f) + U*(1 - r)*fired
-
-def x_eq(x, t_d, r, U, fired):
-    # fraction of the neurotransmitter resources that remain available after synaptic transmission
-    return (1 - x)/t_d - (r + U*(1 - r))*x*fired
-    
-def I_eq(I, t_s, A, U, x, r, fired):
-    # post-synaptic current
-    return -(I/t_s) + A*(r + U*(1 - r))*x*fired
-
-def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A):
-    for p in range(1, 3):
-        r_aux = r[p - 1]
-        x_aux = x[p - 1]
-        Is_aux = Is[p - 1]
-        # Solve EDOs using Euler method
-        r[p] = r_aux + dt*r_eq(r_aux, tau_f[p - 1], U[p - 1], AP)
-        x[p] = x_aux + dt*x_eq(x_aux, tau_d[p - 1], r_aux, U[p - 1], AP)
-        Is[p] = Is_aux + dt*I_eq(Is_aux, tau_s, A[p - 1], U[p - 1], x_aux, r_aux, AP)
-        
-    Ipost = np.sum(Is)
-        
-    return r, x, Is, Ipost
-
-# DBS
-def DBS_delta(f_dbs, dbs_duration, dev, sim_steps, Fs, dbs_amplitude, cut):
-    # This is to define Dirac delta pulses, no membrane current but straight dirac delta pulses that reach PNs:
-    T_dbs = Fs/f_dbs
-    dbs = np.arange(0, dbs_duration, np.round(T_dbs))
-    I_dbs_full = np.zeros((1, dbs_duration))
-    
-    for i in range(len(dbs)):
-        I_dbs_full[0][i] = dbs_amplitude 
-    
-    if (dev == 1):
-        dbs_I = I_dbs_full
-    else:
-        dbs_I = [np.zeros((1, cut)), np.zeros((1, (sim_steps - cut)/dev)), I_dbs_full, np.zeros((1, (sim_steps - cut)/dev))]
-        
-    return dbs_I
-
-def tm_synapse_dbs_eq(dbs, t_delay, dt):
-    t_vec = t_delay*np.ones((1, sim_steps))
-    
-    r = np.zeros((3, sim_steps))
-    x = np.ones((3, sim_steps))
-    Is = np.zeros((3, sim_steps))
-    
-    tau_f = tm_synapse_params_excitatory['t_f']
-    tau_d = tm_synapse_params_excitatory['t_d']
-    U = tm_synapse_params_excitatory['U']
-    A = tm_synapse_params_excitatory['distribution']
-    tau_s = tm_synapse_params_excitatory['t_s']
-    
-    for p in range(1,3):
-        for q in range(1, len(t_vec)):
-            r_aux = r[q - 1]
-            x_aux = x[q - 1]
-            Is_aux = Is[q - 1]
-            r[p][q] = r_aux + dt*r_eq(r_aux, tau_f[p - 1], U[p - 1], dbs[q - t_delay])
-            x[p][q] = x_aux + dt*x_eq(x_aux, tau_d[p - 1], r_aux, U[p - 1], dbs[q - t_delay])
-            Is[p][q] = Is_aux + dt*I_eq(Is_aux, tau_s, A[p - 1], U[p - 1], x_aux, r_aux, dbs[q - t_delay])
-    
-    dbs_I = np.sum(Is, axis = 0)
-    
-    return dbs_I, t_vec
     
 # =============================================================================
 # DBS
@@ -366,14 +294,34 @@ if (dev == 1):
     dbs_duration = sim_steps
     dbs_amplitude = 0.02
     
-    I_dbs_pre = DBS_delta(f_dbs, dbs_duration, dev, sim_steps, Fs, dbs_amplitude, chop_till)
+    I_dbs_pre = DBS_delta(f_dbs = f_dbs, 
+                          dbs_duration = dbs_duration, 
+                          dev = dev, 
+                          sim_steps = sim_steps, 
+                          Fs=Fs, 
+                          dbs_amplitude=dbs_amplitude, 
+                          cut=chop_till)
 else:
     dbs_duration = (sim_steps - chop_till)/dev
     dbs_amplitude = 1
     
-    I_dbs_pre = DBS_delta(f_dbs, dbs_duration, dev, sim_steps, Fs, dbs_amplitude, chop_till)
-    
-I_dbs_post = tm_synapse_dbs_eq(I_dbs_pre, td_syn, dt)
+    I_dbs_pre = DBS_delta(f_dbs = f_dbs, 
+                          dbs_duration = dbs_duration, 
+                          dev = dev, 
+                          sim_steps = sim_steps, 
+                          Fs=Fs, 
+                          dbs_amplitude=dbs_amplitude, 
+                          cut=chop_till)
+
+I_dbs_post = tm_synapse_dbs_eq(dbs = I_dbs_pre, 
+                               t_delay = td_syn, 
+                               dt = dt,
+                               tau_f = tau_f,
+                               tau_d = tau_d,
+                               U = U,
+                               A = A,
+                               tau_s = tau_s,
+                               sim_steps = sim_steps)
 
 I_dbs[0][:] = I_dbs_pre
 I_dbs[1][:] = I_dbs_post[0]
@@ -389,9 +337,8 @@ fired = np.zeros((n_TR,sim_steps))
 
 for t in range(1, sim_steps):
     print("----- Thalamic Reticular Nucleus (TR) - t = %d" %t)
-    I_dbss = 0
-    AP_aux = 0
-    for k in range(0, n_TR):       
+    for k in range(0, n_TR):   
+        AP_aux = 0
         v_aux = v_TR[k][t - 1]
         u_aux = u_TR[k][t - 1]
         I_aux = I_TR[k]
@@ -401,41 +348,41 @@ for t in range(1, sim_steps):
             I_dbss = synaptic_fidelity*I_dbs[1][t - 1]
         else:
             I_dbss = 0
-
+            
+        neuron_contribution = izhikevich_dvdt(v = v_aux, u = u_aux, I = I_aux)
+        self_feedback = W_TR_self[k][0]*I_PSC_TR[t - td_wl - td_syn][0]/n_TR
+        layer_S = W_TR_S[k][0]*I_PSC_S[t - td_ct - td_syn][0]/n_TR
+        layer_M = W_TR_M[k][0]*I_PSC_M[t - td_ct - td_syn][0]/n_TR
+        layer_D = W_TR_D[k][0]*I_PSC_D[t - td_ct - td_syn][0]/n_TR
+        layer_TC = W_TR_TC[k][0]*I_PSC_TC[t - td_bl - td_syn][0]/n_TR
+        layer_CI = W_TR_CI[k][0]*I_PSC_CI[t - td_ct - td_syn][0]/n_TR
+        noise = I_dbss + kisi_TR_I[k][t - 1]
+        
+        v_TR[k][t] = v_aux + dt*(
+            neuron_contribution + 
+            self_feedback + 
+            layer_S + layer_M + layer_D + layer_TC + layer_CI + 
+            noise
+            )
+        u_TR[k][t] = u_aux + dt*izhikevich_dudt(v = v_aux, u = u_aux, a = a_TR[0][k], b = b_TR[0][k])
+        
         if (v_aux >= (vp + white_gausian_aux)):
             AP_aux = 1
             v_aux = vp + white_gausian_aux
             v_TR[k][t] = c_TR[0][k]
             u_TR[k][t] = u_aux + d_TR[0][k]
             fired[k][t] = 1
-            print('fired')
-        else:
-            AP_aux = 0
-            neuron_contribution = dvdt(v_aux, u_aux, I_aux)
-            self_feedback = W_TR_self[k][0]*I_PSC_TR[t - td_wl - td_syn][0]/n_TR
-            layer_S = W_TR_S[k][0]*I_PSC_S[t - td_ct - td_syn][0]/n_TR
-            layer_M = W_TR_M[k][0]*I_PSC_M[t - td_ct - td_syn][0]/n_TR
-            layer_D = W_TR_D[k][0]*I_PSC_D[t - td_ct - td_syn][0]/n_TR
-            layer_TC = W_TR_TC[k][0]*I_PSC_TC[t - td_bl - td_syn][0]/n_TR
-            layer_CI = W_TR_CI[k][0]*I_PSC_CI[t - td_ct - td_syn][0]/n_TR
-            noise = I_dbss + kisi_TR_I[k][t - 1]
-            
-            v_TR[k][t] = v_aux + dt*(
-                neuron_contribution + 
-                self_feedback + 
-                layer_S + layer_M + layer_D + layer_TC + layer_CI + 
-                noise
-                )
-            u_TR[k][t] = u_aux + dt*dudt(v_aux, u_aux, a_TR[0][k], b_TR[0][k])
-            
-        # TM parameters
-        tau_f = tm_synapse_params_inhibitory['t_f']
-        tau_d = tm_synapse_params_inhibitory['t_d']
-        U = tm_synapse_params_inhibitory['U']
-        A = tm_synapse_params_inhibitory['distribution']
-        tau_s = tm_synapse_params_inhibitory['t_s']
         
-        [rs, xs, Isyn, Ipost] = tm_synapse_eq(r_TR, x_TR, I_syn_TR, AP_aux, tau_f, tau_d, tau_s, U, A)
+        [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r_TR, 
+                                              x = x_TR, 
+                                              Is = I_syn_TR, 
+                                              AP = AP_aux, 
+                                              tau_f = tau_f, 
+                                              tau_d = tau_d, 
+                                              tau_s = tau_s, 
+                                              U = U, 
+                                              A = A,
+                                              dt = dt)
         r_TR = rs
         x_TR = xs
         I_syn_TR = Isyn
