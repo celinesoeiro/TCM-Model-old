@@ -5,6 +5,7 @@ Created on Sat Mar 18 14:59:45 2023
 @author: Avell
 """
 
+import math
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -17,6 +18,8 @@ from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupl
 
 from model_functions import izhikevich_dvdt, izhikevich_dudt
 from model_functions import tm_synapse_eq, tm_synapse_dbs_eq, DBS_delta
+
+from model_plots import plot_heat_map, plot_voltages
 
 # from tr_as_func import tr_cells
 # from tc_as_func import tc_cells
@@ -158,41 +161,10 @@ Z_PD_norm = Z_PD/np.linalg.norm(Z_PD)
 # =============================================================================
 print("-- Printing the coupling matrixes")
 
-fig, (ax1, ax2) = plt.subplots(1,2, figsize=(17,7))
-
-fig.subplots_adjust(wspace=0.3)
-fig.suptitle('Matriz de conexão')
-
 CM_Normal = pd.DataFrame(Z_N_norm, columns=['S', 'M', 'D', 'CI', 'TC', 'TR'])
 CM_PD = pd.DataFrame(Z_PD_norm, columns=['S', 'M', 'D', 'CI', 'TC', 'TR'])
 
-sns.heatmap(CM_Normal, 
-            vmin=-1, vmax=1, 
-            yticklabels=['S', 'M', 'D', 'CI', 'TC', 'TR'], 
-            annot=True, 
-            fmt=".3f", 
-            linewidth=.75,
-            cmap=sns.color_palette("coolwarm", as_cmap=True),
-            ax=ax1,
-            )
-ax1.set(xlabel="", ylabel="")
-ax1.xaxis.tick_top()
-ax1.set_title('Condição normal')
-
-sns.heatmap(CM_PD, 
-            vmin=-1, vmax=1, 
-            yticklabels=['S', 'M', 'D', 'CI', 'TC', 'TR'], 
-            annot=True, 
-            fmt=".3f", 
-            linewidth=.75,
-            cmap=sns.color_palette("coolwarm", as_cmap=True),
-            ax=ax2,
-            )
-ax2.set(xlabel="", ylabel="")
-ax2.xaxis.tick_top()
-ax2.set_title('Condição parkinsoniana')
-
-plt.show()
+plot_heat_map(matrix_normal = CM_Normal, matrix_PD = CM_PD)
 
 # =============================================================================
 # WEIGHTS
@@ -216,12 +188,12 @@ I_TR = currents['TR']
 I_TC = currents['TC']
 
 # Post Synaptic Currents
-I_PSC_S = np.zeros((sim_steps,1))
-I_PSC_M = np.zeros((sim_steps,1))
-I_PSC_D = np.zeros((sim_steps,1))
-I_PSC_TC = np.zeros((sim_steps,1))
-I_PSC_TR = np.zeros((sim_steps,1))
-I_PSC_CI = np.zeros((sim_steps,1))
+I_PSC_S = np.zeros((1, sim_steps))
+I_PSC_M = np.zeros((1, sim_steps))
+I_PSC_D = np.zeros((1, sim_steps))
+I_PSC_TC = np.zeros((1, sim_steps))
+I_PSC_TR = np.zeros((1, sim_steps))
+I_PSC_CI = np.zeros((1, sim_steps))
 
 # =============================================================================
 # VOLTAGES
@@ -350,12 +322,12 @@ for t in range(1, sim_steps):
             I_dbss = 0
             
         neuron_contribution = izhikevich_dvdt(v = v_aux, u = u_aux, I = I_aux)
-        self_feedback = W_TR_self[k][0]*I_PSC_TR[t - td_wl - td_syn][0]/n_TR
-        layer_S = W_TR_S[k][0]*I_PSC_S[t - td_ct - td_syn][0]/n_TR
-        layer_M = W_TR_M[k][0]*I_PSC_M[t - td_ct - td_syn][0]/n_TR
-        layer_D = W_TR_D[k][0]*I_PSC_D[t - td_ct - td_syn][0]/n_TR
-        layer_TC = W_TR_TC[k][0]*I_PSC_TC[t - td_bl - td_syn][0]/n_TR
-        layer_CI = W_TR_CI[k][0]*I_PSC_CI[t - td_ct - td_syn][0]/n_TR
+        self_feedback = W_TR_self[k][0]*I_PSC_TR[0][t - td_wl - td_syn]/n_TR
+        layer_S = W_TR_S[k][0]*I_PSC_S[0][t - td_ct - td_syn]/n_TR
+        layer_M = W_TR_M[k][0]*I_PSC_M[0][t - td_ct - td_syn]/n_TR
+        layer_D = W_TR_D[k][0]*I_PSC_D[0][t - td_ct - td_syn]/n_TR
+        layer_TC = W_TR_TC[k][0]*I_PSC_TC[0][t - td_bl - td_syn]/n_TR
+        layer_CI = W_TR_CI[k][0]*I_PSC_CI[0][t - td_ct - td_syn]/n_TR
         noise = I_dbss + kisi_TR_I[k][t - 1]
         
         v_TR[k][t] = v_aux + dt*(
@@ -389,9 +361,18 @@ for t in range(1, sim_steps):
             
         Isi[0][k] = Ipost 
         
-    I_PSC_TR[t][0] = np.sum(Ipost)
+    I_PSC_TR[0][t] = np.sum(Ipost)
     
     gc.collect()
+    
+# =============================================================================
+# CLEANING THE DATA
+# =============================================================================
+plot_voltages(n_neurons = n_TR, voltage = v_TR, chop_till = chop_till, sim_steps = sim_steps)
+
+v_TR_clean = np.transpose(v_TR[:,chop_till:sim_steps])
+I_PSC_TR_clean = I_PSC_TR[:, chop_till:sim_steps]
+
 
 # gc.collect()
     
