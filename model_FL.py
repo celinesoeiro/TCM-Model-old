@@ -5,10 +5,8 @@ Created on Sat Mar 18 14:59:45 2023
 @author: Avell
 """
 
-import math
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 import seaborn as sns
 import gc # Garbage Collector
 
@@ -21,7 +19,7 @@ from model_functions import tm_synapse_eq, tm_synapse_dbs_eq, DBS_delta
 
 from model_plots import plot_heat_map, plot_voltages
 
-# from tr_as_func import tr_cells
+from tr_as_func import tr_cells
 # from tc_as_func import tc_cells
 # from ci_as_func import ci_cells
 # from s_as_func import s_cells
@@ -103,11 +101,17 @@ x_TR = synapse_initial_values['x_TR']
 r_TR = synapse_initial_values['r_TR']
 I_syn_TR = synapse_initial_values['I_syn_TR']
 
-tau_f = tm_synapse_params_inhibitory['t_f']
-tau_d = tm_synapse_params_inhibitory['t_d']
-U = tm_synapse_params_inhibitory['U']
-A = tm_synapse_params_inhibitory['distribution']
-tau_s = tm_synapse_params_inhibitory['t_s']
+tau_f_I = tm_synapse_params_inhibitory['t_f']
+tau_d_I = tm_synapse_params_inhibitory['t_d']
+tau_s_I = tm_synapse_params_inhibitory['t_s']
+U_I = tm_synapse_params_inhibitory['U']
+A_I = tm_synapse_params_inhibitory['distribution']
+
+tau_f_E = tm_synapse_params_excitatory['t_f']
+tau_d_E = tm_synapse_params_excitatory['t_d']
+tau_s_E = tm_synapse_params_excitatory['t_s']
+U_E = tm_synapse_params_excitatory['U']
+A_E = tm_synapse_params_excitatory['distribution']
 
 # =============================================================================
 # NOISE TERMS
@@ -202,8 +206,8 @@ I_PSC_CI = np.zeros((1, sim_steps))
 v_TR = vr*np.ones((n_TR, sim_steps))
 u_TR = 0*v_TR
 
-# v_TC = vr*np.ones((n_TC, sim_steps))
-# u_TC = 0*v_TC
+v_TC = vr*np.ones((n_TC, sim_steps))
+u_TC = 0*v_TC
 
 # v_CI = vr*np.ones((n_CI, sim_steps))
 # u_CI = 0*v_CI
@@ -245,10 +249,10 @@ b_TR = neuron_params['b_TR']
 c_TR = neuron_params['c_TR']
 d_TR = neuron_params['d_TR']
 
-# a_TC = neuron_params['a_TC']
-# b_TC = neuron_params['b_TC']
-# c_TC = neuron_params['c_TC']
-# d_TC = neuron_params['d_TC']
+a_TC = neuron_params['a_TC']
+b_TC = neuron_params['b_TC']
+c_TC = neuron_params['c_TC']
+d_TC = neuron_params['d_TC']
     
 # =============================================================================
 # DBS
@@ -288,11 +292,11 @@ else:
 I_dbs_post = tm_synapse_dbs_eq(dbs = I_dbs_pre, 
                                t_delay = td_syn, 
                                dt = dt,
-                               tau_f = tau_f,
-                               tau_d = tau_d,
-                               U = U,
-                               A = A,
-                               tau_s = tau_s,
+                               tau_f = tau_f_E,
+                               tau_d = tau_d_E,
+                               U = U_E,
+                               A = A_E,
+                               tau_s = tau_s_E,
                                sim_steps = sim_steps)
 
 I_dbs[0][:] = I_dbs_pre
@@ -308,58 +312,103 @@ Isi = np.zeros((1,n_TR))
 fired = np.zeros((n_TR,sim_steps))
 
 for t in range(1, sim_steps):
-    print("----- Thalamic Reticular Nucleus (TR) - t = %d" %t)
-    for k in range(0, n_TR):   
-        AP_aux = 0
-        v_aux = v_TR[k][t - 1]
-        u_aux = u_TR[k][t - 1]
-        I_aux = I_TR[k]
-        white_gausian_aux = zeta_TR_I[k][t - 1]
+    [Ipost, r, x, Is, I_PSC_TR, voltage, u] = tr_cells(
+        t = t,
+        n_neurons = n_TR, 
+        sim_steps = sim_steps,
+        voltage = v_TR,
+        u = u_TR,
+        current = I_TR, 
+        a_wg_noise = zeta_TR_I,
+        t_wg_noise = kisi_TR_I,
+        n_affected = n_TR_affected,
+        synaptic_fidelity = synaptic_fidelity,
+        I_dbs = I_dbs,
+        W_TR_self = W_TR_self,
+        W_TR_S = W_TR_S,
+        W_TR_M = W_TR_M,
+        W_TR_D = W_TR_D,
+        W_TR_TC = W_TR_TC,
+        W_TR_CI = W_TR_CI,
+        I_PSC_S = I_PSC_S,
+        I_PSC_M = I_PSC_M,
+        I_PSC_D = I_PSC_D,
+        I_PSC_TC = I_PSC_TC,
+        I_PSC_TR = I_PSC_TR,
+        I_PSC_CI = I_PSC_CI,
+        td_wl = td_wl,
+        td_syn = td_syn,
+        td_ct = td_ct,
+        td_bl = td_bl,
+        a = a_TR,
+        b = b_TR,
+        c = c_TR,
+        d = d_TR,
+        r = r_TR,
+        x = x_TR,
+        Is = I_syn_TR,
+        tau_f = tau_f_I,
+        tau_d = tau_d_I,
+        tau_s = tau_s_I,
+        U = U_I,
+        A = A_I,
+        vr = vr, 
+        vp = vp,
+        dt = dt,
+    )
+    
+    # print("----- Thalamic Reticular Nucleus (TR) - t = %d" %t)
+    # for k in range(0, n_TR):   
+    #     AP_aux = 0
+    #     v_aux = v_TR[k][t - 1]
+    #     u_aux = u_TR[k][t - 1]
+    #     I_aux = I_TR[k]
+    #     white_gausian_aux = zeta_TR_I[k][t - 1]
         
-        if (k >= 1 and k <= n_TR_affected):
-            I_dbss = synaptic_fidelity*I_dbs[1][t - 1]
-        else:
-            I_dbss = 0
+    #     if (k >= 1 and k <= n_TR_affected):
+    #         I_dbss = synaptic_fidelity*I_dbs[1][t - 1]
+    #     else:
+    #         I_dbss = 0
             
-        neuron_contribution = izhikevich_dvdt(v = v_aux, u = u_aux, I = I_aux)
-        self_feedback = W_TR_self[k][0]*I_PSC_TR[0][t - td_wl - td_syn]/n_TR
-        layer_S = W_TR_S[k][0]*I_PSC_S[0][t - td_ct - td_syn]/n_TR
-        layer_M = W_TR_M[k][0]*I_PSC_M[0][t - td_ct - td_syn]/n_TR
-        layer_D = W_TR_D[k][0]*I_PSC_D[0][t - td_ct - td_syn]/n_TR
-        layer_TC = W_TR_TC[k][0]*I_PSC_TC[0][t - td_bl - td_syn]/n_TR
-        layer_CI = W_TR_CI[k][0]*I_PSC_CI[0][t - td_ct - td_syn]/n_TR
-        noise = I_dbss + kisi_TR_I[k][t - 1]
+    #     neuron_contribution = izhikevich_dvdt(v = v_aux, u = u_aux, I = I_aux)
+    #     self_feedback = W_TR_self[k][0]*I_PSC_TR[0][t - td_wl - td_syn]/n_TR
+    #     layer_S = W_TR_S[k][0]*I_PSC_S[0][t - td_ct - td_syn]/n_TR
+    #     layer_M = W_TR_M[k][0]*I_PSC_M[0][t - td_ct - td_syn]/n_TR
+    #     layer_D = W_TR_D[k][0]*I_PSC_D[0][t - td_ct - td_syn]/n_TR
+    #     layer_TC = W_TR_TC[k][0]*I_PSC_TC[0][t - td_bl - td_syn]/n_TR
+    #     layer_CI = W_TR_CI[k][0]*I_PSC_CI[0][t - td_ct - td_syn]/n_TR
+    #     noise = I_dbss + kisi_TR_I[k][t - 1]
         
-        v_TR[k][t] = v_aux + dt*(
-            neuron_contribution + 
-            self_feedback + 
-            layer_S + layer_M + layer_D + layer_TC + layer_CI + 
-            noise
-            )
-        u_TR[k][t] = u_aux + dt*izhikevich_dudt(v = v_aux, u = u_aux, a = a_TR[0][k], b = b_TR[0][k])
+    #     v_TR[k][t] = v_aux + dt*(
+    #         neuron_contribution + 
+    #         self_feedback + 
+    #         layer_S + layer_M + layer_D + layer_TC + layer_CI + 
+    #         noise
+    #         )
+    #     u_TR[k][t] = u_aux + dt*izhikevich_dudt(v = v_aux, u = u_aux, a = a_TR[0][k], b = b_TR[0][k])
         
-        if (v_aux >= (vp + white_gausian_aux)):
-            AP_aux = 1
-            v_aux = vp + white_gausian_aux
-            v_TR[k][t] = c_TR[0][k]
-            u_TR[k][t] = u_aux + d_TR[0][k]
-            fired[k][t] = 1
+    #     if (v_aux >= (vp + white_gausian_aux)):
+    #         AP_aux = 1
+    #         v_aux = vp + white_gausian_aux
+    #         v_TR[k][t] = c_TR[0][k]
+    #         u_TR[k][t] = u_aux + d_TR[0][k]
+    #         fired[k][t] = 1
         
-        [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r_TR, 
-                                              x = x_TR, 
-                                              Is = I_syn_TR, 
-                                              AP = AP_aux, 
-                                              tau_f = tau_f, 
-                                              tau_d = tau_d, 
-                                              tau_s = tau_s, 
-                                              U = U, 
-                                              A = A,
-                                              dt = dt)
-        r_TR = rs
-        x_TR = xs
-        I_syn_TR = Isyn
+    #     [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r_TR, 
+    #                                           x = x_TR, 
+    #                                           Is = I_syn_TR, 
+    #                                           AP = AP_aux, 
+    #                                           tau_f = tau_f_I, 
+    #                                           tau_d = tau_d_I, 
+    #                                           tau_s = tau_s_I, 
+    #                                           U = U_I, 
+    #                                           A = A_I,
+    #                                           dt = dt)
+    #     r_TR = rs
+    #     x_TR = xs
+    #     I_syn_TR = Isyn
             
-        Isi[0][k] = Ipost 
+    #     Isi[0][k] = Ipost 
         
     I_PSC_TR[0][t] = np.sum(Ipost)
     
@@ -372,6 +421,7 @@ plot_voltages(n_neurons = n_TR, voltage = v_TR, chop_till = chop_till, sim_steps
 
 v_TR_clean = np.transpose(v_TR[:,chop_till:sim_steps])
 I_PSC_TR_clean = I_PSC_TR[:, chop_till:sim_steps]
+
 
 
 # gc.collect()
