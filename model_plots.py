@@ -50,7 +50,11 @@ def plot_voltages(n_neurons, voltage, chop_till, sim_steps):
 
     new_time= np.transpose(np.arange(len(v_clean)))
 
-    fig, axs = plt.subplots(10,2,sharex=True, figsize=(10,20))
+    fig, axs = plt.subplots(25,2,sharex=True, figsize=(10,30))
+
+    if (n_neurons == 20):
+        fig, axs = plt.subplots(10,2,sharex=True, figsize=(10,20))
+    
     
     for i in range(n_neurons):
         column = 0

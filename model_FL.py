@@ -14,13 +14,12 @@ sns.set()
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 
-from model_functions import izhikevich_dvdt, izhikevich_dudt
-from model_functions import tm_synapse_eq, tm_synapse_dbs_eq, DBS_delta
+from model_functions import tm_synapse_dbs_eq, DBS_delta
 
 from model_plots import plot_heat_map, plot_voltages
 
 from tr_as_func import tr_cells
-# from tc_as_func import tc_cells
+from tc_as_func import tc_cells
 # from ci_as_func import ci_cells
 # from s_as_func import s_cells
 # from m_as_func import m_cells
@@ -101,6 +100,10 @@ x_TR = synapse_initial_values['x_TR']
 r_TR = synapse_initial_values['r_TR']
 I_syn_TR = synapse_initial_values['I_syn_TR']
 
+x_TC = synapse_initial_values['x_TC']
+r_TC = synapse_initial_values['r_TC']
+I_syn_TC = synapse_initial_values['I_syn_TC']
+
 tau_f_I = tm_synapse_params_inhibitory['t_f']
 tau_d_I = tm_synapse_params_inhibitory['t_d']
 tau_s_I = tm_synapse_params_inhibitory['t_s']
@@ -121,14 +124,14 @@ A_E = tm_synapse_params_excitatory['distribution']
 # kisi_M_E = noise['kisi_M_E']
 # kisi_D_E = noise['kisi_D_E']
 # kisi_CI_I = noise['kisi_CI_I']
-# kisi_TC_E = noise['kisi_TC_E']
+kisi_TC_E = noise['kisi_TC_E']
 kisi_TR_I = noise['kisi_TR_I']
 # threshold white Gaussian noise
 # zeta_S_E = noise['zeta_S_E']
 # zeta_M_E = noise['zeta_M_E']
 # zeta_D_E = noise['zeta_D_E']
 # zeta_CI_I = noise['zeta_CI_I']
-# zeta_TC_E = noise['zeta_TC_E']
+zeta_TC_E = noise['zeta_TC_E']
 zeta_TR_I = noise['zeta_TR_I']
 
 # =============================================================================
@@ -179,6 +182,13 @@ W_TR_M = W_N['W_IE_tr_m']
 W_TR_D = W_N['W_IE_tr_d']
 W_TR_TC = W_N['W_IE_tr_tc']
 W_TR_CI = W_N['W_II_tr_ci']
+
+W_TC_self = W_N['W_EE_tc']
+W_TC_S = W_N['W_EE_tc_s']
+W_TC_M = W_N['W_EE_tc_m']
+W_TC_D = W_N['W_EE_tc_d']
+W_TC_TR = W_N['W_EI_tc_tr']
+W_TC_CI = W_N['W_EI_tc_ci']
 
 # =============================================================================
 # CURRENTS
@@ -312,7 +322,7 @@ Isi = np.zeros((1,n_TR))
 fired = np.zeros((n_TR,sim_steps))
 
 for t in range(1, sim_steps):
-    [Ipost, r, x, Is, I_PSC_TR, voltage, u] = tr_cells(
+    [Ipost_TR, r_TR, x_TR, I_syn_TR, I_PSC_TR, voltage, u] = tr_cells(
         t = t,
         n_neurons = n_TR, 
         sim_steps = sim_steps,
@@ -356,6 +366,55 @@ for t in range(1, sim_steps):
         vp = vp,
         dt = dt,
     )
+    
+    I_PSC_TR[0][t] = np.sum(Ipost_TR)
+    
+    [Ipost_TC, r_TC, x_TC, Is_TC, I_PSC_TR, voltage, u] = tc_cells(
+        t = t,
+        n_neurons = n_TC, 
+        sim_steps = sim_steps,
+        voltage = v_TC,
+        u = u_TC,
+        current = I_TC, 
+        a_wg_noise = zeta_TC_E,
+        t_wg_noise = kisi_TC_E,
+        n_affected = n_TR_affected,
+        synaptic_fidelity = synaptic_fidelity,
+        I_dbs = I_dbs,
+        W_S = W_TC_S,
+        W_M = W_TC_M,
+        W_D = W_TC_D,
+        W_TR = W_TC_TR,
+        W_TC = W_TC_self,
+        W_CI = W_TC_CI,
+        I_PSC_S = I_PSC_S,
+        I_PSC_M = I_PSC_M,
+        I_PSC_D = I_PSC_D,
+        I_PSC_TC = I_PSC_TC,
+        I_PSC_TR = I_PSC_TR,
+        I_PSC_CI = I_PSC_CI,
+        td_wl = td_wl,
+        td_syn = td_syn,
+        td_ct = td_ct,
+        td_bl = td_bl,
+        a = a_TC,
+        b = b_TC,
+        c = c_TC,
+        d = d_TC,
+        r = r_TC,
+        x = x_TC,
+        Is = I_syn_TC,
+        tau_f = tau_f_E,
+        tau_d = tau_d_E,
+        tau_s = tau_s_E,
+        U = U_E,
+        A = A_E,
+        vr = vr, 
+        vp = vp,
+        dt = dt,
+    )
+    
+    I_PSC_TC[0][t] = np.sum(Ipost_TC)
     
     # print("----- Thalamic Reticular Nucleus (TR) - t = %d" %t)
     # for k in range(0, n_TR):   
@@ -410,14 +469,14 @@ for t in range(1, sim_steps):
             
     #     Isi[0][k] = Ipost 
         
-    I_PSC_TR[0][t] = np.sum(Ipost)
-    
     gc.collect()
     
 # =============================================================================
 # CLEANING THE DATA
 # =============================================================================
 plot_voltages(n_neurons = n_TR, voltage = v_TR, chop_till = chop_till, sim_steps = sim_steps)
+
+plot_voltages(n_neurons = n_TC, voltage = v_TC, chop_till = chop_till, sim_steps = sim_steps)
 
 v_TR_clean = np.transpose(v_TR[:,chop_till:sim_steps])
 I_PSC_TR_clean = I_PSC_TR[:, chop_till:sim_steps]
