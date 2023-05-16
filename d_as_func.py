@@ -87,7 +87,6 @@ def d_cells(
         PSC_S,
         PSC_M,
         PSC_D,
-        PSC_TC,
         PSC_TR,
         PSC_CI,
         PSC_D_TC,
@@ -113,12 +112,16 @@ def d_cells(
         tau_s,
         U,
         A,
+        A_F,
+        A_D,
         vr, 
         vp,
         dt,
      ):
       
-     Isi = np.zeros((1,n_neurons))
+     Ise = np.zeros((1,n_neurons))
+     Ise_F = np.zeros((1,n_neurons))
+     Ise_D = np.zeros((1,n_neurons))
      fired = np.zeros((n_neurons,sim_steps))
 
      for k in range(0, n_neurons):   
@@ -132,15 +135,15 @@ def d_cells(
              I_dbss = 0
          else:
              if (k >= 1 and k <= n_affected):
-                 I_dbss = I_dbs[1][t - 1]
+                 I_dbss = I_dbs[0][t - 1]
              else:
-                 I_dbss = I_dbs[2][t - 1]
+                 I_dbss = I_dbs[1][t - 1]
              
          neuron_contribution = izhikevich_dvdt(v = v_aux, u = u_aux, I = I_aux)
          self_feedback = W_D[k][0]*PSC_D[0][t - td_wl - td_syn]/n_neurons
          layer_S = W_S[k][0]*PSC_S[0][t - td_bl - td_syn]/n_neurons
          layer_M = W_M[k][0]*PSC_M[0][t - td_bl - td_syn]/n_neurons
-         layer_TC = W_TC[k][0]*PSC_TC[0][t - td_tc - td_syn]/n_neurons
+         layer_TC = W_TC[k][0]*PSC_D_TC[0][t - td_tc - td_syn]/n_neurons
          layer_TR = W_TR[k][0]*PSC_TR[0][t - td_tc - td_syn]/n_neurons
          layer_CI = W_CI[k][0]*PSC_CI[0][t - td_wl - td_syn]/n_neurons
          noise = I_dbss + t_wg_noise[k][t - 1]
@@ -160,6 +163,8 @@ def d_cells(
              u[k][t] = u_aux + d[0][k]
              fired[k][t] = 1
          
+         rr = r; xx = x; Iss = Is;
+         # Self
          [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r, 
                                                x = x, 
                                                Is = Is, 
@@ -173,24 +178,44 @@ def d_cells(
          r = rs
          x = xs
          Is = Isyn
+         Ise[0][k] = Ipost
          
-         [r_f, x_f, Isyn_f, Ipost_f] = tm_synapse_eq(r = r, 
-                                               x = x, 
-                                               Is = Is, 
-                                               AP = AP_aux, 
-                                               tau_f = tau_f, 
-                                               tau_d = tau_d, 
-                                               tau_s = tau_s, 
-                                               U = U, 
-                                               A = A,
-                                               dt = dt)
-         rf = r_f
-         xf = x_f
-         Isf = Isyn_f
+         # DBS 
+         [rsf, xsf, Isynf, Ipostf] = tm_synapse_eq(r = rr, 
+                                                   x = xx, 
+                                                   Is = Iss, 
+                                                   AP = AP_aux, 
+                                                   tau_f = tau_f, 
+                                                   tau_d = tau_d, 
+                                                   tau_s = tau_s, 
+                                                   U = U, 
+                                                   A = A_F,
+                                                   dt = dt)
+         rf = rsf
+         xf = xsf
+         Isf = Isynf
+         Ise_F[0][k] = Ipostf
+         
+         # Thalamus 
+         [rsd, xsd, Isynd, Ipostd] = tm_synapse_eq(r = r, 
+                                                   x = x, 
+                                                   Is = Is, 
+                                                   AP = AP_aux, 
+                                                   tau_f = tau_f, 
+                                                   tau_d = tau_d, 
+                                                   tau_s = tau_s, 
+                                                   U = U, 
+                                                   A = A_D,
+                                                   dt = dt)
+         rf = rsd
+         xf = xsd
+         Isf = Isynd
+         Ise_D[0][k] = Ipostd
              
-         Isi[0][k] = Ipost
+         
      
      PSC_D[0][t] = np.sum(Ipost)
-     PSC_D_D[0][t] = np.sum(Ipost)
+     PSC_D_D[0][t] = np.sum(Ipostd)
+     PSC_D_F[0][t] = np.sum(Ipostf)
       
      return r, x, Is, rf, xf, Isf, voltage, u, fired, PSC_D, PSC_D_F, PSC_D_D

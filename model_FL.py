@@ -42,8 +42,6 @@ synapse_initial_values = TCM_model_parameters()['synapse_initial_values']
 
 tm_synapse_params_inhibitory = TCM_model_parameters()['tm_synapse_params_inhibitory']
 tm_synapse_params_excitatory = TCM_model_parameters()['tm_synapse_params_excitatory']
-tm_synapse_params_D = TCM_model_parameters()['tm_synapse_params_D']
-tm_synapse_params_D_F = TCM_model_parameters()['tm_synapse_params_D_F']
 
 facilitating_factor_N = global_parameters['connectivity_factor_normal_condition']
 facilitating_factor_PD = global_parameters['connectivity_factor_PD_condition']
@@ -146,18 +144,8 @@ tau_d_E = tm_synapse_params_excitatory['t_d']
 tau_s_E = tm_synapse_params_excitatory['t_s']
 U_E = tm_synapse_params_excitatory['U']
 A_E = tm_synapse_params_excitatory['distribution']
-
-tau_f_D = tm_synapse_params_D['t_f']
-tau_d_D = tm_synapse_params_D['t_d']
-tau_s_D = tm_synapse_params_D['t_s']
-U_D = tm_synapse_params_D['U']
-A_D = tm_synapse_params_D['distribution']
-
-tau_f_D_F = tm_synapse_params_D_F['t_f']
-tau_d_D_F = tm_synapse_params_D_F['t_d']
-tau_s_D_F = tm_synapse_params_D_F['t_s']
-U_D_F = tm_synapse_params_D_F['U']
-A_D_F = tm_synapse_params_D_F['distribution']
+A_E_D = tm_synapse_params_excitatory['distribution_D']
+A_E_D_F = tm_synapse_params_excitatory['distribution_D_F']
 
 # =============================================================================
 # NOISE TERMS
@@ -397,7 +385,7 @@ fired = np.zeros((n_TR,sim_steps))
 
 for t in range(1, sim_steps):
     # TR
-    [r_I, x_I, I_syn_I, I_PSC_TR, v_TR, u_TR, fired_TR] = tr_cells(
+    [r_I, x_I, I_syn_I, PSC_TR, v_TR, u_TR, fired_TR] = tr_cells(
         t = t,
         n_neurons = n_TR, 
         sim_steps = sim_steps,
@@ -491,11 +479,11 @@ for t in range(1, sim_steps):
         r_D = r_D_TC,
         x_D = x_D_TC,
         I_syn_D = I_syn_D_TC,
-        tau_f_D = tau_f_D,
-        tau_d_D = tau_d_D,
-        tau_s_D = tau_s_D,
-        U_D = U_D,
-        A_D = A_D,
+        tau_f_D = tau_f_E,
+        tau_d_D = tau_d_E,
+        tau_s_D = tau_s_E,
+        U_D = U_E,
+        A_D = A_E_D,
     )
     
     r_TC = r_E; x_TC = x_E; I_syn_TC = I_syn_E;
@@ -670,11 +658,11 @@ for t in range(1, sim_steps):
         PSC_S = PSC_S,
         PSC_M = PSC_M,
         PSC_D = PSC_D,
-        PSC_TC = PSC_TC,
         PSC_TR = PSC_TR,
         PSC_CI = PSC_CI,
         PSC_D_TC = PSC_D_TC,
         PSC_D_D = PSC_D_D,
+        PSC_D_F = PSC_D_F,
         td_wl = td_wl,
         td_syn = td_syn,
         td_ct = td_ct,
@@ -695,6 +683,8 @@ for t in range(1, sim_steps):
         tau_s = tau_s_E,
         U = U_E,
         A = A_E,
+        A_F = A_E_D_F,
+        A_D = A_E_D,
         vr = vr, 
         vp = vp,
         dt = dt,
@@ -706,19 +696,32 @@ for t in range(1, sim_steps):
     gc.collect()
     
 # =============================================================================
-# CLEANING THE DATA
-# =============================================================================
-
-v_TR_clean = np.transpose(v_TR[:,chop_till:sim_steps])
-I_PSC_TR_clean = I_PSC_TR[:, chop_till:sim_steps]
-
-
-# =============================================================================
-# PLOTING THE VOLTAGES
+# PLOTING THE VOLTAGES - CLEAN
 # =============================================================================
 plot_voltages(n_neurons = n_TR, voltage = v_TR, chop_till = chop_till, sim_steps = sim_steps, title="TR Nucleus")
 plot_voltages(n_neurons = n_TC, voltage = v_TC, chop_till = chop_till, sim_steps = sim_steps, title="TC Nucleus")
 plot_voltages(n_neurons = n_CI, voltage = v_CI, chop_till = chop_till, sim_steps = sim_steps, title="CI")
 plot_voltages(n_neurons = n_S, voltage = v_S, chop_till = chop_till, sim_steps = sim_steps, title="Layer S")
 plot_voltages(n_neurons = n_M, voltage = v_M, chop_till = chop_till, sim_steps = sim_steps, title="Layer M")
+plot_voltages(n_neurons = n_D, voltage = v_D, chop_till = chop_till, sim_steps = sim_steps, title="Layer D")
 
+# =============================================================================
+# CLEANING THE DATA
+# =============================================================================
+v_TR_clean = np.transpose(v_TR[:,chop_till:sim_steps])
+PSC_TR_clean = PSC_TR[:, chop_till:sim_steps]
+
+v_TC_clean = np.transpose(v_TC[:,chop_till:sim_steps])
+PSC_TC_clean = PSC_TC[:, chop_till:sim_steps]
+
+v_CI_clean = np.transpose(v_CI[:,chop_till:sim_steps])
+PSC_CI_clean = PSC_CI[:, chop_till:sim_steps]
+
+v_S_clean = np.transpose(v_S[:,chop_till:sim_steps])
+PSC_S_clean = PSC_S[:, chop_till:sim_steps]
+
+v_M_clean = np.transpose(v_M[:,chop_till:sim_steps])
+PSC_M_clean = PSC_M[:, chop_till:sim_steps]
+
+v_D_clean = np.transpose(v_D[:,chop_till:sim_steps])
+PSC_D_clean = PSC_D[:, chop_till:sim_steps]

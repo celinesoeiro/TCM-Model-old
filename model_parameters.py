@@ -136,8 +136,6 @@ def TCM_model_parameters():
         'TC': nTC*hyperdirect_neurons*qnt_neurons_tc, # percentage of N neurons that have synaptic contact with hyperdirect neurons axon arbors
         }
     
-    hyperdirect_neurons_qnt = qnt_neurons_d*hyperdirect_neurons
-    
     # Distribution of neurons in each structure
     neurons_s_1 = int(0.5*qnt_neurons_s)        # RS neurons
     neurons_s_2 = int(0.5*qnt_neurons_s)        # IB neurons
@@ -334,12 +332,6 @@ def TCM_model_parameters():
     I_TC = np.concatenate((I_TC_1*np.ones((1, neurons_tc_1)), I_TC_2*np.ones((1, neurons_tc_2))), axis=None)
     
     currents_per_structure = {
-        # 'S': I_S + Idc_tune*np.ones(qnt_neurons_s),
-        # 'M': I_M + Idc_tune*np.ones(qnt_neurons_m),
-        # 'D': I_D + Idc_tune*np.ones(qnt_neurons_d),
-        # 'CI': I_CI + Idc_tune*np.ones(qnt_neurons_ci),
-        # 'TR': I_TR + Idc_tune*np.ones(qnt_neurons_tr),
-        # 'TC': I_TC + Idc_tune*np.ones(qnt_neurons_tc),
         'S': I_S,
         'M': I_M,
         'D': I_D,
@@ -357,6 +349,8 @@ def TCM_model_parameters():
         't_d': [138, 671, 329],
         'U': [0.09, 0.5, 0.29],
         'distribution': [0.2, 0.63, 0.17],
+        'distribution_D': [0, 1, 0],
+        'distribution_D_F': [1, 0, 0],
         't_s': 3,
         }
     
@@ -366,22 +360,6 @@ def TCM_model_parameters():
         'U': [0.016, 0.25, 0.32],
         'distribution': [0.08, 0.75, 0.17],
         't_s': 11,
-        }
-    
-    tm_synapse_params_D = {
-        't_f': [670, 17, 326],
-        't_d': [138, 671, 329],
-        'U': [.09, .5, .29],
-        'distribution': [0, 1, 0],
-        't_s': 3,
-        }
-    
-    tm_synapse_params_D_F = {
-        't_f': [670, 17, 326],
-        't_d': [138, 671, 329],
-        'U': [.09, .5, .29],
-        'distribution': [1, 0, 0],
-        't_s': 3,
         }
     
     r_S = np.zeros((3, 1))
@@ -457,8 +435,6 @@ def TCM_model_parameters():
         'random_factor': random_factor,
         'tm_synapse_params_excitatory': tm_synapse_params_excitatory,
         'tm_synapse_params_inhibitory': tm_synapse_params_inhibitory,
-        'tm_synapse_params_D': tm_synapse_params_D,
-        'tm_synapse_params_D_F': tm_synapse_params_D_F,
         'synapse_initial_values': synapse_initial_values,
         }
     
