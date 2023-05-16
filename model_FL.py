@@ -20,10 +20,10 @@ from model_plots import plot_heat_map, plot_voltages
 
 from tr_as_func import tr_cells
 from tc_as_func import tc_cells
-# from ci_as_func import ci_cells
-# from s_as_func import s_cells
-# from m_as_func import m_cells
-# from d_as_func import d_cells
+from ci_as_func import ci_cells
+from s_as_func import s_cells
+from m_as_func import m_cells
+from d_as_func import d_cells
 
 # =============================================================================
 # INITIAL VALUES
@@ -42,6 +42,8 @@ synapse_initial_values = TCM_model_parameters()['synapse_initial_values']
 
 tm_synapse_params_inhibitory = TCM_model_parameters()['tm_synapse_params_inhibitory']
 tm_synapse_params_excitatory = TCM_model_parameters()['tm_synapse_params_excitatory']
+tm_synapse_params_D = TCM_model_parameters()['tm_synapse_params_D']
+tm_synapse_params_D_F = TCM_model_parameters()['tm_synapse_params_D_F']
 
 facilitating_factor_N = global_parameters['connectivity_factor_normal_condition']
 facilitating_factor_PD = global_parameters['connectivity_factor_PD_condition']
@@ -68,9 +70,14 @@ n_D = neuron_quantities['D']
 n_CI = neuron_quantities['CI']
 n_TR = neuron_quantities['TR']
 n_TC = neuron_quantities['TC']
+n_Hyper = neuron_quantities['HD']
 
 # Affected neurons
 n_TR_affected = neurons_connected_with_hyperdirect_neurons['TR']
+n_TC_affected = neurons_connected_with_hyperdirect_neurons['TC']
+n_CI_affected = neurons_connected_with_hyperdirect_neurons['CI']
+n_S_affected = neurons_connected_with_hyperdirect_neurons['S']
+n_M_affected = neurons_connected_with_hyperdirect_neurons['M']
 
 # =============================================================================
 # SYNAPTIC WEIGHTS AND PARAMETERS
@@ -104,6 +111,30 @@ x_TC = synapse_initial_values['x_TC']
 r_TC = synapse_initial_values['r_TC']
 I_syn_TC = synapse_initial_values['I_syn_TC']
 
+x_CI = synapse_initial_values['x_CI']
+r_CI = synapse_initial_values['r_CI']
+I_syn_CI = synapse_initial_values['I_syn_CI']
+
+x_D = synapse_initial_values['x_D']
+r_D = synapse_initial_values['r_D']
+I_syn_D = synapse_initial_values['I_syn_D']
+
+x_M = synapse_initial_values['x_M']
+r_M = synapse_initial_values['r_M']
+I_syn_M = synapse_initial_values['I_syn_M']
+
+x_S = synapse_initial_values['x_S']
+r_S = synapse_initial_values['r_S']
+I_syn_S = synapse_initial_values['I_syn_S']
+
+x_D_F = synapse_initial_values['x_D_F']
+r_D_F = synapse_initial_values['r_D_F']
+I_syn_D_F = synapse_initial_values['I_syn_D_F']
+
+x_D_TC = synapse_initial_values['x_D_TC']
+r_D_TC = synapse_initial_values['r_D_TC']
+I_syn_D_TC = synapse_initial_values['I_syn_D_TC']
+
 tau_f_I = tm_synapse_params_inhibitory['t_f']
 tau_d_I = tm_synapse_params_inhibitory['t_d']
 tau_s_I = tm_synapse_params_inhibitory['t_s']
@@ -116,21 +147,33 @@ tau_s_E = tm_synapse_params_excitatory['t_s']
 U_E = tm_synapse_params_excitatory['U']
 A_E = tm_synapse_params_excitatory['distribution']
 
+tau_f_D = tm_synapse_params_D['t_f']
+tau_d_D = tm_synapse_params_D['t_d']
+tau_s_D = tm_synapse_params_D['t_s']
+U_D = tm_synapse_params_D['U']
+A_D = tm_synapse_params_D['distribution']
+
+tau_f_D_F = tm_synapse_params_D_F['t_f']
+tau_d_D_F = tm_synapse_params_D_F['t_d']
+tau_s_D_F = tm_synapse_params_D_F['t_s']
+U_D_F = tm_synapse_params_D_F['U']
+A_D_F = tm_synapse_params_D_F['distribution']
+
 # =============================================================================
 # NOISE TERMS
 # =============================================================================
 # additive white Gaussian noise 
-# kisi_S_E = noise['kisi_S_E']
-# kisi_M_E = noise['kisi_M_E']
-# kisi_D_E = noise['kisi_D_E']
-# kisi_CI_I = noise['kisi_CI_I']
+kisi_S_E = noise['kisi_S_E']
+kisi_M_E = noise['kisi_M_E']
+kisi_D_E = noise['kisi_D_E']
+kisi_CI_I = noise['kisi_CI_I']
 kisi_TC_E = noise['kisi_TC_E']
 kisi_TR_I = noise['kisi_TR_I']
 # threshold white Gaussian noise
-# zeta_S_E = noise['zeta_S_E']
-# zeta_M_E = noise['zeta_M_E']
-# zeta_D_E = noise['zeta_D_E']
-# zeta_CI_I = noise['zeta_CI_I']
+zeta_S_E = noise['zeta_S_E']
+zeta_M_E = noise['zeta_M_E']
+zeta_D_E = noise['zeta_D_E']
+zeta_CI_I = noise['zeta_CI_I']
 zeta_TC_E = noise['zeta_TC_E']
 zeta_TR_I = noise['zeta_TR_I']
 
@@ -190,6 +233,34 @@ W_TC_D = W_N['W_EE_tc_d']
 W_TC_TR = W_N['W_EI_tc_tr']
 W_TC_CI = W_N['W_EI_tc_ci']
 
+W_CI_self = W_N['W_II_ci']
+W_CI_S = W_N['W_IE_ci_s']
+W_CI_M = W_N['W_IE_ci_m']
+W_CI_D = W_N['W_IE_ci_d']
+W_CI_TR = W_N['W_II_ci_tr']
+W_CI_TC = W_N['W_IE_ci_tc']
+
+W_S_self = W_N['W_EE_s']
+W_S_CI = W_N['W_EI_s_ci']
+W_S_M = W_N['W_EE_s_m']
+W_S_D = W_N['W_EE_s_d']
+W_S_TR = W_N['W_EI_s_tr']
+W_S_TC = W_N['W_EE_s_tc']
+
+W_M_self = W_N['W_EE_m']
+W_M_S = W_N['W_EE_m_s']
+W_M_D = W_N['W_EE_m_d']
+W_M_CI = W_N['W_EI_m_ci']
+W_M_TR = W_N['W_EI_m_tr']
+W_M_TC = W_N['W_EE_m_tc']
+
+W_D_self = W_N['W_EE_d']
+W_D_S = W_N['W_EE_d_s']
+W_D_M = W_N['W_EE_d_m']
+W_D_CI = W_N['W_EI_d_ci']
+W_D_TR = W_N['W_EI_d_tr']
+W_D_TC = W_N['W_EE_d_tc']
+
 # =============================================================================
 # CURRENTS
 # =============================================================================
@@ -202,12 +273,15 @@ I_TR = currents['TR']
 I_TC = currents['TC']
 
 # Post Synaptic Currents
-I_PSC_S = np.zeros((1, sim_steps))
-I_PSC_M = np.zeros((1, sim_steps))
-I_PSC_D = np.zeros((1, sim_steps))
-I_PSC_TC = np.zeros((1, sim_steps))
-I_PSC_TR = np.zeros((1, sim_steps))
-I_PSC_CI = np.zeros((1, sim_steps))
+PSC_S = np.zeros((1, sim_steps))
+PSC_M = np.zeros((1, sim_steps))
+PSC_D = np.zeros((1, sim_steps))
+PSC_TC = np.zeros((1, sim_steps))
+PSC_TR = np.zeros((1, sim_steps))
+PSC_CI = np.zeros((1, sim_steps))
+PSC_D_F = np.zeros((1, sim_steps))
+PSC_D_TC = np.zeros((1, sim_steps))
+PSC_D_D = np.zeros((1, sim_steps))
 
 # =============================================================================
 # VOLTAGES
@@ -219,40 +293,40 @@ u_TR = 0*v_TR
 v_TC = vr*np.ones((n_TC, sim_steps))
 u_TC = 0*v_TC
 
-# v_CI = vr*np.ones((n_CI, sim_steps))
-# u_CI = 0*v_CI
+v_CI = vr*np.ones((n_CI, sim_steps))
+u_CI = 0*v_CI
 
-# v_S = vr*np.ones((n_S, sim_steps))
-# u_S = 0*v_S
+v_S = vr*np.ones((n_S, sim_steps))
+u_S = 0*v_S
 
-# v_M = vr*np.ones((n_M, sim_steps))
-# u_M = 0*v_M
+v_M = vr*np.ones((n_M, sim_steps))
+u_M = 0*v_M
 
-# v_D = vr*np.ones((n_D, sim_steps))
-# u_D = 0*v_D
+v_D = vr*np.ones((n_D, sim_steps))
+u_D = 0*v_D
 
 # =============================================================================
 # NEURON PARAMS
 # =============================================================================
-# a_S = neuron_params['a_S']
-# b_S = neuron_params['b_S']
-# c_S = neuron_params['c_S']
-# d_S = neuron_params['d_S']
+a_S = neuron_params['a_S']
+b_S = neuron_params['b_S']
+c_S = neuron_params['c_S']
+d_S = neuron_params['d_S']
 
-# a_M = neuron_params['a_M']
-# b_M = neuron_params['b_M']
-# c_M = neuron_params['c_M']
-# d_M = neuron_params['d_M']
+a_M = neuron_params['a_M']
+b_M = neuron_params['b_M']
+c_M = neuron_params['c_M']
+d_M = neuron_params['d_M']
 
-# a_D = neuron_params['a_D']
-# b_D = neuron_params['b_D']
-# c_D = neuron_params['c_D']
-# d_D = neuron_params['d_D']
+a_D = neuron_params['a_D']
+b_D = neuron_params['b_D']
+c_D = neuron_params['c_D']
+d_D = neuron_params['d_D']
 
-# a_CI = neuron_params['a_CI']
-# b_CI = neuron_params['b_CI']
-# c_CI = neuron_params['c_CI']
-# d_CI = neuron_params['d_CI']
+a_CI = neuron_params['a_CI']
+b_CI = neuron_params['b_CI']
+c_CI = neuron_params['c_CI']
+d_CI = neuron_params['d_CI']
 
 a_TR = neuron_params['a_TR']
 b_TR = neuron_params['b_TR']
@@ -322,7 +396,8 @@ Isi = np.zeros((1,n_TR))
 fired = np.zeros((n_TR,sim_steps))
 
 for t in range(1, sim_steps):
-    [Ipost_TR, r_TR, x_TR, I_syn_TR, I_PSC_TR, voltage, u] = tr_cells(
+    # TR
+    [r_I, x_I, I_syn_I, I_PSC_TR, v_TR, u_TR, fired_TR] = tr_cells(
         t = t,
         n_neurons = n_TR, 
         sim_steps = sim_steps,
@@ -334,18 +409,18 @@ for t in range(1, sim_steps):
         n_affected = n_TR_affected,
         synaptic_fidelity = synaptic_fidelity,
         I_dbs = I_dbs,
-        W_TR_self = W_TR_self,
-        W_TR_S = W_TR_S,
-        W_TR_M = W_TR_M,
-        W_TR_D = W_TR_D,
-        W_TR_TC = W_TR_TC,
-        W_TR_CI = W_TR_CI,
-        I_PSC_S = I_PSC_S,
-        I_PSC_M = I_PSC_M,
-        I_PSC_D = I_PSC_D,
-        I_PSC_TC = I_PSC_TC,
-        I_PSC_TR = I_PSC_TR,
-        I_PSC_CI = I_PSC_CI,
+        W_TR = W_TR_self,
+        W_S = W_TR_S,
+        W_M = W_TR_M,
+        W_D = W_TR_D,
+        W_TC = W_TR_TC,
+        W_CI = W_TR_CI,
+        PSC_S = PSC_S,
+        PSC_M = PSC_M,
+        PSC_D = PSC_D_F,
+        PSC_TC = PSC_TC,
+        PSC_TR = PSC_TR,
+        PSC_CI = PSC_CI,
         td_wl = td_wl,
         td_syn = td_syn,
         td_ct = td_ct,
@@ -367,9 +442,10 @@ for t in range(1, sim_steps):
         dt = dt,
     )
     
-    I_PSC_TR[0][t] = np.sum(Ipost_TR)
-    
-    [Ipost_TC, r_TC, x_TC, Is_TC, I_PSC_TR, voltage, u] = tc_cells(
+    r_TR = r_I; x_TR = x_I; I_syn_TR = I_syn_I;
+        
+    # TC    
+    [r_E, x_E, I_syn_E, PSC_TC, v_TC, u_TC, fired_TC, r_d, x_d, I_syn_d, PSC_D_TC] = tc_cells(
         t = t,
         n_neurons = n_TC, 
         sim_steps = sim_steps,
@@ -378,7 +454,7 @@ for t in range(1, sim_steps):
         current = I_TC, 
         a_wg_noise = zeta_TC_E,
         t_wg_noise = kisi_TC_E,
-        n_affected = n_TR_affected,
+        n_affected = n_TC_affected,
         synaptic_fidelity = synaptic_fidelity,
         I_dbs = I_dbs,
         W_S = W_TC_S,
@@ -387,12 +463,12 @@ for t in range(1, sim_steps):
         W_TR = W_TC_TR,
         W_TC = W_TC_self,
         W_CI = W_TC_CI,
-        I_PSC_S = I_PSC_S,
-        I_PSC_M = I_PSC_M,
-        I_PSC_D = I_PSC_D,
-        I_PSC_TC = I_PSC_TC,
-        I_PSC_TR = I_PSC_TR,
-        I_PSC_CI = I_PSC_CI,
+        PSC_S = PSC_S,
+        PSC_M = PSC_M,
+        PSC_D = PSC_D_F,
+        PSC_TC = PSC_TC,
+        PSC_TR = PSC_TR,
+        PSC_CI = PSC_CI,
         td_wl = td_wl,
         td_syn = td_syn,
         td_ct = td_ct,
@@ -412,263 +488,237 @@ for t in range(1, sim_steps):
         vr = vr, 
         vp = vp,
         dt = dt,
+        r_D = r_D_TC,
+        x_D = x_D_TC,
+        I_syn_D = I_syn_D_TC,
+        tau_f_D = tau_f_D,
+        tau_d_D = tau_d_D,
+        tau_s_D = tau_s_D,
+        U_D = U_D,
+        A_D = A_D,
     )
     
-    I_PSC_TC[0][t] = np.sum(Ipost_TC)
+    r_TC = r_E; x_TC = x_E; I_syn_TC = I_syn_E;
+    r_D_TC = r_d; x_D_TC = x_d; I_syn_D_TC = I_syn_d;
     
-    # print("----- Thalamic Reticular Nucleus (TR) - t = %d" %t)
-    # for k in range(0, n_TR):   
-    #     AP_aux = 0
-    #     v_aux = v_TR[k][t - 1]
-    #     u_aux = u_TR[k][t - 1]
-    #     I_aux = I_TR[k]
-    #     white_gausian_aux = zeta_TR_I[k][t - 1]
-        
-    #     if (k >= 1 and k <= n_TR_affected):
-    #         I_dbss = synaptic_fidelity*I_dbs[1][t - 1]
-    #     else:
-    #         I_dbss = 0
-            
-    #     neuron_contribution = izhikevich_dvdt(v = v_aux, u = u_aux, I = I_aux)
-    #     self_feedback = W_TR_self[k][0]*I_PSC_TR[0][t - td_wl - td_syn]/n_TR
-    #     layer_S = W_TR_S[k][0]*I_PSC_S[0][t - td_ct - td_syn]/n_TR
-    #     layer_M = W_TR_M[k][0]*I_PSC_M[0][t - td_ct - td_syn]/n_TR
-    #     layer_D = W_TR_D[k][0]*I_PSC_D[0][t - td_ct - td_syn]/n_TR
-    #     layer_TC = W_TR_TC[k][0]*I_PSC_TC[0][t - td_bl - td_syn]/n_TR
-    #     layer_CI = W_TR_CI[k][0]*I_PSC_CI[0][t - td_ct - td_syn]/n_TR
-    #     noise = I_dbss + kisi_TR_I[k][t - 1]
-        
-    #     v_TR[k][t] = v_aux + dt*(
-    #         neuron_contribution + 
-    #         self_feedback + 
-    #         layer_S + layer_M + layer_D + layer_TC + layer_CI + 
-    #         noise
-    #         )
-    #     u_TR[k][t] = u_aux + dt*izhikevich_dudt(v = v_aux, u = u_aux, a = a_TR[0][k], b = b_TR[0][k])
-        
-    #     if (v_aux >= (vp + white_gausian_aux)):
-    #         AP_aux = 1
-    #         v_aux = vp + white_gausian_aux
-    #         v_TR[k][t] = c_TR[0][k]
-    #         u_TR[k][t] = u_aux + d_TR[0][k]
-    #         fired[k][t] = 1
-        
-    #     [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r_TR, 
-    #                                           x = x_TR, 
-    #                                           Is = I_syn_TR, 
-    #                                           AP = AP_aux, 
-    #                                           tau_f = tau_f_I, 
-    #                                           tau_d = tau_d_I, 
-    #                                           tau_s = tau_s_I, 
-    #                                           U = U_I, 
-    #                                           A = A_I,
-    #                                           dt = dt)
-    #     r_TR = rs
-    #     x_TR = xs
-    #     I_syn_TR = Isyn
-            
-    #     Isi[0][k] = Ipost 
-        
+    # CI
+    [r_I, x_I, I_syn_I, PSC_CI, v_CI, u_CI, fired_CI] = ci_cells(
+        t = t,
+        n_neurons = n_CI, 
+        sim_steps = sim_steps,
+        voltage = v_CI,
+        u = u_CI,
+        current = I_CI, 
+        a_wg_noise = zeta_CI_I,
+        t_wg_noise = kisi_CI_I,
+        n_affected = n_CI_affected,
+        synaptic_fidelity = synaptic_fidelity,
+        I_dbs = I_dbs,
+        W_S = W_CI_S,
+        W_M = W_CI_M,
+        W_D = W_CI_D,
+        W_TR = W_CI_TR,
+        W_TC = W_CI_TC,
+        W_CI = W_CI_self,
+        PSC_S = PSC_S,
+        PSC_M = PSC_M,
+        PSC_D = PSC_D,
+        PSC_TC = PSC_TC,
+        PSC_TR = PSC_TR,
+        PSC_CI = PSC_CI,
+        td_wl = td_wl,
+        td_syn = td_syn,
+        td_ct = td_ct,
+        td_bl = td_bl,
+        td_tc = td_tc,
+        a = a_CI,
+        b = b_CI,
+        c = c_CI,
+        d = d_CI,
+        r = r_CI,
+        x = x_CI,
+        Is = I_syn_CI,
+        tau_f = tau_f_I,
+        tau_d = tau_d_I,
+        tau_s = tau_s_I,
+        U = U_I,
+        A = A_I,
+        vr = vr, 
+        vp = vp,
+        dt = dt,
+    )
+    
+    r_CI = r_I; x_CI = x_I; I_syn_CI = I_syn_I;
+    
+    # S
+    [r_E, x_E, I_syn_E, PSC_S, v_S, u_S, fired_S] = s_cells(
+        t = t,
+        n_neurons = n_S, 
+        sim_steps = sim_steps,
+        voltage = v_S,
+        u = u_S,
+        current = I_S, 
+        a_wg_noise = zeta_S_E,
+        t_wg_noise = kisi_S_E,
+        n_affected = n_S_affected,
+        synaptic_fidelity = synaptic_fidelity,
+        I_dbs = I_dbs,
+        W_S = W_S_self,
+        W_M = W_S_M,
+        W_D = W_S_D,
+        W_TR = W_S_TR,
+        W_TC = W_S_TC,
+        W_CI = W_S_CI,
+        PSC_S = PSC_S,
+        PSC_M = PSC_M,
+        PSC_D = PSC_D,
+        PSC_TC = PSC_TC,
+        PSC_TR = PSC_TR,
+        PSC_CI = PSC_CI,
+        td_wl = td_wl,
+        td_syn = td_syn,
+        td_ct = td_ct,
+        td_bl = td_bl,
+        td_tc = td_tc,
+        a = a_S,
+        b = b_S,
+        c = c_S,
+        d = d_S,
+        r = r_S,
+        x = x_S,
+        Is = I_syn_S,
+        tau_f = tau_f_E,
+        tau_d = tau_d_E,
+        tau_s = tau_s_E,
+        U = U_E,
+        A = A_E,
+        vr = vr, 
+        vp = vp,
+        dt = dt,
+    )
+    
+    r_S = r_E; x_S = x_E; I_syn_S = I_syn_E;
+    
+    # M
+    [r_E, x_E, I_syn_E, PSC_M, v_M, u_M, fired_M] = m_cells(
+        t = t,
+        n_neurons = n_M, 
+        sim_steps = sim_steps,
+        voltage = v_M,
+        u = u_M,
+        current = I_M, 
+        a_wg_noise = zeta_M_E,
+        t_wg_noise = kisi_M_E,
+        n_affected = n_M_affected,
+        synaptic_fidelity = synaptic_fidelity,
+        I_dbs = I_dbs,
+        W_M = W_M_self,
+        W_S = W_M_S,
+        W_D = W_M_D,
+        W_TR = W_M_TR,
+        W_TC = W_M_TC,
+        W_CI = W_M_CI,
+        PSC_S = PSC_S,
+        PSC_M = PSC_M,
+        PSC_D = PSC_D,
+        PSC_TC = PSC_TC,
+        PSC_TR = PSC_TR,
+        PSC_CI = PSC_CI,
+        td_wl = td_wl,
+        td_syn = td_syn,
+        td_ct = td_ct,
+        td_bl = td_bl,
+        td_tc = td_tc,
+        a = a_M,
+        b = b_M,
+        c = c_M,
+        d = d_M,
+        r = r_M,
+        x = x_M,
+        Is = I_syn_M,
+        tau_f = tau_f_E,
+        tau_d = tau_d_E,
+        tau_s = tau_s_E,
+        U = U_E,
+        A = A_E,
+        vr = vr, 
+        vp = vp,
+        dt = dt,
+    )
+    
+    r_M = r_E; x_M = x_E; I_syn_M = I_syn_E;
+    
+    # D
+    [r_E, x_E, I_syn_E, r_F, x_F, I_syn_F, v_D, u_D, fired_D, PSC_D, PSC_D_F, PSC_D_D] = d_cells(
+        t = t,
+        n_neurons = n_D, 
+        sim_steps = sim_steps,
+        voltage = v_D,
+        u = u_D,
+        current = I_D, 
+        a_wg_noise = zeta_S_E,
+        t_wg_noise = kisi_S_E,
+        n_affected = n_Hyper,
+        synaptic_fidelity = synaptic_fidelity,
+        I_dbs = I_dbs,
+        W_M = W_D_M,
+        W_S = W_D_S,
+        W_D = W_D_self,
+        W_TR = W_D_TR,
+        W_TC = W_D_TC,
+        W_CI = W_D_CI,
+        PSC_S = PSC_S,
+        PSC_M = PSC_M,
+        PSC_D = PSC_D,
+        PSC_TC = PSC_TC,
+        PSC_TR = PSC_TR,
+        PSC_CI = PSC_CI,
+        PSC_D_TC = PSC_D_TC,
+        PSC_D_D = PSC_D_D,
+        td_wl = td_wl,
+        td_syn = td_syn,
+        td_ct = td_ct,
+        td_bl = td_bl,
+        td_tc = td_tc,
+        a = a_D,
+        b = b_D,
+        c = c_D,
+        d = d_D,
+        r = r_D,
+        x = x_D,
+        Is = I_syn_D,
+        r_F = r_D_F,
+        x_F = x_D_F,
+        Is_F = I_syn_D_F,
+        tau_f = tau_f_E,
+        tau_d = tau_d_E,
+        tau_s = tau_s_E,
+        U = U_E,
+        A = A_E,
+        vr = vr, 
+        vp = vp,
+        dt = dt,
+    )
+    
+    r_D = r_E; x_D = x_E; I_syn_D = I_syn_E;
+    r_D_F = r_F; x_D_F = x_F; I_syn_D_F = I_syn_F;
+    
     gc.collect()
     
 # =============================================================================
 # CLEANING THE DATA
 # =============================================================================
-plot_voltages(n_neurons = n_TR, voltage = v_TR, chop_till = chop_till, sim_steps = sim_steps)
-
-plot_voltages(n_neurons = n_TC, voltage = v_TC, chop_till = chop_till, sim_steps = sim_steps)
 
 v_TR_clean = np.transpose(v_TR[:,chop_till:sim_steps])
 I_PSC_TR_clean = I_PSC_TR[:, chop_till:sim_steps]
 
 
+# =============================================================================
+# PLOTING THE VOLTAGES
+# =============================================================================
+plot_voltages(n_neurons = n_TR, voltage = v_TR, chop_till = chop_till, sim_steps = sim_steps, title="TR Nucleus")
+plot_voltages(n_neurons = n_TC, voltage = v_TC, chop_till = chop_till, sim_steps = sim_steps, title="TC Nucleus")
+plot_voltages(n_neurons = n_CI, voltage = v_CI, chop_till = chop_till, sim_steps = sim_steps, title="CI")
+plot_voltages(n_neurons = n_S, voltage = v_S, chop_till = chop_till, sim_steps = sim_steps, title="Layer S")
+plot_voltages(n_neurons = n_M, voltage = v_M, chop_till = chop_till, sim_steps = sim_steps, title="Layer M")
 
-# gc.collect()
-    
-    # PSC_TR, Is, AP, Inhibitory_AP, Inhibitory_aux, r, x
-    # v_tr, u_tr, rI, xI, IsI, IPSC_TR = tr_cells(
-    #     time_vector = time, 
-    #     number_neurons = n_tr, 
-    #     simulation_steps = sim_steps, 
-    #     coupling_matrix = W_N, 
-    #     current = I_TR, 
-    #     vr = vr, 
-    #     vp = vp, 
-    #     dt = dt, 
-    #     t = t,
-    #     v = v_TR,
-    #     u = u_TR,
-    #     Idc_tune = Idc_tune, 
-    #     dvdt = dvdt, 
-    #     dudt = dudt, 
-    #     r_eq = r_eq, 
-    #     x_eq = x_eq, 
-    #     I_eq = I_eq, 
-    #     tm_synapse_eq = tm_synapse_eq,
-    #     synapse_parameters = tm_synapse_params_inhibitory, 
-    #     r = r,
-    #     x = x,
-    #     Is = Is,
-    #     PSC_S = PSC_S[0][t], 
-    #     PSC_M = PSC_M[0][t], 
-    #     PSC_D = PSC_D[0][t], 
-    #     PSC_TR = PSC_TR[0][t], 
-    #     PSC_TC = PSC_TC[0][t], 
-    #     PSC_CI = PSC_CI[0][t],
-    #     neuron_type = "inhibitory",
-    #     random_factor = random_factor,
-    #     a = a_TR,
-    #     b = b_TR,
-    #     c = c_TR,
-    #     d = d_TR,
-    # )
-        
-    # print("----- Thalamo-Cortical Relay Nucleus (TC)")
-    
-    # PSC_TC, I_TC, AP_TC, v_tc, u_tc, r_tc, x_tc = tc_cells(
-    #     time_vector = time, 
-    #     number_neurons = n_tc, 
-    #     simulation_steps = sim_steps, 
-    #     coupling_matrix = W_N, 
-    #     neuron_params = neuron_params['TC1'], 
-    #     current = currents['TC'], 
-    #     vr = vr, 
-    #     vp = vp, 
-    #     dt = dt, 
-    #     Idc = Idc_tune, 
-    #     dvdt = dvdt, 
-    #     dudt = dudt, 
-    #     r_eq = r_eq, 
-    #     x_eq = x_eq, 
-    #     I_eq = I_eq, 
-    #     tm_synapse_eq = tm_synapse_eq,
-    #     synapse_parameters = tm_synapse_params_excitatory, 
-    #     PSC_S = PSC_S, 
-    #     PSC_M = PSC_M, 
-    #     PSC_D = PSC_D, 
-    #     PSC_TR = PSC_TR, 
-    #     PSC_TC = PSC_TC, 
-    #     PSC_CI = PSC_CI,
-    #     neuron_type = "excitatory",
-    #     random_factor = random_factor
-    #     )
-    
-    # print("----- Cortical Interneurons (CI)")
-    
-    # PSC_CI, I_CI, AP_CI, v_ci, u_ci, r_ci, x_ci = ci_cells(
-    #     time_vector = time, 
-    #     number_neurons = n_ci, 
-    #     simulation_steps = sim_steps, 
-    #     coupling_matrix = W_N, 
-    #     neuron_params = neuron_params['CI1'], 
-    #     current = currents['CI'], 
-    #     vr = vr, 
-    #     vp = vp, 
-    #     dt = dt, 
-    #     Idc = Idc_tune, 
-    #     dvdt = dvdt, 
-    #     dudt = dudt, 
-    #     r_eq = r_eq, 
-    #     x_eq = x_eq, 
-    #     I_eq = I_eq, 
-    #     tm_synapse_eq = tm_synapse_eq,
-    #     synapse_parameters = tm_synapse_params_inhibitory, 
-    #     PSC_S = PSC_S, 
-    #     PSC_M = PSC_M, 
-    #     PSC_D = PSC_D, 
-    #     PSC_TR = PSC_TR, 
-    #     PSC_TC = PSC_TC, 
-    #     PSC_CI = PSC_CI,
-    #     neuron_type = "inhibitory",
-    #     random_factor = random_factor
-    #     )
-    
-    # print("----- Superficial layer (S)")
-    
-    # PSC_S, I_S, AP_S, v_s, u_s, r_s, x_s = s_cells(
-    #     time_vector = time, 
-    #     number_neurons = n_s, 
-    #     simulation_steps = sim_steps, 
-    #     coupling_matrix = W_N, 
-    #     neuron_params = neuron_params['S1'], 
-    #     current = currents['S'], 
-    #     vr = vr, 
-    #     vp = vp, 
-    #     dt = dt, 
-    #     Idc = Idc_tune, 
-    #     dvdt = dvdt, 
-    #     dudt = dudt, 
-    #     r_eq = r_eq, 
-    #     x_eq = x_eq, 
-    #     I_eq = I_eq, 
-    #     tm_synapse_eq = tm_synapse_eq,
-    #     synapse_parameters = tm_synapse_params_excitatory, 
-    #     PSC_S = PSC_S, 
-    #     PSC_M = PSC_M, 
-    #     PSC_D = PSC_D, 
-    #     PSC_TR = PSC_TR, 
-    #     PSC_TC = PSC_TC, 
-    #     PSC_CI = PSC_CI,
-    #     neuron_type = "excitatory",
-    #     random_factor = random_factor
-    #     )
-    
-    # print("----- Middle layer (M)")
-    
-    # PSC_M, I_M, AP_M, v_m, u_m, r_m, x_m = m_cells(
-    #     time_vector = time, 
-    #     number_neurons = n_m, 
-    #     simulation_steps = sim_steps, 
-    #     coupling_matrix = W_N, 
-    #     neuron_params = neuron_params['M1'], 
-    #     current = currents['M'], 
-    #     vr = vr, 
-    #     vp = vp, 
-    #     dt = dt, 
-    #     Idc = Idc_tune, 
-    #     dvdt = dvdt, 
-    #     dudt = dudt, 
-    #     r_eq = r_eq, 
-    #     x_eq = x_eq, 
-    #     I_eq = I_eq, 
-    #     tm_synapse_eq = tm_synapse_eq,
-    #     synapse_parameters = tm_synapse_params_excitatory, 
-    #     PSC_S = PSC_S, 
-    #     PSC_M = PSC_M, 
-    #     PSC_D = PSC_D, 
-    #     PSC_TR = PSC_TR, 
-    #     PSC_TC = PSC_TC, 
-    #     PSC_CI = PSC_CI,
-    #     neuron_type = "excitatory",
-    #     random_factor = random_factor
-    #     )
-    
-    # print("----- Deep layer (D)")
-    
-    # PSC_D, I_D, AP_D, v_d, u_d, r_d, x_d = d_cells(
-    #     time_vector = time, 
-    #     number_neurons = n_d, 
-    #     simulation_steps = sim_steps, 
-    #     coupling_matrix = W_N, 
-    #     neuron_params = neuron_params['D1'], 
-    #     current = currents['D'], 
-    #     vr = vr, 
-    #     vp = vp, 
-    #     dt = dt, 
-    #     Idc = Idc_tune, 
-    #     dvdt = dvdt, 
-    #     dudt = dudt, 
-    #     r_eq = r_eq, 
-    #     x_eq = x_eq, 
-    #     I_eq = I_eq, 
-    #     tm_synapse_eq = tm_synapse_eq,
-    #     synapse_parameters = tm_synapse_params_excitatory, 
-    #     PSC_S = PSC_S, 
-    #     PSC_M = PSC_M, 
-    #     PSC_D = PSC_D, 
-    #     PSC_TR = PSC_TR, 
-    #     PSC_TC = PSC_TC, 
-    #     PSC_CI = PSC_CI,
-    #     neuron_type = "excitatory",
-    #     random_factor = random_factor
-    #     )

@@ -368,6 +368,22 @@ def TCM_model_parameters():
         't_s': 11,
         }
     
+    tm_synapse_params_D = {
+        't_f': [670, 17, 326],
+        't_d': [138, 671, 329],
+        'U': [.09, .5, .29],
+        'distribution': [0, 1, 0],
+        't_s': 3,
+        }
+    
+    tm_synapse_params_D_F = {
+        't_f': [670, 17, 326],
+        't_d': [138, 671, 329],
+        'U': [.09, .5, .29],
+        'distribution': [1, 0, 0],
+        't_s': 3,
+        }
+    
     r_S = np.zeros((3, 1))
     x_S = np.zeros((3, 1))
     I_syn_S = np.zeros((3, 1))
@@ -392,6 +408,14 @@ def TCM_model_parameters():
     x_TC = np.zeros((3, 1))
     I_syn_TC = np.zeros((3, 1))
     
+    r_D_TC = np.zeros((3, 1))
+    x_D_TC = np.zeros((3, 1))
+    I_syn_D_TC = np.zeros((3, 1))
+    
+    r_D_F = np.zeros((3, 1))
+    x_D_F = np.zeros((3, 1))
+    I_syn_D_F = np.zeros((3, 1))
+    
     synapse_initial_values = {
         'r_S': r_S,
         'x_S': x_S,
@@ -411,6 +435,12 @@ def TCM_model_parameters():
         'r_TC': r_TC,
         'x_TC': x_TC,
         'I_syn_TC': I_syn_TC,
+        'r_D_F': r_D_F,
+        'x_D_F': x_D_F,
+        'I_syn_D_F': I_syn_D_F,
+        'r_D_TC': r_D_TC,
+        'x_D_TC': x_D_TC,
+        'I_syn_D_TC': I_syn_D_TC,
     }
     
     # Export all dictionaries
@@ -427,6 +457,8 @@ def TCM_model_parameters():
         'random_factor': random_factor,
         'tm_synapse_params_excitatory': tm_synapse_params_excitatory,
         'tm_synapse_params_inhibitory': tm_synapse_params_inhibitory,
+        'tm_synapse_params_D': tm_synapse_params_D,
+        'tm_synapse_params_D_F': tm_synapse_params_D_F,
         'synapse_initial_values': synapse_initial_values,
         }
     

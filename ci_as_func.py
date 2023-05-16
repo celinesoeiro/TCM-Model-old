@@ -65,109 +65,109 @@ Send excitatory stimulus to:
 
 import numpy as np
 
-def ci_cells(
-    time_vector, 
-    number_neurons, 
-    simulation_steps, 
-    neuron_params, 
-    coupling_matrix, 
-    current, 
-    vr, 
-    vp,
-    dt,
-    Idc,
-    dvdt,
-    dudt,
-    r_eq,
-    x_eq,
-    I_eq,
-    synapse_parameters,
-    PSC_S,
-    PSC_M,
-    PSC_D,
-    PSC_TR,
-    PSC_TC,
-    PSC_CI,         
-    neuron_type,
-    random_factor
-    ):
-    
-    v = vr*np.ones((number_neurons,simulation_steps))
-    u = 0*v
-    r = np.zeros((3,len(time_vector)))
-    x = np.ones((3,len(time_vector)))
-    I = np.zeros((3,len(time_vector)))
-    
-    SW_self = coupling_matrix['W_II_ci']
-    SW_S = coupling_matrix['W_IE_ci_s']
-    SW_M = coupling_matrix['W_IE_ci_m']
-    SW_D = coupling_matrix['W_IE_ci_d']
-    SW_TC = coupling_matrix['W_IE_ci_tc']
-    SW_TR = coupling_matrix['W_II_ci_tr']
- 
-    Ib = current + Idc*np.ones(number_neurons)
-    
-    AP = np.zeros((1,len(time_vector)))
-    
-    if (neuron_type == 'excitatory' or 'excit'):
-        a = neuron_params['a']
-        b = neuron_params['b']
-        c = neuron_params['c'] + 15*random_factor**2
-        d = neuron_params['d'] - 6*random_factor**2
-    elif (neuron_type == 'inhibitory' or 'inhib'):
-        a = neuron_params['a'] + 0.08*random_factor
-        b = neuron_params['b'] - 0.05*random_factor
-        c = neuron_params['c']
-        d = neuron_params['d']
-    else:
-        return 'Neuron type must be excitatory or inhibitory'
-    
-    for t in range(1, len(time_vector)):
-        AP_aux = AP[0][t]
-        for k in range(1, number_neurons):        
-            v_aux = v[k - 1][t - 1]
-            u_aux = u[k - 1][t - 1]
-            
-            if (v_aux >= vp):
-                AP_aux = 1
-                v[k][t] = vp
-                v[k][t] = c
-                u[k][t] = u[k][t] + d
-            else:
-                neuron_contribution = dvdt(v_aux, u_aux, Ib[k])
-                self_feedback = SW_self[0][k]*PSC_CI[0][t]/number_neurons
-                layer_S = SW_S[0][k]*PSC_S[0][t]/number_neurons
-                layer_M = SW_M[0][k]*PSC_M[0][t]/number_neurons
-                layer_D = SW_D[0][k]*PSC_D[0][t]/number_neurons
-                layer_TC = SW_TC[0][k]*PSC_TC[0][t]/number_neurons
-                layer_TR = SW_TR[0][k]*PSC_TR[0][t]/number_neurons
-                noise = 0
-                
-                v[k][t] = v_aux + dt*(neuron_contribution + self_feedback + layer_S + layer_M + layer_D + layer_TC + layer_TR + noise)
-                u[k][t] = u_aux + dt*dudt(v_aux, u_aux, a, b)
-                
-            # TM parameters
-            tau_f = synapse_parameters['t_f']
-            tau_d = synapse_parameters['t_d']
-            U = synapse_parameters['U']
-            A = synapse_parameters['distribution']
-            tau_s = synapse_parameters['t_s']
-            parameters_length = len(tau_f)
-            
-            # Loop trhough the parameters
-            for p in range(1, parameters_length):
-                r_aux = r[p - 1][t - 1]
-                x_aux = x[p - 1][t - 1]
-                I_aux = I[p - 1][t - 1]
-                # Solve EDOs using Euler method
-                r[p][t] = r_aux + dt*r_eq(r_aux, tau_f[p], U[p], AP_aux)
-                x[p][t] = x_aux + dt*x_eq(x_aux, tau_d[p], r_aux, U[p], AP_aux)
-                I[p][t] = I_aux + dt*I_eq(I_aux, tau_s, A[p], U[p], x_aux, r_aux, AP_aux)
-            
-            if (np.isnan(v[k][t]) or np.isnan(u[k][t]) or np.isinf(v[k][t]) or np.isinf(u[k][t])):
-                print('NaN or inf in t = ', t)
-                break
+from model_functions import izhikevich_dvdt, izhikevich_dudt, tm_synapse_eq
 
-    PSC_CI = np.sum(I, axis=0).reshape(1,len(time_vector))
-    
-    return PSC_CI, AP, v, u, r, x
+def ci_cells(
+        t,
+        n_neurons,
+        sim_steps,
+        voltage,
+        u,
+        current,
+        a_wg_noise,
+        t_wg_noise,
+        n_affected,
+        synaptic_fidelity,
+        I_dbs,
+        W_TR,
+        W_S,
+        W_M,
+        W_D,
+        W_TC,
+        W_CI,
+        PSC_S,
+        PSC_M,
+        PSC_D,
+        PSC_TC,
+        PSC_TR,
+        PSC_CI,
+        td_wl,
+        td_syn,
+        td_ct,
+        td_bl,
+        td_tc,
+        a,
+        b,
+        c,
+        d,
+        r,
+        x,
+        Is,
+        tau_f,
+        tau_d,
+        tau_s,
+        U,
+        A,
+        vr, 
+        vp,
+        dt,
+     ):
+      
+     Isi = np.zeros((1,n_neurons))
+     fired = np.zeros((n_neurons,sim_steps))
+
+     for k in range(0, n_neurons):   
+         AP_aux = 0
+         v_aux = voltage[k][t - 1]
+         u_aux = u[k][t - 1]
+         I_aux = current[k]
+         white_gausian_aux = a_wg_noise[k][t - 1]
+         
+         if (k >= 1 and k <= n_affected):
+             I_dbss = synaptic_fidelity*I_dbs[1][t - 1]
+         else:
+             I_dbss = 0
+             
+         neuron_contribution = izhikevich_dvdt(v = v_aux, u = u_aux, I = I_aux)
+         self_feedback = W_CI[k][0]*PSC_CI[0][t - td_wl - td_syn]/n_neurons
+         layer_S = W_S[k][0]*PSC_S[0][t - td_wl - td_syn]/n_neurons
+         layer_M = W_M[k][0]*PSC_M[0][t - td_wl - td_syn]/n_neurons
+         layer_D = W_D[k][0]*PSC_D[0][t - td_wl - td_syn]/n_neurons
+         layer_TR = W_TR[k][0]*PSC_TR[0][t - td_tc - td_syn]/n_neurons
+         layer_TC = W_TC[k][0]*PSC_TC[0][t - td_tc - td_syn]/n_neurons
+         noise = I_dbss + t_wg_noise[k][t - 1]
+         
+         voltage[k][t] = v_aux + dt*(
+             neuron_contribution + 
+             self_feedback + 
+             layer_S + layer_M + layer_D + layer_TR + layer_TC + 
+             noise
+             )
+         u[k][t] = u_aux + dt*izhikevich_dudt(v = v_aux, u = u_aux, a = a[0][k], b = b[0][k])
+         
+         if (v_aux >= (vp + white_gausian_aux)):
+             AP_aux = 1
+             v_aux = vp + white_gausian_aux
+             voltage[k][t] = c[0][k]
+             u[k][t] = u_aux + d[0][k]
+             fired[k][t] = 1
+         
+         [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r, 
+                                               x = x, 
+                                               Is = Is, 
+                                               AP = AP_aux, 
+                                               tau_f = tau_f, 
+                                               tau_d = tau_d, 
+                                               tau_s = tau_s, 
+                                               U = U, 
+                                               A = A,
+                                               dt = dt)
+         r = rs
+         x = xs
+         Is = Isyn
+             
+         Isi[0][k] = Ipost 
+         
+     PSC_CI[0][t] = np.sum(Ipost)
+
+     return r, x, Is, PSC_CI, voltage, u, fired
