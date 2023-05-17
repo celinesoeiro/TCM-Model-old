@@ -5,6 +5,7 @@ Created on Sat Mar 18 14:59:45 2023
 @author: Avell
 """
 
+import math
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -14,7 +15,7 @@ sns.set()
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 
-from model_functions import tm_synapse_dbs_eq, DBS_delta
+from model_functions import tm_synapse_dbs_eq, DBS_delta, tm_synapse_poisson_eq
 
 from model_plots import plot_heat_map, plot_voltages
 
@@ -60,6 +61,7 @@ chop_till = global_parameters['chop_till']
 Idc_tune = global_parameters['Idc_tune']
 Fs = global_parameters['sampling_frequency']
 synaptic_fidelity = global_parameters['synaptic_fidelity']
+T = global_parameters['simulation_time_ms']
 
 # Neuron quantities
 n_S = neuron_quantities['S']
@@ -274,7 +276,6 @@ PSC_D_D = np.zeros((1, sim_steps))
 # =============================================================================
 # VOLTAGES
 # =============================================================================
-
 v_TR = vr*np.ones((n_TR, sim_steps))
 u_TR = 0*v_TR
 
@@ -375,6 +376,52 @@ I_dbs[0][:] = I_dbs_pre
 I_dbs[1][:] = I_dbs_post[0]
 
 # =============================================================================
+# POISSONIAN BACKGROUND ACTIVITY
+# =============================================================================
+w_ps = 1
+I_ps_S = np.zeros((2, sim_steps))
+I_ps_M = np.zeros((2, sim_steps))
+I_ps_D = np.zeros((2, sim_steps))
+I_ps_CI = np.zeros((2, sim_steps))
+I_ps_TR = np.zeros((2, sim_steps))
+I_ps_TC = np.zeros((2, sim_steps))
+
+def poissonSpikeGen(firing_rate, sim_steps, n_trials, dt):
+    n_bins = math.floor(sim_steps/dt)
+    spike_mat = np.random.rand(n_trials, n_bins) < firing_rate*dt
+    
+    time_vector = np.arange(0, sim_steps - dt, dt)
+    
+    return spike_mat, time_vector
+
+
+if (w_ps != 0):
+    W_ps = w_ps*np.random.rand(6,2)
+    for l in range(5):
+        poisson_firing = 20 + 2*np.random.randn()
+        [poisson_spikes, poisson_time_vector] = poissonSpikeGen(poisson_firing, T/1000, 1, dt/1000)
+        
+    for i in range(len(poisson_time_vector)):
+        fired = poisson_spikes[0][i]
+
+        if (fired == True):
+            tm_syn_E = tm_synapse_poisson_eq(i, sim_steps, td_syn, dt, tau_f_E, tau_d_E, tau_s_E, U_E, A_E)
+            tm_syn_I = tm_synapse_poisson_eq(i, sim_steps, td_syn, dt, tau_f_I, tau_d_I, tau_s_I, U_I, A_I)
+
+            I_ps_S[0][i] = W_ps[0][0]*tm_syn_E[3][i]
+            I_ps_S[1][i] = W_ps[0][1]*tm_syn_I[3][i]
+            I_ps_M[0][i] = W_ps[1][0]*tm_syn_E[3][i]
+            I_ps_M[1][i] = W_ps[1][1]*tm_syn_I[3][i]
+            I_ps_D[0][i] = W_ps[2][0]*tm_syn_E[3][i]
+            I_ps_D[1][i] = W_ps[2][1]*tm_syn_I[3][i]
+            I_ps_CI[0][i] = W_ps[3][0]*tm_syn_E[3][i]
+            I_ps_CI[1][i] = W_ps[3][1]*tm_syn_I[3][i]
+            I_ps_TR[0][i] = W_ps[4][0]*tm_syn_E[3][i]
+            I_ps_TR[1][i] = W_ps[4][1]*tm_syn_I[3][i]
+            I_ps_TC[0][i] = W_ps[5][0]*tm_syn_E[3][i]
+            I_ps_TC[1][i] = W_ps[5][1]*tm_syn_I[3][i]
+            
+# =============================================================================
 # INITIALIZING MODEL
 # =============================================================================
         
@@ -394,6 +441,8 @@ for t in range(1, sim_steps):
         current = I_TR, 
         a_wg_noise = zeta_TR_I,
         t_wg_noise = kisi_TR_I,
+        poisson_background_E = I_ps_TR[0],
+        poisson_background_I  = I_ps_TR[1],
         n_affected = n_TR_affected,
         synaptic_fidelity = synaptic_fidelity,
         I_dbs = I_dbs,
@@ -442,6 +491,8 @@ for t in range(1, sim_steps):
         current = I_TC, 
         a_wg_noise = zeta_TC_E,
         t_wg_noise = kisi_TC_E,
+        poisson_background_E = I_ps_TC[0],
+        poisson_background_I  = I_ps_TC[1],
         n_affected = n_TC_affected,
         synaptic_fidelity = synaptic_fidelity,
         I_dbs = I_dbs,
@@ -499,6 +550,8 @@ for t in range(1, sim_steps):
         current = I_CI, 
         a_wg_noise = zeta_CI_I,
         t_wg_noise = kisi_CI_I,
+        poisson_background_E = I_ps_CI[0],
+        poisson_background_I  = I_ps_CI[1],
         n_affected = n_CI_affected,
         synaptic_fidelity = synaptic_fidelity,
         I_dbs = I_dbs,
@@ -548,6 +601,8 @@ for t in range(1, sim_steps):
         current = I_S, 
         a_wg_noise = zeta_S_E,
         t_wg_noise = kisi_S_E,
+        poisson_background_E = I_ps_S[0],
+        poisson_background_I  = I_ps_S[1],
         n_affected = n_S_affected,
         synaptic_fidelity = synaptic_fidelity,
         I_dbs = I_dbs,
@@ -597,6 +652,8 @@ for t in range(1, sim_steps):
         current = I_M, 
         a_wg_noise = zeta_M_E,
         t_wg_noise = kisi_M_E,
+        poisson_background_E = I_ps_M[0],
+        poisson_background_I  = I_ps_M[1],
         n_affected = n_M_affected,
         synaptic_fidelity = synaptic_fidelity,
         I_dbs = I_dbs,
@@ -646,6 +703,8 @@ for t in range(1, sim_steps):
         current = I_D, 
         a_wg_noise = zeta_S_E,
         t_wg_noise = kisi_S_E,
+        poisson_background_E = I_ps_D[0],
+        poisson_background_I  = I_ps_D[1],
         n_affected = n_Hyper,
         synaptic_fidelity = synaptic_fidelity,
         I_dbs = I_dbs,
@@ -698,6 +757,7 @@ for t in range(1, sim_steps):
 # =============================================================================
 # PLOTING THE VOLTAGES - CLEAN
 # =============================================================================
+print("-- Printing the membrane potential")
 plot_voltages(n_neurons = n_TR, voltage = v_TR, chop_till = chop_till, sim_steps = sim_steps, title="TR Nucleus")
 plot_voltages(n_neurons = n_TC, voltage = v_TC, chop_till = chop_till, sim_steps = sim_steps, title="TC Nucleus")
 plot_voltages(n_neurons = n_CI, voltage = v_CI, chop_till = chop_till, sim_steps = sim_steps, title="CI")

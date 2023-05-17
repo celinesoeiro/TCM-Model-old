@@ -65,6 +65,28 @@ def tm_synapse_dbs_eq(dbs, t_delay, dt, sim_steps, tau_f, tau_d, tau_s, U, A):
     
     return dbs_I, t_vec
 
+def tm_synapse_poisson_eq(AP_position, sim_steps, t_delay, dt, tau_f, tau_d, tau_s, U, A):
+    r = np.zeros((3, sim_steps))
+    x = np.zeros((3, sim_steps))
+    Is = np.zeros((3, sim_steps))
+    spd = np.zeros((3, sim_steps))
+    
+    for p in range(1, 3):
+        spd[p][AP_position] = 1/dt;
+        for i in range(1, sim_steps - 1):
+            j = t_delay + i
+            r_aux = r[p - 1][j - 1]
+            x_aux = x[p - 1][j - 1]
+            Is_aux = Is[p - 1][j - 1]
+            # Solve EDOs using Euler method
+            r[p][j] = r_aux + dt*tm_r_eq(r_aux, tau_f[p - 1], U[p - 1], spd[p][i])
+            x[p][j] = x_aux + dt*tm_x_eq(x_aux, tau_d[p - 1], r_aux, U[p - 1], spd[p][i])
+            Is[p][j] = Is_aux + dt*tm_I_eq(Is_aux, tau_s, A[p - 1], U[p - 1], x_aux, r_aux, spd[p][i])
+        
+    Ipost = np.sum(Is, axis=0)
+        
+    return r, x, Is, Ipost
+
 # =============================================================================
 # DBS
 # =============================================================================

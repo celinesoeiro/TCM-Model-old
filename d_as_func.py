@@ -75,6 +75,8 @@ def d_cells(
         current, 
         a_wg_noise,
         t_wg_noise,
+        poisson_background_E,
+        poisson_background_I,
         n_affected,
         synaptic_fidelity,
         I_dbs,
@@ -146,7 +148,7 @@ def d_cells(
          layer_TC = W_TC[k][0]*PSC_D_TC[0][t - td_tc - td_syn]/n_neurons
          layer_TR = W_TR[k][0]*PSC_TR[0][t - td_tc - td_syn]/n_neurons
          layer_CI = W_CI[k][0]*PSC_CI[0][t - td_wl - td_syn]/n_neurons
-         noise = I_dbss + t_wg_noise[k][t - 1]
+         noise = I_dbss + t_wg_noise[k][t - 1] + poisson_background_E[t - td_wl - td_syn] - poisson_background_I[t - td_wl - td_syn]
          
          voltage[k][t] = v_aux + dt*(
              neuron_contribution + 
@@ -164,7 +166,7 @@ def d_cells(
              fired[k][t] = 1
          
          rr = r; xx = x; Iss = Is;
-         # Self
+         # Pseudo Linear
          [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r, 
                                                x = x, 
                                                Is = Is, 
@@ -180,7 +182,7 @@ def d_cells(
          Is = Isyn
          Ise[0][k] = Ipost
          
-         # DBS 
+         # Facilitating 
          [rsf, xsf, Isynf, Ipostf] = tm_synapse_eq(r = rr, 
                                                    x = xx, 
                                                    Is = Iss, 
@@ -196,7 +198,7 @@ def d_cells(
          Isf = Isynf
          Ise_F[0][k] = Ipostf
          
-         # Thalamus 
+         # Depressing
          [rsd, xsd, Isynd, Ipostd] = tm_synapse_eq(r = r, 
                                                    x = x, 
                                                    Is = Is, 

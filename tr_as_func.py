@@ -73,6 +73,8 @@ def tr_cells(
        current, 
        a_wg_noise,
        t_wg_noise,
+       poisson_background_E,
+       poisson_background_I,
        n_affected,
        synaptic_fidelity,
        I_dbs,
@@ -131,7 +133,7 @@ def tr_cells(
         layer_D = W_D[k][0]*PSC_D[0][t - td_ct - td_syn]/n_neurons
         layer_TC = W_TC[k][0]*PSC_TC[0][t - td_wl - td_syn]/n_neurons
         layer_CI = W_CI[k][0]*PSC_CI[0][t - td_ct - td_syn]/n_neurons
-        noise = I_dbss + t_wg_noise[k][t - 1]
+        noise = I_dbss + t_wg_noise[k][t - 1] + poisson_background_E[t - td_wl - td_syn] - poisson_background_I[t - td_wl - td_syn]
         
         voltage[k][t] = v_aux + dt*(
             neuron_contribution + 

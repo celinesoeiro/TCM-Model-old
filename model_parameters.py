@@ -60,7 +60,6 @@ Depressing (D) and Pseudo-Linear (P) synapses with distribution:
 """
 
 import numpy as np
-from utils import pinkNoise
 
 def TCM_model_parameters():
     random_factor = np.round(np.random.sample(),2)
