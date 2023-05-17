@@ -5,7 +5,6 @@ Created on Sat Mar 18 14:59:45 2023
 @author: Avell
 """
 
-import math
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -15,7 +14,7 @@ sns.set()
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 
-from model_functions import tm_synapse_dbs_eq, DBS_delta, tm_synapse_poisson_eq
+from model_functions import tm_synapse_dbs_eq, DBS_delta, tm_synapse_poisson_eq, poissonSpikeGen
 
 from model_plots import plot_heat_map, plot_voltages
 
@@ -385,15 +384,6 @@ I_ps_D = np.zeros((2, sim_steps))
 I_ps_CI = np.zeros((2, sim_steps))
 I_ps_TR = np.zeros((2, sim_steps))
 I_ps_TC = np.zeros((2, sim_steps))
-
-def poissonSpikeGen(firing_rate, sim_steps, n_trials, dt):
-    n_bins = math.floor(sim_steps/dt)
-    spike_mat = np.random.rand(n_trials, n_bins) < firing_rate*dt
-    
-    time_vector = np.arange(0, sim_steps - dt, dt)
-    
-    return spike_mat, time_vector
-
 
 if (w_ps != 0):
     W_ps = w_ps*np.random.rand(6,2)

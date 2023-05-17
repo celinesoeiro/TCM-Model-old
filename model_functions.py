@@ -5,6 +5,7 @@ Created on Fri May 12 16:43:26 2023
 @author: Avell
 """
 
+import math
 import numpy as np
 
 # =============================================================================
@@ -106,3 +107,13 @@ def DBS_delta(f_dbs, dbs_duration, dev, sim_steps, Fs, dbs_amplitude, cut):
         
     return dbs_I
 
+# =============================================================================
+# POISSON
+# =============================================================================
+def poissonSpikeGen(firing_rate, sim_steps, n_trials, dt):
+    n_bins = math.floor(sim_steps/dt)
+    spike_mat = np.random.rand(n_trials, n_bins) < firing_rate*dt
+    
+    time_vector = np.arange(0, sim_steps - dt, dt)
+    
+    return spike_mat, time_vector
