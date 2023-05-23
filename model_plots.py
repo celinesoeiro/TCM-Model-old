@@ -46,9 +46,7 @@ def plot_heat_map(matrix_normal, matrix_PD):
     plt.show()
     
 def plot_voltages(n_neurons, voltage, chop_till, sim_steps, title):
-    v_clean = np.transpose(voltage[:,chop_till:sim_steps])
-
-    new_time= np.transpose(np.arange(len(v_clean)))
+    new_time= np.transpose(np.arange(len(voltage)))
 
     if (n_neurons == 20):
         fig, axs = plt.subplots(10,2,sharex=True, figsize=(10,20))
@@ -60,14 +58,14 @@ def plot_voltages(n_neurons, voltage, chop_till, sim_steps, title):
     for i in range(n_neurons):
         column = 0
         row = math.floor(i/2)
-        
+                
         if (i%2 == 0):
             column = 0
         else:
             column = 1
         
         axs[row,column].set_title(f'NEURONIO {i + 1}')
-        axs[row,column].plot(new_time, voltage[i, chop_till:sim_steps])
+        axs[row,column].plot(new_time, voltage[:, i])
             
     plt.show()
             

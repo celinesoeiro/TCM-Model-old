@@ -391,7 +391,7 @@ if (w_ps != 0):
         poisson_firing = 20 + 2*np.random.randn()
         [poisson_spikes, poisson_time_vector] = poissonSpikeGen(poisson_firing, T/1000, 1, dt/1000)
         
-    for i in range(len(poisson_time_vector)):
+    for i in range (len(poisson_time_vector)):
         fired = poisson_spikes[0][i]
 
         if (fired == True):
@@ -745,17 +745,6 @@ for t in range(1, sim_steps):
     gc.collect()
     
 # =============================================================================
-# PLOTING THE VOLTAGES - CLEAN
-# =============================================================================
-print("-- Printing the membrane potential")
-plot_voltages(n_neurons = n_TR, voltage = v_TR, chop_till = chop_till, sim_steps = sim_steps, title="TR Nucleus")
-plot_voltages(n_neurons = n_TC, voltage = v_TC, chop_till = chop_till, sim_steps = sim_steps, title="TC Nucleus")
-plot_voltages(n_neurons = n_CI, voltage = v_CI, chop_till = chop_till, sim_steps = sim_steps, title="CI")
-plot_voltages(n_neurons = n_S, voltage = v_S, chop_till = chop_till, sim_steps = sim_steps, title="Layer S")
-plot_voltages(n_neurons = n_M, voltage = v_M, chop_till = chop_till, sim_steps = sim_steps, title="Layer M")
-plot_voltages(n_neurons = n_D, voltage = v_D, chop_till = chop_till, sim_steps = sim_steps, title="Layer D")
-
-# =============================================================================
 # CLEANING THE DATA
 # =============================================================================
 v_TR_clean = np.transpose(v_TR[:,chop_till:sim_steps])
@@ -775,3 +764,23 @@ PSC_M_clean = PSC_M[:, chop_till:sim_steps]
 
 v_D_clean = np.transpose(v_D[:,chop_till:sim_steps])
 PSC_D_clean = PSC_D[:, chop_till:sim_steps]
+    
+# =============================================================================
+# PLOTING THE VOLTAGES - CLEAN
+# =============================================================================
+print("-- Printing the membrane potential")
+plot_voltages(n_neurons = n_TR, voltage = v_TR_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - TR Nucleus")
+plot_voltages(n_neurons = n_TC, voltage = v_TC_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - TC Nucleus")
+plot_voltages(n_neurons = n_CI, voltage = v_CI_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - CI")
+plot_voltages(n_neurons = n_S, voltage = v_S_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - Layer S")
+plot_voltages(n_neurons = n_M, voltage = v_M_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - Layer M")
+plot_voltages(n_neurons = n_D, voltage = v_D_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - Layer D")
+
+print("-- Printing the Post Synaptic Current")
+plot_voltages(n_neurons = n_TR, voltage = v_TR_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - TR Nucleus")
+plot_voltages(n_neurons = n_TC, voltage = v_TC_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - TC Nucleus")
+plot_voltages(n_neurons = n_CI, voltage = v_CI_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - CI")
+plot_voltages(n_neurons = n_S, voltage = v_S_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer S")
+plot_voltages(n_neurons = n_M, voltage = v_M_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer M")
+plot_voltages(n_neurons = n_D, voltage = v_D_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer D")
+
