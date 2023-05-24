@@ -150,3 +150,23 @@ def make_dict(sim_steps, chop_till, n_neurons, fired):
         }
     
     return v_dict
+
+def export_spike_dict(n_neuron, sim_steps, chop_till, spikes):
+    # Creating a dictionary
+    clean_sim_steps = np.arange(0, sim_steps - chop_till)
+    neuron = {}
+    spike_time = []
+    for n in range(n_neuron):
+        neuron_name = f"neuron_{n}"
+        neuron[neuron_name] = []
+    
+    # Filling the dictionary with the firing time
+    for n in range(n_neuron):
+        for t in range(len(clean_sim_steps)):
+            if (spikes[n][t] != 0):
+                spike_time.append(int(spikes[n][t]))
+
+        neuron_name = f"neuron_{n}"
+        neuron[neuron_name] = np.array(spike_time)
+    
+    return neuron

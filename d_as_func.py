@@ -120,6 +120,7 @@ def d_cells(
         vp,
         dt,
         fired,
+        spikes,
      ):
       
      Ise = np.zeros((1,n_neurons))
@@ -163,6 +164,7 @@ def d_cells(
              v_aux = vp + white_gausian_aux
              voltage[k][t] = c[0][k]
              u[k][t] = u_aux + d[0][k]
+             spikes[k][t] = t
          
          rr = r; xx = x; Iss = Is;
          # Pseudo Linear
@@ -214,7 +216,7 @@ def d_cells(
          Ise_D[0][k] = Ipostd
          
          fired[k][t] = AP_aux
-         
+
      
      PSC_D[0][t] = np.sum(Ipost)
      PSC_D_D[0][t] = np.sum(Ipostd)

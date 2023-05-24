@@ -14,9 +14,9 @@ sns.set()
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 
-from model_functions import tm_synapse_dbs_eq, DBS_delta, tm_synapse_poisson_eq, poissonSpikeGen, make_dict
+from model_functions import tm_synapse_dbs_eq, DBS_delta, tm_synapse_poisson_eq, poissonSpikeGen, export_spike_dict
 
-from model_plots import plot_heat_map, plot_voltages
+from model_plots import plot_heat_map, plot_voltages, plot_rasters
 
 from tr_as_func import tr_cells
 from tc_as_func import tc_cells
@@ -421,6 +421,13 @@ fired_D = np.zeros((n_D, sim_steps))
 fired_M = np.zeros((n_M, sim_steps))
 fired_S = np.zeros((n_S, sim_steps))
 
+spike_times_TR = np.zeros((n_TR, sim_steps))
+spike_times_TC = np.zeros((n_TC, sim_steps))
+spike_times_CI = np.zeros((n_CI, sim_steps))
+spike_times_D = np.zeros((n_D, sim_steps))
+spike_times_M = np.zeros((n_M, sim_steps))
+spike_times_S = np.zeros((n_S, sim_steps))
+
 # =============================================================================
 # INITIALIZING MODEL
 # =============================================================================
@@ -477,7 +484,8 @@ for t in range(1, sim_steps):
         vr = vr, 
         vp = vp,
         dt = dt,
-        fired = fired_TR
+        fired = fired_TR,
+        spikes = spike_times_TR,
     )
     
     r_TR = r_I; x_TR = x_I; I_syn_TR = I_syn_I;
@@ -536,7 +544,8 @@ for t in range(1, sim_steps):
         tau_s_D = tau_s_E,
         U_D = U_E,
         A_D = A_E_D,
-        fired = fired_TC
+        fired = fired_TC,
+        spikes = spike_times_TC
     )
     
     r_TC = r_E; x_TC = x_E; I_syn_TC = I_syn_E;
@@ -589,7 +598,8 @@ for t in range(1, sim_steps):
         vr = vr, 
         vp = vp,
         dt = dt,
-        fired = fired_CI
+        fired = fired_CI,
+        spikes = spike_times_CI
     )
     
     r_CI = r_I; x_CI = x_I; I_syn_CI = I_syn_I;
@@ -641,7 +651,8 @@ for t in range(1, sim_steps):
         vr = vr, 
         vp = vp,
         dt = dt,
-        fired = fired_S
+        fired = fired_S,
+        spikes = spike_times_S
     )
     
     r_S = r_E; x_S = x_E; I_syn_S = I_syn_E;
@@ -693,7 +704,8 @@ for t in range(1, sim_steps):
         vr = vr, 
         vp = vp,
         dt = dt,
-        fired = fired_M
+        fired = fired_M,
+        spikes = spike_times_M
     )
     
     r_M = r_E; x_M = x_E; I_syn_M = I_syn_E;
@@ -752,7 +764,8 @@ for t in range(1, sim_steps):
         vr = vr, 
         vp = vp,
         dt = dt,
-        fired = fired_D
+        fired = fired_D,
+        spikes = spike_times_D
     )
     
     r_D = r_E; x_D = x_E; I_syn_D = I_syn_E;
@@ -803,17 +816,16 @@ plot_voltages(n_neurons = n_D, voltage = v_D_clean, chop_till = chop_till, sim_s
 # =============================================================================
 # MAKING RASTER PLOTS
 # =============================================================================
-TR_dict = make_dict(sim_steps, chop_till, n_TR, fired_TR)
-TC_dict = make_dict(sim_steps, chop_till, n_TC, fired_TC)
-CI_dict = make_dict(sim_steps, chop_till, n_CI, fired_CI)
-D_dict = make_dict(sim_steps, chop_till, n_D, fired_D)
-M_dict = make_dict(sim_steps, chop_till, n_M, fired_M)
-S_dict = make_dict(sim_steps, chop_till, n_S, fired_S)
+AP_TR = export_spike_dict(sim_steps = sim_steps, n_neuron = n_TR, spikes = spike_times_TR, chop_till = chop_till)
+AP_TC = export_spike_dict(sim_steps = sim_steps, n_neuron = n_TC, spikes = spike_times_TC, chop_till = chop_till)
+AP_CI = export_spike_dict(sim_steps = sim_steps, n_neuron = n_CI, spikes = spike_times_CI, chop_till = chop_till)
+AP_D = export_spike_dict(sim_steps = sim_steps, n_neuron = n_D, spikes = spike_times_D, chop_till = chop_till)
+AP_M = export_spike_dict(sim_steps = sim_steps, n_neuron = n_M, spikes = spike_times_M, chop_till = chop_till)
+AP_S = export_spike_dict(sim_steps = sim_steps, n_neuron = n_S, spikes = spike_times_S, chop_till = chop_till)
 
-sns.stripplot(data=TR_dict, x="time", y="neuron", hue="fired")
-        
-        
-        
-
-
-
+plot_rasters(AP_TR, title = "Raster Plot TR Nucleus")
+plot_rasters(AP_TC, title = "Raster Plot TC Nucleus")
+plot_rasters(AP_CI, title = "Raster Plot CI")
+plot_rasters(AP_D, title = "Raster Plot D Layer")
+plot_rasters(AP_M, title = "Raster Plot M Layer")
+plot_rasters(AP_S, title = "Raster Plot S Layer")

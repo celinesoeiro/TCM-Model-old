@@ -68,4 +68,29 @@ def plot_voltages(n_neurons, voltage, chop_till, sim_steps, title):
         axs[row,column].plot(new_time, voltage[:, i])
             
     plt.show()
-            
+
+# =============================================================================
+# RASTER
+# =============================================================================
+def plot_rasters(neuron_dict, title):
+    # Create a new figure
+    plt.figure(figsize=(10, 8))
+    plt.title(title)
+    
+    # Iterate over each neuron
+    for neuron_idx, spike_times in enumerate(neuron_dict.values()):
+        # Generate y-values for scatter plot
+        y_values = np.full_like(spike_times, neuron_idx + 1)
+        
+        # Plot scatter points for spike times
+        plt.scatter(spike_times, y_values, marker='|', color='black')
+    
+    # Set the y-axis limits and labels
+    plt.ylim(0.5, len(neuron_dict) + 0.5)
+    plt.yticks(range(1, len(neuron_dict) + 1), neuron_dict.keys())
+    
+    # Set the x-axis label
+    plt.xlabel('Time')
+    
+    # Show the plot
+    plt.show()

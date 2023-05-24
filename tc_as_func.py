@@ -62,6 +62,7 @@ def tc_cells(
        U_D,
        A_D,
        fired,
+       spikes
     ):
      
     Isi = np.zeros((1, n_neurons))
@@ -101,6 +102,7 @@ def tc_cells(
             v_aux = vp + white_gausian_aux
             voltage[k][t] = c[0][k]
             u[k][t] = u_aux + d[0][k]
+            spikes[k][t] = t
         
         [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r, 
                                               x = x, 
@@ -134,6 +136,7 @@ def tc_cells(
         Isi_D[0][k] = IpostD 
         
         fired[k][t] = AP_aux
+        
     
     PSC_TC[0][t] = np.sum(Ipost)
     PSC_D[0][t] = np.sum(IpostD)
