@@ -14,7 +14,7 @@ sns.set()
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 
-from model_functions import tm_synapse_dbs_eq, DBS_delta, tm_synapse_poisson_eq, poissonSpikeGen
+from model_functions import tm_synapse_dbs_eq, DBS_delta, tm_synapse_poisson_eq, poissonSpikeGen, make_dict
 
 from model_plots import plot_heat_map, plot_voltages
 
@@ -412,10 +412,20 @@ if (w_ps != 0):
             I_ps_TC[1][i] = W_ps[5][1]*tm_syn_I[3][i]
             
 # =============================================================================
+# FIRED NEURONS
+# =============================================================================
+fired_TR = np.zeros((n_TR, sim_steps))
+fired_TC = np.zeros((n_TC, sim_steps))
+fired_CI = np.zeros((n_CI, sim_steps))
+fired_D = np.zeros((n_D, sim_steps))
+fired_M = np.zeros((n_M, sim_steps))
+fired_S = np.zeros((n_S, sim_steps))
+
+# =============================================================================
 # INITIALIZING MODEL
 # =============================================================================
         
-print("-- Initializing model")
+print("-- Running the model")
 
 Isi = np.zeros((1,n_TR))
 fired = np.zeros((n_TR,sim_steps))
@@ -467,6 +477,7 @@ for t in range(1, sim_steps):
         vr = vr, 
         vp = vp,
         dt = dt,
+        fired = fired_TR
     )
     
     r_TR = r_I; x_TR = x_I; I_syn_TR = I_syn_I;
@@ -525,6 +536,7 @@ for t in range(1, sim_steps):
         tau_s_D = tau_s_E,
         U_D = U_E,
         A_D = A_E_D,
+        fired = fired_TC
     )
     
     r_TC = r_E; x_TC = x_E; I_syn_TC = I_syn_E;
@@ -577,6 +589,7 @@ for t in range(1, sim_steps):
         vr = vr, 
         vp = vp,
         dt = dt,
+        fired = fired_CI
     )
     
     r_CI = r_I; x_CI = x_I; I_syn_CI = I_syn_I;
@@ -628,6 +641,7 @@ for t in range(1, sim_steps):
         vr = vr, 
         vp = vp,
         dt = dt,
+        fired = fired_S
     )
     
     r_S = r_E; x_S = x_E; I_syn_S = I_syn_E;
@@ -679,6 +693,7 @@ for t in range(1, sim_steps):
         vr = vr, 
         vp = vp,
         dt = dt,
+        fired = fired_M
     )
     
     r_M = r_E; x_M = x_E; I_syn_M = I_syn_E;
@@ -737,6 +752,7 @@ for t in range(1, sim_steps):
         vr = vr, 
         vp = vp,
         dt = dt,
+        fired = fired_D
     )
     
     r_D = r_E; x_D = x_E; I_syn_D = I_syn_E;
@@ -783,4 +799,21 @@ plot_voltages(n_neurons = n_CI, voltage = v_CI_clean, chop_till = chop_till, sim
 plot_voltages(n_neurons = n_S, voltage = v_S_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer S")
 plot_voltages(n_neurons = n_M, voltage = v_M_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer M")
 plot_voltages(n_neurons = n_D, voltage = v_D_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer D")
+
+# =============================================================================
+# MAKING RASTER PLOTS
+# =============================================================================
+TR_dict = make_dict(sim_steps, chop_till, n_TR, fired_TR)
+TC_dict = make_dict(sim_steps, chop_till, n_TC, fired_TC)
+CI_dict = make_dict(sim_steps, chop_till, n_CI, fired_CI)
+D_dict = make_dict(sim_steps, chop_till, n_D, fired_D)
+M_dict = make_dict(sim_steps, chop_till, n_M, fired_M)
+S_dict = make_dict(sim_steps, chop_till, n_S, fired_S)
+
+sns.stripplot(data=TR_dict, x="time", y="neuron", hue="fired")
+        
+        
+        
+
+
 

@@ -61,11 +61,11 @@ def tc_cells(
        tau_s_D,
        U_D,
        A_D,
+       fired,
     ):
      
     Isi = np.zeros((1, n_neurons))
     Isi_D = np.zeros((1, n_neurons))
-    fired = np.zeros((n_neurons,sim_steps))
 
     for k in range(0, n_neurons):   
         AP_aux = 0
@@ -101,7 +101,6 @@ def tc_cells(
             v_aux = vp + white_gausian_aux
             voltage[k][t] = c[0][k]
             u[k][t] = u_aux + d[0][k]
-            fired[k][t] = 1
         
         [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r, 
                                               x = x, 
@@ -133,6 +132,8 @@ def tc_cells(
         
         Isi[0][k] = Ipost 
         Isi_D[0][k] = IpostD 
+        
+        fired[k][t] = AP_aux
     
     PSC_TC[0][t] = np.sum(Ipost)
     PSC_D[0][t] = np.sum(IpostD)

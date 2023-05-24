@@ -119,12 +119,12 @@ def d_cells(
         vr, 
         vp,
         dt,
+        fired,
      ):
       
      Ise = np.zeros((1,n_neurons))
      Ise_F = np.zeros((1,n_neurons))
      Ise_D = np.zeros((1,n_neurons))
-     fired = np.zeros((n_neurons,sim_steps))
 
      for k in range(0, n_neurons):   
          AP_aux = 0
@@ -163,7 +163,6 @@ def d_cells(
              v_aux = vp + white_gausian_aux
              voltage[k][t] = c[0][k]
              u[k][t] = u_aux + d[0][k]
-             fired[k][t] = 1
          
          rr = r; xx = x; Iss = Is;
          # Pseudo Linear
@@ -213,7 +212,8 @@ def d_cells(
          xf = xsd
          Isf = Isynd
          Ise_D[0][k] = Ipostd
-             
+         
+         fired[k][t] = AP_aux
          
      
      PSC_D[0][t] = np.sum(Ipost)

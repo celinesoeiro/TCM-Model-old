@@ -117,3 +117,36 @@ def poissonSpikeGen(firing_rate, sim_steps, n_trials, dt):
     time_vector = np.arange(0, sim_steps - dt, dt)
     
     return spike_mat, time_vector
+
+# =============================================================================
+# RASTER
+# =============================================================================
+def make_dict(sim_steps, chop_till, n_neurons, fired):
+    clean_sim_steps = np.arange(0, sim_steps - chop_till)
+    
+    new_length = len(clean_sim_steps)*n_neurons
+    neuron = np.zeros((new_length, 3))
+
+    n_aux = 0
+    t_aux = 0
+    for i in range(new_length):
+        if (n_aux == n_neurons):
+            n_aux = 0
+        
+        if (t_aux == len(clean_sim_steps)):
+            t_aux = 0
+            
+        neuron[i][0] = n_aux
+        neuron[i][1] = t_aux
+        neuron[i][2] = fired[n_aux][t_aux]
+            
+        n_aux += 1
+        t_aux +=1
+    
+    v_dict = {
+        "neuron": neuron[:, 0],
+        "time": neuron[:, 1],
+        "fired": neuron[:, 2],
+        }
+    
+    return v_dict

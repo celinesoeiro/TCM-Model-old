@@ -113,10 +113,10 @@ def ci_cells(
         vr, 
         vp,
         dt,
+        fired,
      ):
       
      Isi = np.zeros((1,n_neurons))
-     fired = np.zeros((n_neurons,sim_steps))
 
      for k in range(0, n_neurons):   
          AP_aux = 0

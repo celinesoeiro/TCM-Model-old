@@ -112,10 +112,10 @@ def s_cells(
         vr, 
         vp,
         dt,
+        fired,
      ):
       
      Isi = np.zeros((1,n_neurons))
-     fired = np.zeros((n_neurons,sim_steps))
 
      for k in range(0, n_neurons):   
          AP_aux = 0
@@ -151,7 +151,6 @@ def s_cells(
              v_aux = vp + white_gausian_aux
              voltage[k][t] = c[0][k]
              u[k][t] = u_aux + d[0][k]
-             fired[k][t] = 1
          
          [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r, 
                                                x = x, 
@@ -168,6 +167,8 @@ def s_cells(
          Is = Isyn
              
          Isi[0][k] = Ipost 
+         
+         fired[k][t] = AP_aux
      
      PSC_S[0][t] = np.sum(Ipost)
 
