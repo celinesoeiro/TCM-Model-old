@@ -103,7 +103,7 @@ def DBS_delta(f_dbs, dbs_duration, dev, sim_steps, Fs, dbs_amplitude, cut):
     if (dev == 1):
         dbs_I = I_dbs_full
     else:
-        dbs_I = [np.zeros((1, cut)), np.zeros((1, (sim_steps - cut)/dev)), I_dbs_full, np.zeros((1, (sim_steps - cut)/dev))]
+        dbs_I = [np.zeros((1, cut)), np.zeros((1, int((sim_steps - cut)/dev))), I_dbs_full, np.zeros((1, int((sim_steps - cut)/dev)))]
         
     return dbs_I
 

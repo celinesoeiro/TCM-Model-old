@@ -350,7 +350,7 @@ if (dev == 1):
                           dbs_amplitude=dbs_amplitude, 
                           cut=chop_till)
 else:
-    dbs_duration = (sim_steps - chop_till)/dev
+    dbs_duration = int(np.round((sim_steps - chop_till)/dev))
     dbs_amplitude = 1
     
     I_dbs_pre = DBS_delta(f_dbs = f_dbs, 
@@ -816,6 +816,9 @@ plot_voltages(n_neurons = n_D, voltage = v_D_clean, chop_till = chop_till, sim_s
 # =============================================================================
 # MAKING RASTER PLOTS
 # =============================================================================
+
+
+
 AP_TR = export_spike_dict(sim_steps = sim_steps, n_neuron = n_TR, spikes = spike_times_TR, chop_till = chop_till)
 AP_TC = export_spike_dict(sim_steps = sim_steps, n_neuron = n_TC, spikes = spike_times_TC, chop_till = chop_till)
 AP_CI = export_spike_dict(sim_steps = sim_steps, n_neuron = n_CI, spikes = spike_times_CI, chop_till = chop_till)

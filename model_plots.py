@@ -48,10 +48,10 @@ def plot_heat_map(matrix_normal, matrix_PD):
 def plot_voltages(n_neurons, voltage, chop_till, sim_steps, title):
     new_time= np.transpose(np.arange(len(voltage)))
 
-    if (n_neurons == 20):
-        fig, axs = plt.subplots(10,2,sharex=True, figsize=(10,20))
+    if (n_neurons == 40):
+        fig, axs = plt.subplots(20,2,sharex=True, figsize=(20,20))
     else:
-        fig, axs = plt.subplots(25,2,sharex=True, figsize=(10,30))
+        fig, axs = plt.subplots(50,2,sharex=True, figsize=(40,30))
         
     fig.suptitle(title)    
     
@@ -74,7 +74,7 @@ def plot_voltages(n_neurons, voltage, chop_till, sim_steps, title):
 # =============================================================================
 def plot_rasters(neuron_dict, title):
     # Create a new figure
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(10, 16))
     plt.title(title)
     
     # Iterate over each neuron
@@ -83,7 +83,7 @@ def plot_rasters(neuron_dict, title):
         y_values = np.full_like(spike_times, neuron_idx + 1)
         
         # Plot scatter points for spike times
-        plt.scatter(spike_times, y_values, marker='|', color='black')
+        plt.scatter(spike_times, y_values, marker='o', color='black')
     
     # Set the y-axis limits and labels
     plt.ylim(0.5, len(neuron_dict) + 0.5)

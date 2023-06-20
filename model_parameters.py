@@ -68,7 +68,7 @@ def TCM_model_parameters():
     dt = 0.5                                    # time step in ms
     fs = 1000/dt                                # sampling frequency in Hz
     Fs = int(np.round(fs))                      # 
-    dbs_on = 5*67                               # value of synaptic fidelity when DBS on
+    dbs_on = int(5*67)                               # value of synaptic fidelity when DBS on
     dbs_off = 0                                 # value of synaptic fidelity when DBS off
     synaptic_fidelity = dbs_off                 # synaptic fidelity
     simulation_time = 3                         # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
@@ -98,12 +98,12 @@ def TCM_model_parameters():
         t_vec = np.arange(td_cortex_thalamus + td_synapse + 1, sim_steps)
         
     # Neuron quantities
-    qnt_neurons_s = 50         # Excitatory
-    qnt_neurons_m = 50         # Excitatory
-    qnt_neurons_d = 50         # Excitatory
-    qnt_neurons_ci = 50        # Inhibitory
-    qnt_neurons_tc = 50        # Excitatory
-    qnt_neurons_tr = 20         # Inhibitory
+    qnt_neurons_s = 100         # Excitatory
+    qnt_neurons_m = 100         # Excitatory
+    qnt_neurons_d = 100         # Excitatory
+    qnt_neurons_ci = 100        # Inhibitory
+    qnt_neurons_tc = 100        # Excitatory
+    qnt_neurons_tr = 40         # Inhibitory
     
     neuron_quantities = {
         'S': qnt_neurons_s,                      # Number of neurons in Superficial layer
