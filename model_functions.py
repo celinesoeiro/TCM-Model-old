@@ -162,7 +162,7 @@ def export_spike_dict(n_neuron, sim_steps, chop_till, spikes):
     
     # Filling the dictionary with the firing time
     for n in range(n_neuron):
-        for t in range(len(clean_sim_steps)):
+        for t in clean_sim_steps:
             if (spikes[n][t] != 0):
                 spike_time.append(int(spikes[n][t]))
 

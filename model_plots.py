@@ -94,3 +94,82 @@ def plot_rasters(neuron_dict, title):
     
     # Show the plot
     plt.show()
+    
+def plot_raster(
+        sim_steps,
+        chop_till, 
+        n_TR, 
+        n_TC, 
+        n_CI, 
+        n_D, 
+        n_M, 
+        n_S, 
+        n_total,
+        n_CI_FS,
+        n_CI_LTS,
+        n_D_RS,
+        n_D_IB,
+        n_S_RS,
+        n_S_IB,
+        spike_times_TR, 
+        spike_times_TC, 
+        spike_times_CI, 
+        spike_times_D, 
+        spike_times_M,
+        spike_times_S):
+    
+    spike_TR_clean = np.zeros((n_TR, sim_steps - chop_till))
+    spike_TC_clean = np.zeros((n_TC, sim_steps - chop_till))
+    spike_CI_clean = np.zeros((n_CI, sim_steps - chop_till))
+    spike_D_clean = np.zeros((n_D, sim_steps - chop_till))
+    spike_M_clean = np.zeros((n_M, sim_steps - chop_till))
+    spike_S_clean = np.zeros((n_S, sim_steps - chop_till))
+    
+    for i in range(n_TR):
+        spike_TR_clean[i] = spike_times_TR[i][chop_till:]
+        
+    for i in range(n_TC):
+        spike_TC_clean[i] = spike_times_TC[i][chop_till:]
+        spike_CI_clean[i] = spike_times_CI[i][chop_till:]
+        spike_D_clean[i] = spike_times_D[i][chop_till:]
+        spike_M_clean[i] = spike_times_M[i][chop_till:]
+        spike_S_clean[i] = spike_times_S[i][chop_till:]
+    
+    spikes = np.concatenate([spike_TR_clean, spike_TC_clean, spike_CI_clean, spike_D_clean, spike_M_clean, spike_S_clean])
+    
+    plt.figure(figsize=(8, 8))
+    plt.title('raster plot')
+    
+    for i in range(n_total):  
+        y_values = np.full_like(spikes[i], i + 1)
+        plt.scatter(x=spikes[i], y=y_values, color='black', s=0.5)
+        
+    plt.ylim(1, n_total + 1)
+    plt.yticks(np.arange(0, n_total + 10, 20))
+    plt.xlim(left = chop_till - 1, right=sim_steps + 1)
+    plt.xticks(np.arange(2000, sim_steps + 1, 1000))
+    
+    # TR neurons
+    plt.axhline(y = n_TR, color = 'b', linestyle='-' )
+    # TC neurons
+    plt.axhline(y = n_TR + n_TC, color = 'g', linestyle='-' )
+    # CI neurons
+    plt.axhline(y = n_TR + n_TC + n_CI, color = 'r', linestyle='-' )
+    plt.axhline(y = n_TR + n_TC + n_CI + n_CI_FS, color = 'lightcoral', linestyle='-')
+    plt.axhline(y = n_TR + n_TC + n_CI + n_CI_FS + n_CI_LTS, color = 'lightcoral', linestyle='-')
+    # D neurons
+    plt.axhline(y = n_TR + n_TC + n_CI + n_D, color = 'c', linestyle='-' )
+    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_D_RS, color = 'paleturquoise', linestyle='-' )
+    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_D_RS + n_D_IB, color = 'paleturquoise', linestyle='-' )
+    # M neurons
+    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M, color = 'm', linestyle='-' )
+    # S neurons
+    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M + n_S, color = 'gold', linestyle='-' )
+    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M + n_S + n_S_RS, color = 'khaki', linestyle='-' )
+    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M + n_S + n_S_RS + n_S_IB, color = 'khaki', linestyle='-' )
+    
+    plt.ylabel('neurons')
+    plt.xlabel('Time')
+        
+    plt.show()
+    

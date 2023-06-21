@@ -14,9 +14,9 @@ sns.set()
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 
-from model_functions import tm_synapse_dbs_eq, DBS_delta, tm_synapse_poisson_eq, poissonSpikeGen, export_spike_dict
+from model_functions import tm_synapse_dbs_eq, DBS_delta, tm_synapse_poisson_eq, poissonSpikeGen
 
-from model_plots import plot_heat_map, plot_voltages, plot_rasters
+from model_plots import plot_heat_map, plot_voltages, plot_raster
 
 from tr_as_func import tr_cells
 from tc_as_func import tc_cells
@@ -32,12 +32,12 @@ print("-- Initializing the global values")
 
 global_parameters = TCM_model_parameters()['model_global_parameters']
 neuron_quantities = TCM_model_parameters()['neuron_quantities']
+neuron_per_structure = TCM_model_parameters()['neuron_per_structure']
 neurons_connected_with_hyperdirect_neurons = TCM_model_parameters()['neurons_connected_with_hyperdirect_neurons']
 neuron_params = TCM_model_parameters()['neuron_paramaters']
 currents = TCM_model_parameters()['currents_per_structure']
 noise = TCM_model_parameters()['noise']
 TCM_model = TCM_model_parameters()['model_global_parameters']
-random_factor = TCM_model_parameters()['random_factor']
 synapse_initial_values = TCM_model_parameters()['synapse_initial_values']
 
 tm_synapse_params_inhibitory = TCM_model_parameters()['tm_synapse_params_inhibitory']
@@ -70,6 +70,14 @@ n_CI = neuron_quantities['CI']
 n_TR = neuron_quantities['TR']
 n_TC = neuron_quantities['TC']
 n_Hyper = neuron_quantities['HD']
+n_total = neuron_quantities['total']
+
+n_CI_FS = neuron_per_structure['neurons_ci_1']
+n_CI_LTS = neuron_per_structure['neurons_ci_2']
+n_D_RS = neuron_per_structure['neurons_d_1']
+n_D_IB = neuron_per_structure['neurons_d_2']
+n_S_RS = neuron_per_structure['neurons_s_1']
+n_S_IB = neuron_per_structure['neurons_s_2']
 
 # Affected neurons
 n_TR_affected = neurons_connected_with_hyperdirect_neurons['TR']
@@ -814,21 +822,85 @@ plot_voltages(n_neurons = n_M, voltage = v_M_clean, chop_till = chop_till, sim_s
 plot_voltages(n_neurons = n_D, voltage = v_D_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer D")
 
 # =============================================================================
-# MAKING RASTER PLOTS
+# MAKING RASTER PLOT
 # =============================================================================
 
+plot_raster(
+    sim_steps, 
+    chop_till, 
+    n_TR, 
+    n_TC,
+    n_CI, 
+    n_D, 
+    n_M, 
+    n_S, 
+    n_total, 
+    n_CI_FS,
+    n_CI_LTS,
+    n_D_RS,
+    n_D_IB,
+    n_S_RS,
+    n_S_IB,
+    spike_times_TR, 
+    spike_times_TC, 
+    spike_times_CI, 
+    spike_times_D, 
+    spike_times_M, 
+    spike_times_S
+    )
 
+# from matplotlib import pyplot as plt
 
-AP_TR = export_spike_dict(sim_steps = sim_steps, n_neuron = n_TR, spikes = spike_times_TR, chop_till = chop_till)
-AP_TC = export_spike_dict(sim_steps = sim_steps, n_neuron = n_TC, spikes = spike_times_TC, chop_till = chop_till)
-AP_CI = export_spike_dict(sim_steps = sim_steps, n_neuron = n_CI, spikes = spike_times_CI, chop_till = chop_till)
-AP_D = export_spike_dict(sim_steps = sim_steps, n_neuron = n_D, spikes = spike_times_D, chop_till = chop_till)
-AP_M = export_spike_dict(sim_steps = sim_steps, n_neuron = n_M, spikes = spike_times_M, chop_till = chop_till)
-AP_S = export_spike_dict(sim_steps = sim_steps, n_neuron = n_S, spikes = spike_times_S, chop_till = chop_till)
+# spike_TR_clean = np.zeros((n_TR, sim_steps - chop_till))
+# spike_TC_clean = np.zeros((n_TC, sim_steps - chop_till))
+# spike_CI_clean = np.zeros((n_CI, sim_steps - chop_till))
+# spike_D_clean = np.zeros((n_D, sim_steps - chop_till))
+# spike_M_clean = np.zeros((n_M, sim_steps - chop_till))
+# spike_S_clean = np.zeros((n_S, sim_steps - chop_till))
 
-plot_rasters(AP_TR, title = "Raster Plot TR Nucleus")
-plot_rasters(AP_TC, title = "Raster Plot TC Nucleus")
-plot_rasters(AP_CI, title = "Raster Plot CI")
-plot_rasters(AP_D, title = "Raster Plot D Layer")
-plot_rasters(AP_M, title = "Raster Plot M Layer")
-plot_rasters(AP_S, title = "Raster Plot S Layer")
+# for i in range(n_TR):
+#     spike_TR_clean[i] = spike_times_TR[i][chop_till:]
+    
+# for i in range(n_TC):
+#     spike_TC_clean[i] = spike_times_TC[i][chop_till:]
+#     spike_CI_clean[i] = spike_times_CI[i][chop_till:]
+#     spike_D_clean[i] = spike_times_D[i][chop_till:]
+#     spike_M_clean[i] = spike_times_M[i][chop_till:]
+#     spike_S_clean[i] = spike_times_S[i][chop_till:]
+
+# spikes = np.concatenate([spike_TR_clean, spike_TC_clean, spike_CI_clean, spike_D_clean, spike_M_clean, spike_S_clean])
+
+# plt.figure(figsize=(8, 8))
+# plt.title('raster plot')
+
+# for i in range(n_total):  
+#     y_values = np.full_like(spikes[i], i + 1)
+#     plt.scatter(x=spikes[i], y=y_values, color='black', s=0.5)
+    
+# plt.ylim(1, n_total + 1)
+# plt.yticks(np.arange(0, n_total + 10, 20))
+# plt.xlim(left = chop_till - 1, right=sim_steps + 1)
+# plt.xticks(np.arange(2000, sim_steps + 1, 1000))
+# # TR neurons
+# plt.axhline(y = n_TR, color = 'b', linestyle='-' )
+# # TC neurons
+# plt.axhline(y = n_TR + n_TC, color = 'g', linestyle='-' )
+# # CI neurons
+# plt.axhline(y = n_TR + n_TC + n_CI, color = 'r', linestyle='-' )
+# plt.axhline(y = n_TR + n_TC + n_CI + n_CI_FS, color = 'lightcoral', linestyle='-')
+# plt.axhline(y = n_TR + n_TC + n_CI + n_CI_FS + n_CI_LTS, color = 'lightcoral', linestyle='-')
+# # D neurons
+# plt.axhline(y = n_TR + n_TC + n_CI + n_D, color = 'c', linestyle='-' )
+# plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_D_RS, color = 'paleturquoise', linestyle='-' )
+# plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_D_RS + n_D_IB, color = 'paleturquoise', linestyle='-' )
+# # M neurons
+# plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M, color = 'm', linestyle='-' )
+# # S neurons
+# plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M + n_S, color = 'gold', linestyle='-' )
+# plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M + n_S + n_S_RS, color = 'khaki', linestyle='-' )
+# plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M + n_S + n_S_RS + n_S_IB, color = 'khaki', linestyle='-' )
+
+# plt.ylabel('neurons')
+# plt.xlabel('Time')
+    
+# plt.show()
