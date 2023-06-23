@@ -97,6 +97,8 @@ def plot_rasters(neuron_dict, title):
     
 def plot_raster(
         sim_steps,
+        sim_time,
+        dt,
         chop_till, 
         n_TR, 
         n_TC, 
@@ -117,6 +119,16 @@ def plot_raster(
         spike_times_D, 
         spike_times_M,
         spike_times_S):
+    
+    TR_lim = n_TR
+    TC_lim = TR_lim + n_TC
+    CI_lim = TC_lim + n_CI
+    CI_FS_lim = CI_lim - n_CI_LTS
+    D_lim = CI_lim + n_D
+    D_RS_lim = D_lim - n_D_IB
+    M_lim = D_lim + n_M
+    S_lim = M_lim + n_S
+    S_RS_lim = S_lim - n_S_IB
     
     spike_TR_clean = np.zeros((n_TR, sim_steps - chop_till))
     spike_TC_clean = np.zeros((n_TC, sim_steps - chop_till))
@@ -140,36 +152,71 @@ def plot_raster(
     plt.figure(figsize=(8, 8))
     plt.title('raster plot')
     
+    ax = plt.axes()
+    
     for i in range(n_total):  
         y_values = np.full_like(spikes[i], i + 1)
-        plt.scatter(x=spikes[i], y=y_values, color='black', s=0.5)
+        ax.scatter(x=spikes[i], y=y_values, color='black', s=0.5)
         
-    plt.ylim(1, n_total + 1)
-    plt.yticks(np.arange(0, n_total + 10, 20))
-    plt.xlim(left = chop_till - 1, right=sim_steps + 1)
-    plt.xticks(np.arange(2000, sim_steps + 1, 1000))
+    TR_lim = n_TR
+    TC_lim = TR_lim + n_TC
+    CI_lim = TC_lim + n_CI
+    CI_FS_lim = CI_lim - n_CI_LTS
+    D_lim = CI_lim + n_D
+    D_RS_lim = D_lim - n_D_IB
+    M_lim = D_lim + n_M
+    S_lim = M_lim + n_S
+    S_RS_lim = S_lim - n_S_IB
+        
+    ax.set_ylabel('neurons')
+    ax.set_ylim(1, n_total + 1)
+    ax.set_yticks([0, 
+                   TR_lim, 
+                   TC_lim, 
+                   CI_lim, 
+                   CI_FS_lim - 20, 
+                   CI_FS_lim + 20, 
+                   D_RS_lim - 20, 
+                   D_RS_lim + 10, 
+                   D_lim, 
+                   M_lim, 
+                   S_RS_lim - 20, 
+                   S_RS_lim + 20, 
+                   S_lim])
+    ax.set_yticklabels(['',
+                        'TR',
+                        'TC',
+                        'CI - FS',
+                        'CI - LTS',
+                        'CI',
+                        'D - RS',
+                        'D - IB',
+                        'D', 
+                        'M', 
+                        'S - RS', 
+                        'S - IB', 
+                        'S',
+                        ])
+    
+    ax.set_xlabel('Time (s)')
+    ax.set_xlim(left = chop_till - 1, right=sim_steps + 1)
+    ax.set_xticks(np.arange(2000, sim_steps + 1, 1000))
+    ax.set_xticklabels(np.arange(0, sim_time + dt, dt))
     
     # TR neurons
-    plt.axhline(y = n_TR, color = 'b', linestyle='-' )
+    ax.hlines(y = TR_lim, xmin=0, xmax=8000, color = 'b', linestyle='solid' )
     # TC neurons
-    plt.axhline(y = n_TR + n_TC, color = 'g', linestyle='-' )
+    ax.hlines(y = TC_lim, xmin=0, xmax=8000, color = 'g', linestyle='solid' )
     # CI neurons
-    plt.axhline(y = n_TR + n_TC + n_CI, color = 'r', linestyle='-' )
-    plt.axhline(y = n_TR + n_TC + n_CI + n_CI_FS, color = 'lightcoral', linestyle='-')
-    plt.axhline(y = n_TR + n_TC + n_CI + n_CI_FS + n_CI_LTS, color = 'lightcoral', linestyle='-')
+    ax.hlines(y = CI_lim, xmin=0, xmax=8000, color = 'r', linestyle='solid' )
+    ax.hlines(y = CI_FS_lim, xmin=0, xmax=8000, color = 'lightcoral', linestyle='solid')
     # D neurons
-    plt.axhline(y = n_TR + n_TC + n_CI + n_D, color = 'c', linestyle='-' )
-    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_D_RS, color = 'paleturquoise', linestyle='-' )
-    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_D_RS + n_D_IB, color = 'paleturquoise', linestyle='-' )
+    ax.hlines(y = D_lim, xmin=0, xmax=8000, color = 'c', linestyle='solid' )
+    ax.hlines(y = D_RS_lim, xmin=0, xmax=8000, color = 'paleturquoise', linestyle='solid' )
     # M neurons
-    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M, color = 'm', linestyle='-' )
+    ax.hlines(y = M_lim, xmin=0, xmax=8000, color = 'm', linestyle='solid' )
     # S neurons
-    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M + n_S, color = 'gold', linestyle='-' )
-    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M + n_S + n_S_RS, color = 'khaki', linestyle='-' )
-    plt.axhline(y = n_TR + n_TC + n_CI + n_D + n_M + n_S + n_S_RS + n_S_IB, color = 'khaki', linestyle='-' )
-    
-    plt.ylabel('neurons')
-    plt.xlabel('Time')
-        
+    ax.hlines(y = S_lim, xmin=0, xmax=8000, color = 'gold', linestyle='solid' )
+    ax.hlines(y = S_RS_lim, xmin=0, xmax=8000, color = 'khaki', linestyle='solid' )
     plt.show()
     
