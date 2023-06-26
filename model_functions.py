@@ -91,19 +91,24 @@ def tm_synapse_poisson_eq(AP_position, sim_steps, t_delay, dt, tau_f, tau_d, tau
 # =============================================================================
 # DBS
 # =============================================================================
-def DBS_delta(f_dbs, dbs_duration, dev, sim_steps, Fs, dbs_amplitude, cut):
+def DBS_delta(f_dbs, dbs_duration, dev, sim_steps, Fs, dbs_amplitude, chop_till):
     # This is to define Dirac delta pulses, no membrane current but straight dirac delta pulses that reach PNs:
-    T_dbs = Fs/f_dbs
-    dbs = np.arange(0, dbs_duration, np.round(T_dbs))
+    T_dbs = np.round(Fs/f_dbs)
+    dbs = np.arange(0, dbs_duration, T_dbs)
     I_dbs_full = np.zeros((1, dbs_duration))
-    
-    for i in range(len(dbs)):
-        I_dbs_full[0][i] = dbs_amplitude 
-    
+
+    for i in dbs:
+        I_dbs_full[0][int(i)] = dbs_amplitude 
+
     if (dev == 1):
         dbs_I = I_dbs_full
     else:
-        dbs_I = [np.zeros((1, cut)), np.zeros((1, int((sim_steps - cut)/dev))), I_dbs_full, np.zeros((1, int((sim_steps - cut)/dev)))]
+        dbs_I = np.concatenate((
+            np.zeros((1, chop_till - 1)), 
+            np.zeros((1, int(np.round((sim_steps - chop_till)/dev)))), 
+            I_dbs_full, 
+            np.zeros((1, int(np.round((sim_steps - chop_till)/dev))))
+            ),axis=None)
         
     return dbs_I
 

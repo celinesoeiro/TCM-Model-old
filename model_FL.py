@@ -217,6 +217,7 @@ plot_heat_map(matrix_normal = CM_Normal, matrix_PD = CM_PD)
 # =============================================================================
 # WEIGHTS
 # =============================================================================
+print("-- Initializing model variables")
 W_TR_self = W_N['W_II_tr']
 W_TR_S = W_N['W_IE_tr_s']
 W_TR_M = W_N['W_IE_tr_m']
@@ -350,25 +351,17 @@ if (synaptic_fidelity != 0):
 if (dev == 1):
     dbs_duration = sim_steps
     dbs_amplitude = 0.02
-    
-    I_dbs_pre = DBS_delta(f_dbs = f_dbs, 
-                          dbs_duration = dbs_duration, 
-                          dev = dev, 
-                          sim_steps = sim_steps, 
-                          Fs=Fs, 
-                          dbs_amplitude=dbs_amplitude, 
-                          cut=chop_till)
 else:
     dbs_duration = int(np.round((sim_steps - chop_till)/dev))
     dbs_amplitude = 1
     
-    I_dbs_pre = DBS_delta(f_dbs = f_dbs, 
-                          dbs_duration = dbs_duration, 
-                          dev = dev, 
-                          sim_steps = sim_steps, 
-                          Fs=Fs, 
-                          dbs_amplitude=dbs_amplitude, 
-                          cut=chop_till)
+I_dbs_pre = DBS_delta(f_dbs, 
+                      dbs_duration, 
+                      dev, 
+                      sim_steps, 
+                      Fs, 
+                      dbs_amplitude, 
+                      chop_till)
 
 I_dbs_post = tm_synapse_dbs_eq(dbs = I_dbs_pre, 
                                t_delay = td_syn, 
@@ -379,7 +372,6 @@ I_dbs_post = tm_synapse_dbs_eq(dbs = I_dbs_pre,
                                A = A_E,
                                tau_s = tau_s_E,
                                sim_steps = sim_steps)
-
 I_dbs[0][:] = I_dbs_pre
 I_dbs[1][:] = I_dbs_post[0]
 

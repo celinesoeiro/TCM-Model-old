@@ -149,7 +149,7 @@ def plot_raster(
     
     spikes = np.concatenate([spike_TR_clean, spike_TC_clean, spike_CI_clean, spike_D_clean, spike_M_clean, spike_S_clean])
     
-    plt.figure(figsize=(8, 8))
+    plt.figure(figsize=(10, 10))
     plt.title('raster plot')
     
     ax = plt.axes()
@@ -198,25 +198,26 @@ def plot_raster(
                         'S',
                         ])
     
+    multiplier = 50000
     ax.set_xlabel('Time (s)')
     ax.set_xlim(left = chop_till - 1, right=sim_steps + 1)
-    ax.set_xticks(np.arange(2000, sim_steps + 1, 1000))
-    ax.set_xticklabels(np.arange(0, sim_time + dt, dt))
+    ax.set_xticks(np.arange(chop_till, sim_steps + dt*multiplier, int(dt*multiplier)))
+    ax.set_xticklabels(np.arange(1, sim_time + dt*15, dt*5))
     
     # TR neurons
-    ax.hlines(y = TR_lim, xmin=0, xmax=8000, color = 'b', linestyle='solid' )
+    ax.hlines(y = TR_lim, xmin=0, xmax=sim_steps, color = 'b', linestyle='solid' )
     # TC neurons
-    ax.hlines(y = TC_lim, xmin=0, xmax=8000, color = 'g', linestyle='solid' )
+    ax.hlines(y = TC_lim, xmin=0, xmax=sim_steps, color = 'g', linestyle='solid' )
     # CI neurons
-    ax.hlines(y = CI_lim, xmin=0, xmax=8000, color = 'r', linestyle='solid' )
-    ax.hlines(y = CI_FS_lim, xmin=0, xmax=8000, color = 'lightcoral', linestyle='solid')
+    ax.hlines(y = CI_lim, xmin=0, xmax=sim_steps, color = 'r', linestyle='solid' )
+    ax.hlines(y = CI_FS_lim, xmin=0, xmax=sim_steps, color = 'lightcoral', linestyle='solid')
     # D neurons
-    ax.hlines(y = D_lim, xmin=0, xmax=8000, color = 'c', linestyle='solid' )
-    ax.hlines(y = D_RS_lim, xmin=0, xmax=8000, color = 'paleturquoise', linestyle='solid' )
+    ax.hlines(y = D_lim, xmin=0, xmax=sim_steps, color = 'c', linestyle='solid' )
+    ax.hlines(y = D_RS_lim, xmin=0, xmax=sim_steps, color = 'paleturquoise', linestyle='solid' )
     # M neurons
-    ax.hlines(y = M_lim, xmin=0, xmax=8000, color = 'm', linestyle='solid' )
+    ax.hlines(y = M_lim, xmin=0, xmax=sim_steps, color = 'm', linestyle='solid' )
     # S neurons
-    ax.hlines(y = S_lim, xmin=0, xmax=8000, color = 'gold', linestyle='solid' )
-    ax.hlines(y = S_RS_lim, xmin=0, xmax=8000, color = 'khaki', linestyle='solid' )
+    ax.hlines(y = S_lim, xmin=0, xmax=sim_steps, color = 'gold', linestyle='solid' )
+    ax.hlines(y = S_RS_lim, xmin=0, xmax=sim_steps, color = 'khaki', linestyle='solid' )
     plt.show()
     
