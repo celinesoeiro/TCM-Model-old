@@ -55,12 +55,13 @@ def tm_synapse_dbs_eq(dbs, t_delay, dt, sim_steps, tau_f, tau_d, tau_s, U, A):
     
     for p in range(1,3):
         for q in range(1, len(t_vec)):
-            r_aux = r[q - 1]
-            x_aux = x[q - 1]
-            Is_aux = Is[q - 1]
-            r[p][q] = r_aux + dt*tm_r_eq(r_aux, tau_f[p - 1], U[p - 1], dbs[q - t_delay])
-            x[p][q] = x_aux + dt*tm_x_eq(x_aux, tau_d[p - 1], r_aux, U[p - 1], dbs[q - t_delay])
-            Is[p][q] = Is_aux + dt*tm_I_eq(Is_aux, tau_s, A[p - 1], U[p - 1], x_aux, r_aux, dbs[q - t_delay])
+            r_aux = r[p][q - 1]
+            x_aux = x[p][q - 1]
+            Is_aux = Is[p][q - 1]
+            r[p][q] = r_aux + dt*(-r_aux/tau_f + U[p - 1]*(1 - r_aux)*dbs[q - t_delay])
+            x[p][q] = x_aux + dt*((1-x_aux/tau_d) - r_aux*x_aux*dbs[q - t_delay])
+            Is[p][q] = Is_aux + dt*(-1*Is_aux/tau_s + A[p - 1]*r_aux*x_aux*dbs[q - t_delay])
+            # Is[p][q] = Is_aux + dt*tm_I_eq(Is_aux, tau_s, A[p - 1], U[p - 1], x_aux, r_aux, dbs[q - t_delay])
     
     dbs_I = np.sum(Is, axis = 0)
     

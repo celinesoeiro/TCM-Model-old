@@ -137,7 +137,7 @@ def d_cells(
          if (n_affected == 0):
              I_dbss = 0
          else:
-             if (k >= 1 and k <= n_affected):
+             if (k >= 0 and k <= n_affected):
                  I_dbss = I_dbs[0][t - 1]
              else:
                  I_dbss = I_dbs[1][t - 1]
