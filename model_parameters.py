@@ -66,11 +66,9 @@ def TCM_model_parameters():
     
     number_trials = 1                           # number of trials
     dt = 0.1                                    # time step in ms
-    fs = 1000/dt                                # sampling frequency in Hz
-    Fs = int(np.round(fs))                      # 
+    Fs = int(1000/dt)                           # sampling frequency in Hz
     dbs_on = int(5*67)                          # value of synaptic fidelity when DBS on
     dbs_off = 0                                 # value of synaptic fidelity when DBS off
-    synaptic_fidelity = dbs_off                 # synaptic fidelity
     simulation_time = 10                         # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
     T = (simulation_time + 1)*1000              # (s) Simulation time in ms with 1 extra second to reach the steady state and trash later
     sim_steps = int(np.round(T/dt))             # number of simulation steps
@@ -114,15 +112,6 @@ def TCM_model_parameters():
         'TR': qnt_neurons_tr,                    # Number of neurons in TR
         'HD': qnt_neurons_d*hyperdirect_neurons, # Number of hyperdirect neurons
         'total': qnt_neurons_s + qnt_neurons_m + qnt_neurons_d + qnt_neurons_ci + qnt_neurons_tc + qnt_neurons_tr,
-        }
-    
-    # Impact of DBS on the other cortical structures via D PNs axons:
-    synaptic_fidelity_per_structure = {
-        'S': 1*synaptic_fidelity, # the synaptic fidelity, for dbs carriers (to be used to invade layer S)
-        'M': 0*synaptic_fidelity, # the synaptic fidelity, for dbs carriers (to be used to invade layer M)
-        'CI': 1*synaptic_fidelity, # the synaptic fidelity, for dbs carriers (to be used to invade CIs)
-        'TC': 1*synaptic_fidelity,# the synaptic fidelity, for dbs carriers (to be used to invade layer TCR)
-        'TR': 1*synaptic_fidelity,# the synaptic fidelity, for dbs carriers (to be used to invade layer TRN)
         }
     
     nS = 1; nM = 0; nCI = 1; nTC = 1; nTR = 1;
@@ -237,7 +226,6 @@ def TCM_model_parameters():
 
     model_global_parameters = {
         'number_trials': number_trials,
-        'synaptic_fidelity': synaptic_fidelity, # DBS off - To turn DBS on set this value to 5*67
         'hyperdirect_neurons': hyperdirect_neurons, # Percentage of PNs affected in D by DBS
         'simulation_time': simulation_time, # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
         'simulation_time_ms': T,
@@ -425,7 +413,6 @@ def TCM_model_parameters():
         'neuron_quantities': neuron_quantities,
         'neuron_per_structure': neuron_per_structure,
         'model_global_parameters': model_global_parameters,
-        'synaptic_fidelity_per_structure': synaptic_fidelity_per_structure,
         'neurons_connected_with_hyperdirect_neurons': neurons_connected_with_hyperdirect_neurons,
         'neuron_paramaters': neuron_params,
         'bias_current': Idc,
@@ -435,6 +422,7 @@ def TCM_model_parameters():
         'tm_synapse_params_excitatory': tm_synapse_params_excitatory,
         'tm_synapse_params_inhibitory': tm_synapse_params_inhibitory,
         'synapse_initial_values': synapse_initial_values,
+        'dbs': [dbs_off, dbs_on]
         }
     
     return data

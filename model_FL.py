@@ -39,6 +39,7 @@ currents = TCM_model_parameters()['currents_per_structure']
 noise = TCM_model_parameters()['noise']
 TCM_model = TCM_model_parameters()['model_global_parameters']
 synapse_initial_values = TCM_model_parameters()['synapse_initial_values']
+dbs_modes = TCM_model_parameters()['dbs']
 
 tm_synapse_params_inhibitory = TCM_model_parameters()['tm_synapse_params_inhibitory']
 tm_synapse_params_excitatory = TCM_model_parameters()['tm_synapse_params_excitatory']
@@ -59,7 +60,6 @@ vp = global_parameters['vp']
 chop_till = global_parameters['chop_till']
 Idc_tune = global_parameters['Idc_tune']
 Fs = global_parameters['sampling_frequency']
-synaptic_fidelity = global_parameters['synaptic_fidelity']
 T = global_parameters['simulation_time_ms']
 sim_time = global_parameters['simulation_time']
 
@@ -73,6 +73,7 @@ n_TC = neuron_quantities['TC']
 n_Hyper = neuron_quantities['HD']
 n_total = neuron_quantities['total']
 
+# Quantity of neurons of different types per structure (FS, LTS, RS, IB)
 n_CI_FS = neuron_per_structure['neurons_ci_1']
 n_CI_LTS = neuron_per_structure['neurons_ci_2']
 n_D_RS = neuron_per_structure['neurons_d_1']
@@ -335,45 +336,6 @@ a_TC = neuron_params['a_TC']
 b_TC = neuron_params['b_TC']
 c_TC = neuron_params['c_TC']
 d_TC = neuron_params['d_TC']
-    
-# =============================================================================
-# DBS
-# =============================================================================
-I_dbs = np.zeros((2, sim_steps))
-
-f_dbs = 130
-dev = 1 # devide the total simulation time in dev sections
-
-if (synaptic_fidelity != 0):
-    dev = 3
-
-# for DBS on all the time
-if (dev == 1):
-    dbs_duration = sim_steps
-    dbs_amplitude = 0.02
-else:
-    dbs_duration = int(np.round((sim_steps - chop_till)/dev))
-    dbs_amplitude = 1
-    
-I_dbs_pre = DBS_delta(f_dbs, 
-                      dbs_duration, 
-                      dev, 
-                      sim_steps, 
-                      Fs, 
-                      dbs_amplitude, 
-                      chop_till)
-
-I_dbs_post = tm_synapse_dbs_eq(dbs = I_dbs_pre, 
-                               t_delay = td_syn, 
-                               dt = dt,
-                               tau_f = tau_f_E,
-                               tau_d = tau_d_E,
-                               U = U_E,
-                               A = A_E,
-                               tau_s = tau_s_E,
-                               sim_steps = sim_steps)
-I_dbs[0][:] = I_dbs_pre
-I_dbs[1][:] = I_dbs_post[0]
 
 # =============================================================================
 # POISSONIAN BACKGROUND ACTIVITY
@@ -432,414 +394,464 @@ spike_times_S = np.zeros((n_S, sim_steps))
 # =============================================================================
 # INITIALIZING MODEL
 # =============================================================================
-print("-- Running the model")
-
 Isi = np.zeros((1,n_TR))
 fired = np.zeros((n_TR,sim_steps))
 
-for t in range(1, sim_steps):
-    # TR
-    [r_I, x_I, I_syn_I, PSC_TR, v_TR, u_TR, fired_TR] = tr_cells(
-        t = t,
-        n_neurons = n_TR, 
-        sim_steps = sim_steps,
-        voltage = v_TR,
-        u = u_TR,
-        current = I_TR, 
-        a_wg_noise = zeta_TR_I,
-        t_wg_noise = kisi_TR_I,
-        poisson_background_E = I_ps_TR[0],
-        poisson_background_I  = I_ps_TR[1],
-        n_affected = n_TR_affected,
-        synaptic_fidelity = synaptic_fidelity,
-        I_dbs = I_dbs,
-        W_TR = W_TR_self,
-        W_S = W_TR_S,
-        W_M = W_TR_M,
-        W_D = W_TR_D,
-        W_TC = W_TR_TC,
-        W_CI = W_TR_CI,
-        PSC_S = PSC_S,
-        PSC_M = PSC_M,
-        PSC_D = PSC_D_F,
-        PSC_TC = PSC_TC,
-        PSC_TR = PSC_TR,
-        PSC_CI = PSC_CI,
-        td_wl = td_wl,
-        td_syn = td_syn,
-        td_ct = td_ct,
-        td_bl = td_bl,
-        a = a_TR,
-        b = b_TR,
-        c = c_TR,
-        d = d_TR,
-        r = r_TR,
-        x = x_TR,
-        Is = I_syn_TR,
-        tau_f = tau_f_I,
-        tau_d = tau_d_I,
-        tau_s = tau_s_I,
-        U = U_I,
-        A = A_I,
-        vr = vr, 
-        vp = vp,
-        dt = dt,
-        fired = fired_TR,
-        spikes = spike_times_TR,
-    )
+for dbs in dbs_modes:
+    print(f'-- Running the model for dbs = {dbs}')
+    # Impact of DBS on other cortical structures via D PNs axons
+    syn_fid_CI = dbs
+    syn_fid_D = dbs
+    syn_fid_M = 0*dbs
+    syn_fid_S = dbs
+    syn_fid_TC = dbs
+    syn_fid_TR = dbs
     
-    r_TR = r_I; x_TR = x_I; I_syn_TR = I_syn_I;
+    # =============================================================================
+    # DBS
+    # =============================================================================
+    I_dbs = np.zeros((2, sim_steps))
+
+    f_dbs = 130
+    dev = 1 # devide the total simulation time in dev sections
+
+    if (dbs != 0):
+        dev = 3
+
+    # for DBS on all the time
+    if (dev == 1):
+        dbs_duration = sim_steps
+        dbs_amplitude = 0.02
+    else:
+        dbs_duration = int(np.round((sim_steps - chop_till)/dev))
+        dbs_amplitude = 1
         
-    # TC    
-    [r_E, x_E, I_syn_E, PSC_TC, v_TC, u_TC, fired_TC, r_d, x_d, I_syn_d, PSC_D_TC] = tc_cells(
-        t = t,
-        n_neurons = n_TC, 
-        sim_steps = sim_steps,
-        voltage = v_TC,
-        u = u_TC,
-        current = I_TC, 
-        a_wg_noise = zeta_TC_E,
-        t_wg_noise = kisi_TC_E,
-        poisson_background_E = I_ps_TC[0],
-        poisson_background_I  = I_ps_TC[1],
-        n_affected = n_TC_affected,
-        synaptic_fidelity = synaptic_fidelity,
-        I_dbs = I_dbs,
-        W_S = W_TC_S,
-        W_M = W_TC_M,
-        W_D = W_TC_D,
-        W_TR = W_TC_TR,
-        W_TC = W_TC_self,
-        W_CI = W_TC_CI,
-        PSC_S = PSC_S,
-        PSC_M = PSC_M,
-        PSC_D = PSC_D_F,
-        PSC_TC = PSC_TC,
-        PSC_TR = PSC_TR,
-        PSC_CI = PSC_CI,
-        td_wl = td_wl,
-        td_syn = td_syn,
-        td_ct = td_ct,
-        td_bl = td_bl,
-        a = a_TC,
-        b = b_TC,
-        c = c_TC,
-        d = d_TC,
-        r = r_TC,
-        x = x_TC,
-        Is = I_syn_TC,
-        tau_f = tau_f_E,
-        tau_d = tau_d_E,
-        tau_s = tau_s_E,
-        U = U_E,
-        A = A_E,
-        vr = vr, 
-        vp = vp,
-        dt = dt,
-        r_D = r_D_TC,
-        x_D = x_D_TC,
-        I_syn_D = I_syn_D_TC,
-        tau_f_D = tau_f_E,
-        tau_d_D = tau_d_E,
-        tau_s_D = tau_s_E,
-        U_D = U_E,
-        A_D = A_E_D,
-        fired = fired_TC,
-        spikes = spike_times_TC
-    )
-    
-    r_TC = r_E; x_TC = x_E; I_syn_TC = I_syn_E;
-    r_D_TC = r_d; x_D_TC = x_d; I_syn_D_TC = I_syn_d;
-    
-    # CI
-    [r_I, x_I, I_syn_I, PSC_CI, v_CI, u_CI, fired_CI] = ci_cells(
-        t = t,
-        n_neurons = n_CI, 
-        sim_steps = sim_steps,
-        voltage = v_CI,
-        u = u_CI,
-        current = I_CI, 
-        a_wg_noise = zeta_CI_I,
-        t_wg_noise = kisi_CI_I,
-        poisson_background_E = I_ps_CI[0],
-        poisson_background_I  = I_ps_CI[1],
-        n_affected = n_CI_affected,
-        synaptic_fidelity = synaptic_fidelity,
-        I_dbs = I_dbs,
-        W_S = W_CI_S,
-        W_M = W_CI_M,
-        W_D = W_CI_D,
-        W_TR = W_CI_TR,
-        W_TC = W_CI_TC,
-        W_CI = W_CI_self,
-        PSC_S = PSC_S,
-        PSC_M = PSC_M,
-        PSC_D = PSC_D,
-        PSC_TC = PSC_TC,
-        PSC_TR = PSC_TR,
-        PSC_CI = PSC_CI,
-        td_wl = td_wl,
-        td_syn = td_syn,
-        td_ct = td_ct,
-        td_bl = td_bl,
-        td_tc = td_tc,
-        a = a_CI,
-        b = b_CI,
-        c = c_CI,
-        d = d_CI,
-        r = r_CI,
-        x = x_CI,
-        Is = I_syn_CI,
-        tau_f = tau_f_I,
-        tau_d = tau_d_I,
-        tau_s = tau_s_I,
-        U = U_I,
-        A = A_I,
-        vr = vr, 
-        vp = vp,
-        dt = dt,
-        fired = fired_CI,
-        spikes = spike_times_CI
-    )
-    
-    r_CI = r_I; x_CI = x_I; I_syn_CI = I_syn_I;
-    
-    # S
-    [r_E, x_E, I_syn_E, PSC_S, v_S, u_S, fired_S] = s_cells(
-        t = t,
-        n_neurons = n_S, 
-        sim_steps = sim_steps,
-        voltage = v_S,
-        u = u_S,
-        current = I_S, 
-        a_wg_noise = zeta_S_E,
-        t_wg_noise = kisi_S_E,
-        poisson_background_E = I_ps_S[0],
-        poisson_background_I  = I_ps_S[1],
-        n_affected = n_S_affected,
-        synaptic_fidelity = synaptic_fidelity,
-        I_dbs = I_dbs,
-        W_S = W_S_self,
-        W_M = W_S_M,
-        W_D = W_S_D,
-        W_TR = W_S_TR,
-        W_TC = W_S_TC,
-        W_CI = W_S_CI,
-        PSC_S = PSC_S,
-        PSC_M = PSC_M,
-        PSC_D = PSC_D,
-        PSC_TC = PSC_TC,
-        PSC_TR = PSC_TR,
-        PSC_CI = PSC_CI,
-        td_wl = td_wl,
-        td_syn = td_syn,
-        td_ct = td_ct,
-        td_bl = td_bl,
-        td_tc = td_tc,
-        a = a_S,
-        b = b_S,
-        c = c_S,
-        d = d_S,
-        r = r_S,
-        x = x_S,
-        Is = I_syn_S,
-        tau_f = tau_f_E,
-        tau_d = tau_d_E,
-        tau_s = tau_s_E,
-        U = U_E,
-        A = A_E,
-        vr = vr, 
-        vp = vp,
-        dt = dt,
-        fired = fired_S,
-        spikes = spike_times_S
-    )
-    
-    r_S = r_E; x_S = x_E; I_syn_S = I_syn_E;
-    
-    # M
-    [r_E, x_E, I_syn_E, PSC_M, v_M, u_M, fired_M] = m_cells(
-        t = t,
-        n_neurons = n_M, 
-        sim_steps = sim_steps,
-        voltage = v_M,
-        u = u_M,
-        current = I_M, 
-        a_wg_noise = zeta_M_E,
-        t_wg_noise = kisi_M_E,
-        poisson_background_E = I_ps_M[0],
-        poisson_background_I  = I_ps_M[1],
-        n_affected = n_M_affected,
-        synaptic_fidelity = synaptic_fidelity,
-        I_dbs = I_dbs,
-        W_M = W_M_self,
-        W_S = W_M_S,
-        W_D = W_M_D,
-        W_TR = W_M_TR,
-        W_TC = W_M_TC,
-        W_CI = W_M_CI,
-        PSC_S = PSC_S,
-        PSC_M = PSC_M,
-        PSC_D = PSC_D,
-        PSC_TC = PSC_TC,
-        PSC_TR = PSC_TR,
-        PSC_CI = PSC_CI,
-        td_wl = td_wl,
-        td_syn = td_syn,
-        td_ct = td_ct,
-        td_bl = td_bl,
-        td_tc = td_tc,
-        a = a_M,
-        b = b_M,
-        c = c_M,
-        d = d_M,
-        r = r_M,
-        x = x_M,
-        Is = I_syn_M,
-        tau_f = tau_f_E,
-        tau_d = tau_d_E,
-        tau_s = tau_s_E,
-        U = U_E,
-        A = A_E,
-        vr = vr, 
-        vp = vp,
-        dt = dt,
-        fired = fired_M,
-        spikes = spike_times_M
-    )
-    
-    r_M = r_E; x_M = x_E; I_syn_M = I_syn_E;
-    
-    # D
-    [r_E, x_E, I_syn_E, r_F, x_F, I_syn_F, v_D, u_D, fired_D, PSC_D, PSC_D_F, PSC_D_D] = d_cells(
-        t = t,
-        n_neurons = n_D, 
-        sim_steps = sim_steps,
-        voltage = v_D,
-        u = u_D,
-        current = I_D, 
-        a_wg_noise = zeta_S_E,
-        t_wg_noise = kisi_S_E,
-        poisson_background_E = I_ps_D[0],
-        poisson_background_I  = I_ps_D[1],
-        n_affected = n_Hyper,
-        synaptic_fidelity = synaptic_fidelity,
-        I_dbs = I_dbs,
-        W_M = W_D_M,
-        W_S = W_D_S,
-        W_D = W_D_self,
-        W_TR = W_D_TR,
-        W_TC = W_D_TC,
-        W_CI = W_D_CI,
-        PSC_S = PSC_S,
-        PSC_M = PSC_M,
-        PSC_D = PSC_D,
-        PSC_TR = PSC_TR,
-        PSC_CI = PSC_CI,
-        PSC_D_TC = PSC_D_TC,
-        PSC_D_D = PSC_D_D,
-        PSC_D_F = PSC_D_F,
-        td_wl = td_wl,
-        td_syn = td_syn,
-        td_ct = td_ct,
-        td_bl = td_bl,
-        td_tc = td_tc,
-        a = a_D,
-        b = b_D,
-        c = c_D,
-        d = d_D,
-        r = r_D,
-        x = x_D,
-        Is = I_syn_D,
-        r_F = r_D_F,
-        x_F = x_D_F,
-        Is_F = I_syn_D_F,
-        tau_f = tau_f_E,
-        tau_d = tau_d_E,
-        tau_s = tau_s_E,
-        U = U_E,
-        A = A_E,
-        A_F = A_E_D_F,
-        A_D = A_E_D,
-        vr = vr, 
-        vp = vp,
-        dt = dt,
-        fired = fired_D,
-        spikes = spike_times_D
-    )
-    
-    r_D = r_E; x_D = x_E; I_syn_D = I_syn_E;
-    r_D_F = r_F; x_D_F = x_F; I_syn_D_F = I_syn_F;
-    
-    gc.collect()
-    
-# =============================================================================
-# CLEANING THE DATA
-# =============================================================================
-v_TR_clean = np.transpose(v_TR[:,chop_till:sim_steps])
-PSC_TR_clean = PSC_TR[:, chop_till:sim_steps]
+    I_dbs_pre = DBS_delta(f_dbs, 
+                          dbs_duration, 
+                          dev, 
+                          sim_steps, 
+                          Fs, 
+                          dbs_amplitude, 
+                          chop_till)
 
-v_TC_clean = np.transpose(v_TC[:,chop_till:sim_steps])
-PSC_TC_clean = PSC_TC[:, chop_till:sim_steps]
+    I_dbs_post = tm_synapse_dbs_eq(I_dbs = I_dbs_pre, 
+                                   t_delay = td_syn, 
+                                   dt = dt,
+                                   tau_f = tau_f_E,
+                                   tau_d = tau_d_E,
+                                   U = U_E,
+                                   A = A_E,
+                                   tau_s = tau_s_E,
+                                   sim_steps = sim_steps)
+    I_dbs[0][:] = I_dbs_pre
+    I_dbs[1][:] = I_dbs_post[0]
 
-v_CI_clean = np.transpose(v_CI[:,chop_till:sim_steps])
-PSC_CI_clean = PSC_CI[:, chop_till:sim_steps]
-
-v_S_clean = np.transpose(v_S[:,chop_till:sim_steps])
-PSC_S_clean = PSC_S[:, chop_till:sim_steps]
-
-v_M_clean = np.transpose(v_M[:,chop_till:sim_steps])
-PSC_M_clean = PSC_M[:, chop_till:sim_steps]
-
-v_D_clean = np.transpose(v_D[:,chop_till:sim_steps])
-PSC_D_clean = PSC_D[:, chop_till:sim_steps]
+    for t in range(1, sim_steps):
+        # TR
+        [r_I, x_I, I_syn_I, PSC_TR, v_TR, u_TR, fired_TR] = tr_cells(
+            t = t,
+            n_neurons = n_TR, 
+            sim_steps = sim_steps,
+            voltage = v_TR,
+            u = u_TR,
+            current = I_TR, 
+            a_wg_noise = zeta_TR_I,
+            t_wg_noise = kisi_TR_I,
+            poisson_background_E = I_ps_TR[0],
+            poisson_background_I  = I_ps_TR[1],
+            n_affected = n_TR_affected,
+            synaptic_fidelity = dbs,
+            I_dbs = syn_fid_TR*I_dbs,
+            W_TR = W_TR_self,
+            W_S = W_TR_S,
+            W_M = W_TR_M,
+            W_D = W_TR_D,
+            W_TC = W_TR_TC,
+            W_CI = W_TR_CI,
+            PSC_S = PSC_S,
+            PSC_M = PSC_M,
+            PSC_D = PSC_D_F,
+            PSC_TC = PSC_TC,
+            PSC_TR = PSC_TR,
+            PSC_CI = PSC_CI,
+            td_wl = td_wl,
+            td_syn = td_syn,
+            td_ct = td_ct,
+            td_bl = td_bl,
+            a = a_TR,
+            b = b_TR,
+            c = c_TR,
+            d = d_TR,
+            r = r_TR,
+            x = x_TR,
+            Is = I_syn_TR,
+            tau_f = tau_f_I,
+            tau_d = tau_d_I,
+            tau_s = tau_s_I,
+            U = U_I,
+            A = A_I,
+            vr = vr, 
+            vp = vp,
+            dt = dt,
+            fired = fired_TR,
+            spikes = spike_times_TR,
+        )
+        
+        r_TR = r_I; x_TR = x_I; I_syn_TR = I_syn_I;
+            
+        # TC    
+        [r_E, x_E, I_syn_E, PSC_TC, v_TC, u_TC, fired_TC, r_d, x_d, I_syn_d, PSC_D_TC] = tc_cells(
+            t = t,
+            n_neurons = n_TC, 
+            sim_steps = sim_steps,
+            voltage = v_TC,
+            u = u_TC,
+            current = I_TC, 
+            a_wg_noise = zeta_TC_E,
+            t_wg_noise = kisi_TC_E,
+            poisson_background_E = I_ps_TC[0],
+            poisson_background_I  = I_ps_TC[1],
+            n_affected = n_TC_affected,
+            synaptic_fidelity = dbs,
+            I_dbs = syn_fid_TC*I_dbs,
+            W_S = W_TC_S,
+            W_M = W_TC_M,
+            W_D = W_TC_D,
+            W_TR = W_TC_TR,
+            W_TC = W_TC_self,
+            W_CI = W_TC_CI,
+            PSC_S = PSC_S,
+            PSC_M = PSC_M,
+            PSC_D = PSC_D_F,
+            PSC_TC = PSC_TC,
+            PSC_TR = PSC_TR,
+            PSC_CI = PSC_CI,
+            td_wl = td_wl,
+            td_syn = td_syn,
+            td_ct = td_ct,
+            td_bl = td_bl,
+            a = a_TC,
+            b = b_TC,
+            c = c_TC,
+            d = d_TC,
+            r = r_TC,
+            x = x_TC,
+            Is = I_syn_TC,
+            tau_f = tau_f_E,
+            tau_d = tau_d_E,
+            tau_s = tau_s_E,
+            U = U_E,
+            A = A_E,
+            vr = vr, 
+            vp = vp,
+            dt = dt,
+            r_D = r_D_TC,
+            x_D = x_D_TC,
+            I_syn_D = I_syn_D_TC,
+            tau_f_D = tau_f_E,
+            tau_d_D = tau_d_E,
+            tau_s_D = tau_s_E,
+            U_D = U_E,
+            A_D = A_E_D,
+            fired = fired_TC,
+            spikes = spike_times_TC
+        )
+        
+        r_TC = r_E; x_TC = x_E; I_syn_TC = I_syn_E;
+        r_D_TC = r_d; x_D_TC = x_d; I_syn_D_TC = I_syn_d;
+        
+        # CI
+        [r_I, x_I, I_syn_I, PSC_CI, v_CI, u_CI, fired_CI] = ci_cells(
+            t = t,
+            n_neurons = n_CI, 
+            sim_steps = sim_steps,
+            voltage = v_CI,
+            u = u_CI,
+            current = I_CI, 
+            a_wg_noise = zeta_CI_I,
+            t_wg_noise = kisi_CI_I,
+            poisson_background_E = I_ps_CI[0],
+            poisson_background_I  = I_ps_CI[1],
+            n_affected = n_CI_affected,
+            synaptic_fidelity = dbs,
+            I_dbs = syn_fid_CI*I_dbs,
+            W_S = W_CI_S,
+            W_M = W_CI_M,
+            W_D = W_CI_D,
+            W_TR = W_CI_TR,
+            W_TC = W_CI_TC,
+            W_CI = W_CI_self,
+            PSC_S = PSC_S,
+            PSC_M = PSC_M,
+            PSC_D = PSC_D,
+            PSC_TC = PSC_TC,
+            PSC_TR = PSC_TR,
+            PSC_CI = PSC_CI,
+            td_wl = td_wl,
+            td_syn = td_syn,
+            td_ct = td_ct,
+            td_bl = td_bl,
+            td_tc = td_tc,
+            a = a_CI,
+            b = b_CI,
+            c = c_CI,
+            d = d_CI,
+            r = r_CI,
+            x = x_CI,
+            Is = I_syn_CI,
+            tau_f = tau_f_I,
+            tau_d = tau_d_I,
+            tau_s = tau_s_I,
+            U = U_I,
+            A = A_I,
+            vr = vr, 
+            vp = vp,
+            dt = dt,
+            fired = fired_CI,
+            spikes = spike_times_CI
+        )
+        
+        r_CI = r_I; x_CI = x_I; I_syn_CI = I_syn_I;
+        
+        # S
+        [r_E, x_E, I_syn_E, PSC_S, v_S, u_S, fired_S] = s_cells(
+            t = t,
+            n_neurons = n_S, 
+            sim_steps = sim_steps,
+            voltage = v_S,
+            u = u_S,
+            current = I_S, 
+            a_wg_noise = zeta_S_E,
+            t_wg_noise = kisi_S_E,
+            poisson_background_E = I_ps_S[0],
+            poisson_background_I  = I_ps_S[1],
+            n_affected = n_S_affected,
+            synaptic_fidelity = dbs,
+            I_dbs = syn_fid_S*I_dbs,
+            W_S = W_S_self,
+            W_M = W_S_M,
+            W_D = W_S_D,
+            W_TR = W_S_TR,
+            W_TC = W_S_TC,
+            W_CI = W_S_CI,
+            PSC_S = PSC_S,
+            PSC_M = PSC_M,
+            PSC_D = PSC_D,
+            PSC_TC = PSC_TC,
+            PSC_TR = PSC_TR,
+            PSC_CI = PSC_CI,
+            td_wl = td_wl,
+            td_syn = td_syn,
+            td_ct = td_ct,
+            td_bl = td_bl,
+            td_tc = td_tc,
+            a = a_S,
+            b = b_S,
+            c = c_S,
+            d = d_S,
+            r = r_S,
+            x = x_S,
+            Is = I_syn_S,
+            tau_f = tau_f_E,
+            tau_d = tau_d_E,
+            tau_s = tau_s_E,
+            U = U_E,
+            A = A_E,
+            vr = vr, 
+            vp = vp,
+            dt = dt,
+            fired = fired_S,
+            spikes = spike_times_S
+        )
+        
+        r_S = r_E; x_S = x_E; I_syn_S = I_syn_E;
+        
+        # M
+        [r_E, x_E, I_syn_E, PSC_M, v_M, u_M, fired_M] = m_cells(
+            t = t,
+            n_neurons = n_M, 
+            sim_steps = sim_steps,
+            voltage = v_M,
+            u = u_M,
+            current = I_M, 
+            a_wg_noise = zeta_M_E,
+            t_wg_noise = kisi_M_E,
+            poisson_background_E = I_ps_M[0],
+            poisson_background_I  = I_ps_M[1],
+            n_affected = n_M_affected,
+            synaptic_fidelity = dbs,
+            I_dbs = syn_fid_M*I_dbs,
+            W_M = W_M_self,
+            W_S = W_M_S,
+            W_D = W_M_D,
+            W_TR = W_M_TR,
+            W_TC = W_M_TC,
+            W_CI = W_M_CI,
+            PSC_S = PSC_S,
+            PSC_M = PSC_M,
+            PSC_D = PSC_D,
+            PSC_TC = PSC_TC,
+            PSC_TR = PSC_TR,
+            PSC_CI = PSC_CI,
+            td_wl = td_wl,
+            td_syn = td_syn,
+            td_ct = td_ct,
+            td_bl = td_bl,
+            td_tc = td_tc,
+            a = a_M,
+            b = b_M,
+            c = c_M,
+            d = d_M,
+            r = r_M,
+            x = x_M,
+            Is = I_syn_M,
+            tau_f = tau_f_E,
+            tau_d = tau_d_E,
+            tau_s = tau_s_E,
+            U = U_E,
+            A = A_E,
+            vr = vr, 
+            vp = vp,
+            dt = dt,
+            fired = fired_M,
+            spikes = spike_times_M
+        )
+        
+        r_M = r_E; x_M = x_E; I_syn_M = I_syn_E;
+        
+        # D
+        [r_E, x_E, I_syn_E, r_F, x_F, I_syn_F, v_D, u_D, fired_D, PSC_D, PSC_D_F, PSC_D_D] = d_cells(
+            t = t,
+            n_neurons = n_D, 
+            sim_steps = sim_steps,
+            voltage = v_D,
+            u = u_D,
+            current = I_D, 
+            a_wg_noise = zeta_S_E,
+            t_wg_noise = kisi_S_E,
+            poisson_background_E = I_ps_D[0],
+            poisson_background_I  = I_ps_D[1],
+            n_affected = n_Hyper,
+            synaptic_fidelity = dbs,
+            I_dbs = syn_fid_D*I_dbs,
+            W_M = W_D_M,
+            W_S = W_D_S,
+            W_D = W_D_self,
+            W_TR = W_D_TR,
+            W_TC = W_D_TC,
+            W_CI = W_D_CI,
+            PSC_S = PSC_S,
+            PSC_M = PSC_M,
+            PSC_D = PSC_D,
+            PSC_TR = PSC_TR,
+            PSC_CI = PSC_CI,
+            PSC_D_TC = PSC_D_TC,
+            PSC_D_D = PSC_D_D,
+            PSC_D_F = PSC_D_F,
+            td_wl = td_wl,
+            td_syn = td_syn,
+            td_ct = td_ct,
+            td_bl = td_bl,
+            td_tc = td_tc,
+            a = a_D,
+            b = b_D,
+            c = c_D,
+            d = d_D,
+            r = r_D,
+            x = x_D,
+            Is = I_syn_D,
+            r_F = r_D_F,
+            x_F = x_D_F,
+            Is_F = I_syn_D_F,
+            tau_f = tau_f_E,
+            tau_d = tau_d_E,
+            tau_s = tau_s_E,
+            U = U_E,
+            A = A_E,
+            A_F = A_E_D_F,
+            A_D = A_E_D,
+            vr = vr, 
+            vp = vp,
+            dt = dt,
+            fired = fired_D,
+            spikes = spike_times_D
+        )
+        
+        r_D = r_E; x_D = x_E; I_syn_D = I_syn_E;
+        r_D_F = r_F; x_D_F = x_F; I_syn_D_F = I_syn_F;
+        
+        gc.collect()
+        
+    # =============================================================================
+    # CLEANING THE DATA
+    # =============================================================================
+    v_TR_clean = np.transpose(v_TR[:,chop_till:sim_steps])
+    PSC_TR_clean = PSC_TR[:, chop_till:sim_steps]
     
-# =============================================================================
-# PLOTING THE VOLTAGES - CLEAN
-# =============================================================================
-print("-- Printing the membrane potential")
-plot_voltages(n_neurons = n_TR, voltage = v_TR_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - TR Nucleus")
-plot_voltages(n_neurons = n_TC, voltage = v_TC_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - TC Nucleus")
-plot_voltages(n_neurons = n_CI, voltage = v_CI_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - CI")
-plot_voltages(n_neurons = n_S, voltage = v_S_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - Layer S")
-plot_voltages(n_neurons = n_M, voltage = v_M_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - Layer M")
-plot_voltages(n_neurons = n_D, voltage = v_D_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - Layer D")
-
-print("-- Printing the Post Synaptic Current")
-plot_voltages(n_neurons = n_TR, voltage = v_TR_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - TR Nucleus")
-plot_voltages(n_neurons = n_TC, voltage = v_TC_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - TC Nucleus")
-plot_voltages(n_neurons = n_CI, voltage = v_CI_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - CI")
-plot_voltages(n_neurons = n_S, voltage = v_S_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer S")
-plot_voltages(n_neurons = n_M, voltage = v_M_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer M")
-plot_voltages(n_neurons = n_D, voltage = v_D_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer D")
-
-# =============================================================================
-# MAKING RASTER PLOT
-# =============================================================================
-
-plot_raster(
-    sim_steps, 
-    sim_time,
-    dt,
-    chop_till, 
-    n_TR, 
-    n_TC,
-    n_CI, 
-    n_D, 
-    n_M, 
-    n_S, 
-    n_total, 
-    n_CI_FS,
-    n_CI_LTS,
-    n_D_RS,
-    n_D_IB,
-    n_S_RS,
-    n_S_IB,
-    spike_times_TR, 
-    spike_times_TC, 
-    spike_times_CI, 
-    spike_times_D, 
-    spike_times_M, 
-    spike_times_S
-    )
+    v_TC_clean = np.transpose(v_TC[:,chop_till:sim_steps])
+    PSC_TC_clean = PSC_TC[:, chop_till:sim_steps]
+    
+    v_CI_clean = np.transpose(v_CI[:,chop_till:sim_steps])
+    PSC_CI_clean = PSC_CI[:, chop_till:sim_steps]
+    
+    v_S_clean = np.transpose(v_S[:,chop_till:sim_steps])
+    PSC_S_clean = PSC_S[:, chop_till:sim_steps]
+    
+    v_M_clean = np.transpose(v_M[:,chop_till:sim_steps])
+    PSC_M_clean = PSC_M[:, chop_till:sim_steps]
+    
+    v_D_clean = np.transpose(v_D[:,chop_till:sim_steps])
+    PSC_D_clean = PSC_D[:, chop_till:sim_steps]
+        
+    # =============================================================================
+    # PLOTING THE VOLTAGES - CLEAN
+    # =============================================================================
+    print("--- Printing membrane potentials")
+    plot_voltages(n_neurons = n_TR, voltage = v_TR_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - TR Nucleus")
+    plot_voltages(n_neurons = n_TC, voltage = v_TC_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - TC Nucleus")
+    plot_voltages(n_neurons = n_CI, voltage = v_CI_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - CI")
+    plot_voltages(n_neurons = n_S, voltage = v_S_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - Layer S")
+    plot_voltages(n_neurons = n_M, voltage = v_M_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - Layer M")
+    plot_voltages(n_neurons = n_D, voltage = v_D_clean, chop_till = chop_till, sim_steps = sim_steps, title="V - Layer D")
+    
+    print("--- Printing Post Synaptic Currents")
+    plot_voltages(n_neurons = n_TR, voltage = v_TR_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - TR Nucleus")
+    plot_voltages(n_neurons = n_TC, voltage = v_TC_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - TC Nucleus")
+    plot_voltages(n_neurons = n_CI, voltage = v_CI_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - CI")
+    plot_voltages(n_neurons = n_S, voltage = v_S_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer S")
+    plot_voltages(n_neurons = n_M, voltage = v_M_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer M")
+    plot_voltages(n_neurons = n_D, voltage = v_D_clean, chop_till = chop_till, sim_steps = sim_steps, title="PSC - Layer D")
+    
+    # =============================================================================
+    # MAKING RASTER PLOT
+    # =============================================================================
+    
+    
+    print("--- Printing Raster Plot")
+    plot_raster(
+        dbs,
+        sim_steps, 
+        sim_time,
+        dt,
+        chop_till, 
+        n_TR, 
+        n_TC,
+        n_CI, 
+        n_D, 
+        n_M, 
+        n_S, 
+        n_total, 
+        n_CI_FS,
+        n_CI_LTS,
+        n_D_RS,
+        n_D_IB,
+        n_S_RS,
+        n_S_IB,
+        spike_times_TR, 
+        spike_times_TC, 
+        spike_times_CI, 
+        spike_times_D, 
+        spike_times_M, 
+        spike_times_S
+        )
 
