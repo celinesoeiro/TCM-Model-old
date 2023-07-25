@@ -74,7 +74,7 @@ def plot_voltages(n_neurons, voltage, chop_till, sim_steps, title):
 # =============================================================================
 def plot_rasters(neuron_dict, title):
     # Create a new figure
-    plt.figure(figsize=(10, 16))
+    plt.figure(figsize=(15, 15))
     plt.title(title)
     
     # Iterate over each neuron
@@ -211,9 +211,18 @@ def plot_raster(
                         'S',
                         ])
     
-    ax1.set_xlim(chop_till - dt*100, sim_steps + dt*100)
-    ax1.set_xticks(np.arange(chop_till - dt*5, sim_steps + dt*5, dt*5))
-    ax1.set_xticklabels(np.arange(chop_till/1000 - 0.5, sim_steps/1000 + 0.5, 0.5))
+    # For dt = 0.1
+    multiplier = 1000
+    lim_down = chop_till
+    lim_up = sim_steps + multiplier*dt
+    new_arr = np.arange(lim_down, lim_up, multiplier)
+    
+    # Transforming flot array to int array
+    x_ticks = list(map(int,new_arr/multiplier))
+    
+    ax1.set_xlim(lim_down, lim_up)
+    ax1.set_xticks(new_arr)
+    ax1.set_xticklabels(x_ticks)
     
     # TR neurons
     ax1.hlines(y = TR_lim, xmin=0, xmax=sim_steps, color = 'b', linestyle='solid' )

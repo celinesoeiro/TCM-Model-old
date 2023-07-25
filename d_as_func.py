@@ -1,66 +1,81 @@
 """
-Cortical Layer D
-
 @author: Celine Soeiro
 
-Valores de saida
-    Inh_AP = vRet(:,i+1)
-    Inh_Aux = uRet(:,i+1)
-    r = rI
-    x = xI
-    Is =IsI
-    IPSC = IPSC_ret(i+1)
-
-Valores de entrada
-    a = aIret
-    b = bIret
-    c = cIret
-    d = dIret
-    n = nIret
-    v = vRet(:,i)
-    u = uRet(:,i)
-    r = rIret
-    x = xIret
-    Is = IsIret
-    IPSC = IPSC_ret(i-td_wL-td_syn)
-    EPSCs = EPSCs(i-td_CT-td_syn)
-    EPSCm = EPSCm(i-td_CT-td_syn)
-    EPSCd = EPSCdF(i-td_CT-td_syn)
-    IPSC_in = IPSC_INs(i-td_CT-td_syn)
-    EPSC_rel = EPSC_rel(i-td_L-td_syn)
-    W_II = W_IIret
-    W_IErs = W_IE_Ret_s
-    W_IErm = W_IE_Ret_m
-    W_IErd = W_IE_Ret_d
-    W_II_IN = W_II_Ret_INs
-    W_IE_rel = W_IE_Ret_Rel
-    I_psE = 0*I_ps(5,1,i-td_wL-td_syn)
-    I_psI = 0*I_ps(5,2,i-td_wL-td_syn)
-    kisi = kisiIret(:,i)+pnIret(:,i)
-    zeta = zetaIret(:,i)
-    Idc = Idc_Ret
-    Idbs = fidN*I_dbs(2,i)
-    n_affected = n_conn_N
-    dt = dt
-
------------- OVERVIEW
-
+@description: Layer D function
+    
+-- OVERVIEW
 Receive inhibitory stimulus from:
-    - Self
-    - Cortical Interneurons (CI)
+    - Self 
+    - CI
 
 Receive excitatory stimulus from:
-    - Supraganular Layer (S)
-    - Thalamic Reticular Nucleus (TRN)
+    - Layer S
+    - TC nucleus
 
 Send inhibitory stimulus to:
     - None
     
 Send excitatory stimulus to:
-    - Cortical Interneurons (CI)
-    - Supraganular Layer (S)
-    - Thalamic Reticular Nucleus (TRN)
-    - Basal Ganglia Nucleus -> LATER
+    - Layer S
+    - CI
+    - TR nucleus
+    - TC nucleus
+Receive DBS input
+
+-- INPUTS:
+    t: time
+    dt: time step
+    n_neurons: number of neurons in structure
+    sim_steps: simulation steps
+    ------------------------ Izhikevich Neuron Model
+    v: membrane voltage 
+    u: membrane recovery variable 
+    I_dc: Bias current 
+    a, b, c, d: Izhikevich neuron params
+    vp: Peak voltage 
+    ------------------------ TM Synapse Model
+    r: available neurotransmitter resources ready to be used (u in original article)
+    x: neurotransmitter resources that remain available after synaptic transmission 
+    I_syn: post-synaptic current 
+    tau_f: 
+    tau_d:
+    tau_s:
+    U: 
+    A: Distribution
+    r_F: available neurotransmitter resources ready to be used from Layer D to Thalamus (Facilitating)
+    x_F: neurotransmitter resources that remain available after synaptic transmission from Layer D to Thalamus (Facilitating)
+    I_syn_F: post-synaptic current from Layer D to Thalamus (Facilitating)
+    tau_f_F:
+    tau_d_F:
+    tau_s_F:
+    U_F: 
+    A_F: Distribution from Layer D to Thalamus (Facilitating)
+    A_D: Distribution from Thalamus to Layer D (Depressing)
+    ------------------------ TCM Model
+    PSC_S: Post Synaptic Current from layer S 
+    PSC_M: Post Synaptic Current from Layer M 
+    PSC_D: Post Synaptic Current from layer D (Self)
+    PSC_TC: Post Synaptic Current from TC
+    PSC_TR: Post Synaptic Current from TR 
+    PSC_CI: Post Synspatic Current frmo CI
+    W_TR: Synaptic weight within TR neurons
+    W_S: Synaptic weight between Layer S and TR neurons
+    W_M: Synaptic weight between Layer M and TR neurons
+    W_D: Synaptic weight between Layer D and TR neurons
+    W_TC: Synaptic weight between TC and TR neurons
+    W_CI: Synaptic weight between CI and TR neurons
+    a_wg_noise: Additive white gaussian noise
+    t_wg_noise: threshold white gaussian noise
+    I_dbs: Postsynadisplay DBS pulses
+    n_affected: Percentage of neurons that are connected with hyperdirect neurons
+    
+-- OUTPUTS:
+    r: available neurotransmitter resources ready to be used (u in original article)
+    x: neurotransmitter resources that remain available after synaptic transmission 
+    I_syn: post-synaptic current
+    PSC_D: Post Synaptic Current from Layer D (Self)
+    v: membrane voltage 
+    u: membrane recovery variable  
 """
 import numpy as np
 
@@ -68,58 +83,48 @@ from model_functions import izhikevich_dvdt, izhikevich_dudt, tm_synapse_eq
 
 def d_cells(
         t,
+        dt,
         n_neurons, 
         sim_steps,
-        voltage,
+        v,
         u,
-        current, 
-        a_wg_noise,
-        t_wg_noise,
-        poisson_background_E,
-        poisson_background_I,
-        n_affected,
-        synaptic_fidelity,
-        I_dbs,
-        W_M,
-        W_S,
-        W_D,
-        W_TR,
-        W_TC,
-        W_CI,
-        PSC_S,
-        PSC_M,
-        PSC_D,
-        PSC_TR,
-        PSC_CI,
-        PSC_D_TC,
-        PSC_D_D,
-        PSC_D_F,
-        td_wl,
-        td_syn,
-        td_ct,
-        td_bl,
-        td_tc,
+        I_dc, 
         a,
         b,
         c,
         d,
         r,
         x,
-        Is,
+        I_syn,
+        U,
+        A,
         r_F,
         x_F,
-        Is_F,
+        I_syn_F,
+        A_F,
+        A_D,
         tau_f,
         tau_d,
         tau_s,
-        U,
-        A,
-        A_F,
-        A_D,
-        vr, 
+        PSC_S,
+        PSC_M,
+        PSC_D,
+        PSC_TR,
+        PSC_CI,
+        PSC_D_TC,
+        W_M,
+        W_S,
+        W_D,
+        W_TR,
+        W_TC,
+        W_CI,
+        a_wg_noise,
+        t_wg_noise,
+        poisson_background_E,
+        poisson_background_I,
+        n_affected,
+        I_dbs,
         vp,
-        dt,
-        fired,
         spikes,
      ):
       
@@ -129,9 +134,9 @@ def d_cells(
 
      for k in range(0, n_neurons):   
          AP_aux = 0
-         v_aux = voltage[k][t - 1]
+         v_aux = v[k][t - 1]
          u_aux = u[k][t - 1]
-         I_aux = current[k]
+         I_aux = I_dc[k]
          white_gausian_aux = a_wg_noise[k][t - 1]
          
          if (n_affected == 0):
@@ -143,34 +148,35 @@ def d_cells(
                  I_dbss = I_dbs[1][t - 1]
              
          neuron_contribution = izhikevich_dvdt(v = v_aux, u = u_aux, I = I_aux)
-         self_feedback = W_D[k][0]*PSC_D[0][t - td_wl - td_syn]/n_neurons
-         layer_S = W_S[k][0]*PSC_S[0][t - td_bl - td_syn]/n_neurons
-         layer_M = W_M[k][0]*PSC_M[0][t - td_bl - td_syn]/n_neurons
-         layer_TC = W_TC[k][0]*PSC_D_TC[0][t - td_tc - td_syn]/n_neurons
-         layer_TR = W_TR[k][0]*PSC_TR[0][t - td_tc - td_syn]/n_neurons
-         layer_CI = W_CI[k][0]*PSC_CI[0][t - td_wl - td_syn]/n_neurons
-         noise = I_dbss + t_wg_noise[k][t - 1] + poisson_background_E[t - td_wl - td_syn] - poisson_background_I[t - td_wl - td_syn]
+         self_feedback = W_D[k][0]*PSC_D/n_neurons
+         layer_S = W_S[k][0]*PSC_S/n_neurons
+         layer_M = W_M[k][0]*PSC_M/n_neurons
+         layer_TC = W_TC[k][0]*PSC_D_TC/n_neurons
+         layer_TR = W_TR[k][0]*PSC_TR/n_neurons
+         layer_CI = W_CI[k][0]*PSC_CI/n_neurons
+         noise = t_wg_noise[k][t - 1] + poisson_background_E - poisson_background_I
          
-         voltage[k][t] = v_aux + dt*(
+         v[k][t] = v_aux + dt*(
              neuron_contribution + 
              self_feedback + 
              layer_TC + layer_S + layer_M + layer_TR + layer_CI + 
-             noise
+             noise +
+             I_dbss
              )
          u[k][t] = u_aux + dt*izhikevich_dudt(v = v_aux, u = u_aux, a = a[0][k], b = b[0][k])
          
          if (v_aux >= (vp + white_gausian_aux)):
              AP_aux = 1
              v_aux = vp + white_gausian_aux
-             voltage[k][t] = c[0][k]
+             v[k][t] = c[0][k]
              u[k][t] = u_aux + d[0][k]
              spikes[k][t] = t
          
-         rr = r; xx = x; Iss = Is;
+         rr = r; xx = x; Iss = I_syn;
          # Pseudo Linear
          [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r, 
                                                x = x, 
-                                               Is = Is, 
+                                               Is = I_syn, 
                                                AP = AP_aux, 
                                                tau_f = tau_f, 
                                                tau_d = tau_d, 
@@ -178,9 +184,7 @@ def d_cells(
                                                U = U, 
                                                A = A,
                                                dt = dt)
-         r = rs
-         x = xs
-         Is = Isyn
+         r = rs; x = xs; I_syn = Isyn
          Ise[0][k] = Ipost
          
          # Facilitating 
@@ -194,15 +198,13 @@ def d_cells(
                                                    U = U, 
                                                    A = A_F,
                                                    dt = dt)
-         rf = rsf
-         xf = xsf
-         Isf = Isynf
+         rf = rsf; xf = xsf; Isf = Isynf;
          Ise_F[0][k] = Ipostf
          
          # Depressing
-         [rsd, xsd, Isynd, Ipostd] = tm_synapse_eq(r = r, 
-                                                   x = x, 
-                                                   Is = Is, 
+         [rsd, xsd, Isynd, Ipostd] = tm_synapse_eq(r = rr, 
+                                                   x = xx, 
+                                                   Is = Iss, 
                                                    AP = AP_aux, 
                                                    tau_f = tau_f, 
                                                    tau_d = tau_d, 
@@ -210,16 +212,20 @@ def d_cells(
                                                    U = U, 
                                                    A = A_D,
                                                    dt = dt)
-         rf = rsd
-         xf = xsd
-         Isf = Isynd
          Ise_D[0][k] = Ipostd
          
-         fired[k][t] = AP_aux
-
+     d_neurons = dict()
      
-     PSC_D[0][t] = np.sum(Ipost)
-     PSC_D_D[0][t] = np.sum(Ipostd)
-     PSC_D_F[0][t] = np.sum(Ipostf)
-      
-     return r, x, Is, rf, xf, Isf, voltage, u, fired, PSC_D, PSC_D_F, PSC_D_D
+     d_neurons['r'] = r
+     d_neurons['x'] = x
+     d_neurons['I_syn'] = I_syn
+     d_neurons['PSC_D'] = np.sum(Ise[0])
+     d_neurons['v'] = v
+     d_neurons['u'] = u
+     d_neurons['r_F'] = rf
+     d_neurons['x_F'] = xf
+     d_neurons['I_syn_F'] = Isf
+     d_neurons['PSC_D_T'] = np.sum(Ise_F[0])
+     d_neurons['PSC_T_D'] = np.sum(Ise_D[0])
+     
+     return d_neurons
