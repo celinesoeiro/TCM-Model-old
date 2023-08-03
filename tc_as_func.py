@@ -123,7 +123,7 @@ def tc_cells(
        poisson_background_I,
        n_affected,
        I_dbs,
-       spikes
+       spikes,
     ):
      
     Isi = np.zeros((1, n_neurons))
@@ -166,36 +166,33 @@ def tc_cells(
             u[k][t] = u_aux + d[0][k]
             spikes[k][t] = t
         
-        [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r, 
-                                              x = x, 
-                                              Is = I_syn, 
-                                              AP = AP_aux, 
-                                              tau_f = tau_f, 
-                                              tau_d = tau_d, 
-                                              tau_s = tau_s, 
-                                              U = U, 
-                                              A = A,
-                                              dt = dt)
-        r = rs
-        x = xs
-        I_syn = Isyn
+        rr = r;     xx = x;     Iss = I_syn;
+        tm_syn_inst = tm_synapse_eq(r = r, 
+                                    x = x, 
+                                    Is = I_syn, 
+                                    AP = AP_aux, 
+                                    tau_f = tau_f, 
+                                    tau_d = tau_d, 
+                                    tau_s = tau_s, 
+                                    U = U, 
+                                    A = A,
+                                    dt = dt)
+        r = tm_syn_inst['r']; x = tm_syn_inst['x']; I_syn = tm_syn_inst['Is'];
         
-        [rsD, xsD, IsynD, IpostD] = tm_synapse_eq(r = r_D, 
-                                                  x = x_D, 
-                                                  Is = I_syn_D, 
-                                                  AP = AP_aux, 
-                                                  tau_f = tau_f_D, 
-                                                  tau_d = tau_d_D, 
-                                                  tau_s = tau_s_D, 
-                                                  U = U_D, 
-                                                  A = A_D,
-                                                  dt = dt)
-        r_D = rsD
-        x_D = xsD
-        I_syn_D = IsynD
+        tm_syn_inst_dep = tm_synapse_eq(r = rr, 
+                                        x = xx, 
+                                        Is = Iss, 
+                                        AP = AP_aux, 
+                                        tau_f = tau_f_D, 
+                                        tau_d = tau_d_D, 
+                                        tau_s = tau_s_D, 
+                                        U = U_D, 
+                                        A = A_D,
+                                        dt = dt)
+        r_D = tm_syn_inst_dep['r']; x_D = tm_syn_inst_dep['x']; I_syn_D = tm_syn_inst_dep['Is'];
         
-        Isi[0][k] = Ipost 
-        Isi_D[0][k] = IpostD 
+        Isi[0][k] = tm_syn_inst['Ipost'] 
+        Isi_D[0][k] = tm_syn_inst_dep['Ipost'] 
         
     PSC_TC = np.sum(Isi[0])
     PSC_D = np.sum(Isi_D[0])

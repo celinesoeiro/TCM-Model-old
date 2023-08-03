@@ -69,7 +69,7 @@ def TCM_model_parameters():
     
     number_trials = 1                       # number of trials
     dt = 0.5                                # time step in ms
-    samp_freq = int(1000/dt)                       # sampling frequency in Hz
+    samp_freq = int(1000/dt)                # sampling frequency in Hz
     dbs_on = int(5*67)                      # value of synaptic fidelity when DBS on
     dbs_off = 0                             # value of synaptic fidelity when DBS off
     simulation_time = 3                     # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)

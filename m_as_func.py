@@ -150,21 +150,18 @@ def m_cells(
              u[k][t] = u_aux + d[0][k]
              spikes[k][t] = t
          
-         [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r, 
-                                               x = x, 
-                                               Is = I_syn, 
-                                               AP = AP_aux, 
-                                               tau_f = tau_f, 
-                                               tau_d = tau_d, 
-                                               tau_s = tau_s, 
-                                               U = U, 
-                                               A = A,
-                                               dt = dt)
-         r = rs
-         x = xs
-         I_syn = Isyn
-             
-         Isi[0][k] = Ipost 
+         tm_syn_inst = tm_synapse_eq(r = r, 
+                                    x = x, 
+                                    Is = I_syn, 
+                                    AP = AP_aux, 
+                                    tau_f = tau_f, 
+                                    tau_d = tau_d, 
+                                    tau_s = tau_s, 
+                                    U = U, 
+                                    A = A,
+                                    dt = dt)
+         r = tm_syn_inst['r']; x = tm_syn_inst['x']; I_syn = tm_syn_inst['Is'];
+         Isi[0][k] = tm_syn_inst['Ipost'];
      
      PSC_M = np.sum(Isi[0])
      

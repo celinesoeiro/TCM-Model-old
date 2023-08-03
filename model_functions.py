@@ -20,42 +20,37 @@ def izhikevich_dudt(v, u, a, b):
 # =============================================================================
 # TM synapse
 # =============================================================================
-def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):
+def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):        
     for p in range(1, 3):
-        r_aux = r[p - 1]
-        x_aux = x[p - 1]
-        Is_aux = Is[p - 1]
         # Solve EDOs using Euler method
-        # r[p] = r_aux + dt*tm_r_eq(r_aux, tau_f[p - 1], U[p - 1], AP)
-        r[p] = r_aux + dt*(-r_aux/tau_f[p - 1] + U[p - 1]*(1 - r_aux)*AP)
-        x[p] = x_aux + dt*((1 - x_aux)/tau_d[p - 1] - (r_aux+U[p-1]*(1-r_aux))*x_aux*AP)
-        # x[p] = x_aux + dt*tm_x_eq(x_aux, tau_d[p - 1], r_aux, U[p - 1], AP)
-        Is[p] = Is_aux + dt*(-Is_aux/tau_s + A[p-1]*x_aux*(r_aux+U[p-1]*(1-r_aux))*AP)
-        # Is[p] = Is_aux + dt*tm_I_eq(Is_aux, tau_s, A[p - 1], U[p - 1], x_aux, r_aux, AP)
+        r[p][0] = r[p][0] + dt*(-r[p][0]/tau_f[p - 1] + U[p - 1]*(1 - r[p][0])*AP)
+        x[p][0] = x[p][0] + dt*((1 - x[p][0])/tau_d[p - 1] - (r[p][0] + U[p - 1]*(1 - r[p][0]))*x[p][0]*AP)
+        Is[p][0] = Is[p][0] + dt*(-Is[p][0]/tau_s + A[p - 1]*x[p][0]*(r[p][0] + U[p - 1]*(1 - r[p][0]))*AP)
         
     Ipost = np.sum(Is)
-        
-    return r, x, Is, Ipost
-
-def tm_synapse_dbs_eq(I_dbs, t_delay, dt, sim_steps, tau_f, tau_d, tau_s, U, A):
-    t_vec = t_delay*np.ones((1, sim_steps - 1))
     
+    tm_syn_inst = dict()
+    tm_syn_inst['r'] = r
+    tm_syn_inst['x'] = x
+    tm_syn_inst['Is'] = Is
+    tm_syn_inst['Ipost'] = Ipost
+        
+    return tm_syn_inst
+
+def tm_synapse_dbs_eq(I_dbs, t_delay, dt, sim_steps, tau_f, tau_d, tau_s, U, A):    
     r = np.zeros((3, sim_steps))
     x = np.ones((3, sim_steps))
     Is = np.zeros((3, sim_steps))
     
     for p in range(0,2):
         for i in range(1 + t_delay, sim_steps - 1):
-            r_aux = r[p][i - 1]
-            x_aux = x[p][i - 1]
-            Is_aux = Is[p][i - 1]
-            r[p][i] = r_aux + dt*(-r_aux/tau_f[p] + U[p]*(1 - r_aux)*I_dbs[0][i- t_delay])
-            x[p][i] = x_aux + dt*((1-x_aux)/tau_d[p] - r[p][i]*x_aux*I_dbs[0][i - t_delay])
-            Is[p][i] = Is_aux + dt*(-Is_aux/tau_s + A[p]*r[p][i]*x_aux*I_dbs[0][i - t_delay])
+            r[p][i + 1] = r[p][i] + dt*(-r[p][i]/tau_f[p] + U[p]*(1 - r[p][i])*I_dbs[0][i- t_delay])
+            x[p][i + 1] = x[p][i] + dt*((1-x[p][i])/tau_d[p] - r[p][i]*x[p][i]*I_dbs[0][i - t_delay])
+            Is[p][i + 1] = Is[p][i] + dt*(-Is[p][i]/tau_s + A[p]*r[p][i]*x[p][i]*I_dbs[0][i - t_delay])
             
     dbs_I = np.sum(Is, axis = 0)
     
-    return dbs_I, t_vec
+    return dbs_I.reshape(1,-1)
 
 def tm_synapse_poisson_eq(AP_position, sim_steps, t_delay, dt, tau_f, tau_d, tau_s, U, A):
     r = np.zeros((3, sim_steps))
@@ -67,13 +62,9 @@ def tm_synapse_poisson_eq(AP_position, sim_steps, t_delay, dt, tau_f, tau_d, tau
     
     for p in range(0, 2):    
         for i in range(1 + t_delay, sim_steps - 1):
-            r_aux = r[p][i - 1]
-            x_aux = x[p][i - 1]
-            Is_aux = Is[p][i - 1]
-            # Solve EDOs using Euler method
-            r[p][i] = r_aux + dt*(-r_aux/tau_f[p] + U[p]*(1 - r_aux)*spd[0][i - t_delay])
-            x[p][i] = x_aux + dt*((1 - x_aux)/tau_d[p] - r[p][i]*x_aux*spd[0][i - t_delay])
-            Is[p][i] = Is_aux + dt*(-Is_aux/tau_s + A[p]*r_aux*x[p][i]*spd[0][i - t_delay])
+            r[p][i] = r[p][i] + dt*(-r[p][i]/tau_f[p] + U[p]*(1 - r[p][i])*spd[0][i - t_delay])
+            x[p][i] = x[p][i] + dt*((1 - x[p][i])/tau_d[p] - r[p][i]*x[p][i]*spd[0][i - t_delay])
+            Is[p][i] = Is[p][i] + dt*(-Is[p][i]/tau_s + A[p]*r[p][i]*x[p][i]*spd[0][i - t_delay])
         
     Ipost = np.sum(Is, axis=0)
         

@@ -174,45 +174,45 @@ def d_cells(
          
          rr = r; xx = x; Iss = I_syn;
          # Pseudo Linear
-         [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r, 
-                                               x = x, 
-                                               Is = I_syn, 
-                                               AP = AP_aux, 
-                                               tau_f = tau_f, 
-                                               tau_d = tau_d, 
-                                               tau_s = tau_s, 
-                                               U = U, 
-                                               A = A,
-                                               dt = dt)
-         r = rs; x = xs; I_syn = Isyn
-         Ise[0][k] = Ipost
+         tm_syn_inst = tm_synapse_eq(r = r, 
+                                    x = x, 
+                                    Is = I_syn, 
+                                    AP = AP_aux, 
+                                    tau_f = tau_f, 
+                                    tau_d = tau_d, 
+                                    tau_s = tau_s, 
+                                    U = U, 
+                                    A = A,
+                                    dt = dt)
+         r = tm_syn_inst['r']; x = tm_syn_inst['x']; I_syn = tm_syn_inst['Is'];
+         Ise[0][k] = tm_syn_inst['Ipost'];
          
          # Facilitating 
-         [rsf, xsf, Isynf, Ipostf] = tm_synapse_eq(r = rr, 
-                                                   x = xx, 
-                                                   Is = Iss, 
-                                                   AP = AP_aux, 
-                                                   tau_f = tau_f, 
-                                                   tau_d = tau_d, 
-                                                   tau_s = tau_s, 
-                                                   U = U, 
-                                                   A = A_F,
-                                                   dt = dt)
-         rf = rsf; xf = xsf; Isf = Isynf;
-         Ise_F[0][k] = Ipostf
+         tm_syn_inst_fac = tm_synapse_eq(r = rr, 
+                                        x = xx, 
+                                        Is = Iss, 
+                                        AP = AP_aux, 
+                                        tau_f = tau_f, 
+                                        tau_d = tau_d, 
+                                        tau_s = tau_s, 
+                                        U = U, 
+                                        A = A_F,
+                                        dt = dt)
+         rf = tm_syn_inst_fac['r']; xf = tm_syn_inst_fac['x']; Isf = tm_syn_inst_fac['Is'];
+         Ise_F[0][k] = tm_syn_inst_fac['Ipost']
          
          # Depressing
-         [rsd, xsd, Isynd, Ipostd] = tm_synapse_eq(r = rr, 
-                                                   x = xx, 
-                                                   Is = Iss, 
-                                                   AP = AP_aux, 
-                                                   tau_f = tau_f, 
-                                                   tau_d = tau_d, 
-                                                   tau_s = tau_s, 
-                                                   U = U, 
-                                                   A = A_D,
-                                                   dt = dt)
-         Ise_D[0][k] = Ipostd
+         tm_syn_inst_dep = tm_synapse_eq(r = rr, 
+                                        x = xx, 
+                                        Is = Iss, 
+                                        AP = AP_aux, 
+                                        tau_f = tau_f, 
+                                        tau_d = tau_d, 
+                                        tau_s = tau_s, 
+                                        U = U, 
+                                        A = A_D,
+                                        dt = dt)
+         Ise_D[0][k] = tm_syn_inst_dep['Ipost']
          
      d_neurons = dict()
      
