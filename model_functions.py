@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """
-Created on Fri May 12 16:43:26 2023
-
-@author: Avell
+@author: Celine Soeiro
+@description: TCM functions
 """
 
 import math
@@ -37,21 +35,6 @@ def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):
         
     return tm_syn_inst
 
-def tm_synapse_dbs_eq(I_dbs, t_delay, dt, sim_steps, tau_f, tau_d, tau_s, U, A):    
-    r = np.zeros((3, sim_steps))
-    x = np.ones((3, sim_steps))
-    Is = np.zeros((3, sim_steps))
-    
-    for p in range(0,2):
-        for i in range(1 + t_delay, sim_steps - 1):
-            r[p][i + 1] = r[p][i] + dt*(-r[p][i]/tau_f[p] + U[p]*(1 - r[p][i])*I_dbs[0][i- t_delay])
-            x[p][i + 1] = x[p][i] + dt*((1-x[p][i])/tau_d[p] - r[p][i]*x[p][i]*I_dbs[0][i - t_delay])
-            Is[p][i + 1] = Is[p][i] + dt*(-Is[p][i]/tau_s + A[p]*r[p][i]*x[p][i]*I_dbs[0][i - t_delay])
-            
-    dbs_I = np.sum(Is, axis = 0)
-    
-    return dbs_I.reshape(1,-1)
-
 def tm_synapse_poisson_eq(AP_position, sim_steps, t_delay, dt, tau_f, tau_d, tau_s, U, A):
     r = np.zeros((3, sim_steps))
     x = np.zeros((3, sim_steps))
@@ -62,37 +45,80 @@ def tm_synapse_poisson_eq(AP_position, sim_steps, t_delay, dt, tau_f, tau_d, tau
     
     for p in range(0, 2):    
         for i in range(1 + t_delay, sim_steps - 1):
-            r[p][i] = r[p][i] + dt*(-r[p][i]/tau_f[p] + U[p]*(1 - r[p][i])*spd[0][i - t_delay])
-            x[p][i] = x[p][i] + dt*((1 - x[p][i])/tau_d[p] - r[p][i]*x[p][i]*spd[0][i - t_delay])
-            Is[p][i] = Is[p][i] + dt*(-Is[p][i]/tau_s + A[p]*r[p][i]*x[p][i]*spd[0][i - t_delay])
+            r[p][i + 1] = r[p][i] + dt*(-r[p][i]/tau_f[p] + U[p]*(1 - r[p][i])*spd[0][i - t_delay])
+            x[p][i + 1] = x[p][i] + dt*((1 - x[p][i])/tau_d[p] - r[p][i]*x[p][i]*spd[0][i - t_delay])
+            Is[p][i + 1] = Is[p][i] + dt*(-Is[p][i]/tau_s + A[p]*r[p][i]*x[p][i]*spd[0][i - t_delay])
         
     Ipost = np.sum(Is, axis=0)
         
     return Ipost
 
+def tm_synapse_dbs_eq(I_dbs, t_delay, dt, sim_steps, tau_f, tau_d, tau_s, U, A):    
+    r = np.zeros((3, sim_steps))
+    x = np.ones((3, sim_steps))
+    Is = np.zeros((3, sim_steps))
+    
+    for p in range(0,2):
+        for i in range(1 + t_delay, sim_steps - 1):
+            r[p][i + 1] = r[p][i] + dt*(-r[p][i]/tau_f[p] + U[p]*(1 - r[p][i])*I_dbs[i- t_delay])
+            x[p][i + 1] = x[p][i] + dt*((1-x[p][i])/tau_d[p] - r[p][i]*x[p][i]*I_dbs[i - t_delay])
+            Is[p][i + 1] = Is[p][i] + dt*(-Is[p][i]/tau_s + A[p]*r[p][i]*x[p][i]*I_dbs[i - t_delay])
+            
+    dbs_I = np.sum(Is, axis = 0)
+    
+    return dbs_I.reshape(1,-1)
+
 # =============================================================================
 # DBS
 # =============================================================================
-def DBS_delta(f_dbs, dbs_duration, dev, sim_steps, samp_freq, dbs_amplitude, chop_till):
-    # This is to define Dirac delta pulses, no membrane current but straight dirac delta pulses that reach PNs:
-    T_dbs = np.round(samp_freq/f_dbs)
-    dbs = np.arange(0, dbs_duration, T_dbs)
-    I_dbs_full = np.zeros((1, dbs_duration))
+def I_DBS(sim_steps, chop_till, dt, td_syn, tau_f, tau_d, tau_s, U, A, dbs, samp_freq):    
+    I_dbs = np.zeros((2, sim_steps))
+    dev = 1 # divide the total simulation time in dev 
+    f_dbs = 130
 
-    for i in dbs:
-        I_dbs_full[0][int(i)] = dbs_amplitude 
-
-    if (dev == 1):
-        dbs_I = I_dbs_full
-    else:
-        dbs_I = np.concatenate((
-            np.zeros((1, chop_till)), 
-            np.zeros((1, int(np.ceil((sim_steps - chop_till)/dev)))), 
-            I_dbs_full, 
-            np.zeros((1, int(np.ceil((sim_steps - chop_till)/dev))))
-            ),axis=1)
+    # Simulate 1/dev of DBS
+    if (dbs != 0):
+        dev = 3
         
-    return dbs_I
+    if (dev == 1):
+        print('dbd off')
+        dbs_duration = sim_steps
+        dbs_amplitude = 0.02
+    else:
+        print('dbs on')
+        dbs_duration = int(np.round((sim_steps - chop_till)/dev))
+        dbs_amplitude = 1
+    
+    T_dbs = np.round(samp_freq/f_dbs)
+    dbs_arr = np.arange(0, dbs_duration, T_dbs)
+    I_dbs_full = np.zeros((1, dbs_duration))
+    
+    for i in dbs_arr:
+        I_dbs_full[0][int(i)] = dbs_amplitude 
+        
+    if (dev == 1):
+        I_dbs_pre = I_dbs_full
+    else:
+        I_dbs_pre = np.concatenate((
+            np.zeros((1, chop_till)), 
+            np.zeros((1, dbs_duration)), 
+            I_dbs_full, 
+            np.zeros((1, dbs_duration))
+            ),axis=1)
+
+    I_dbs_post = tm_synapse_dbs_eq(I_dbs = I_dbs_pre[0], 
+                                   t_delay = td_syn, 
+                                   dt = dt,
+                                   tau_f = tau_f,
+                                   tau_d = tau_d,
+                                   U = U,
+                                   A = A,
+                                   tau_s = tau_s,
+                                   sim_steps = sim_steps)
+    I_dbs[0][:] = I_dbs_pre
+    I_dbs[1][:] = I_dbs_post
+    
+    return I_dbs
 
 # =============================================================================
 # POISSON

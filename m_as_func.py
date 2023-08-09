@@ -120,7 +120,7 @@ def m_cells(
          I_aux = I_dc[k]
          white_gausian_aux = a_wg_noise[k][t - 1]
          
-         if (k >= 1 and k <= n_affected):
+         if (k >= 1 and k <= (n_affected - 1)):
              I_dbss = I_dbs
          else:
              I_dbss = 0
@@ -132,7 +132,7 @@ def m_cells(
          layer_TC = W_TC[k][0]*PSC_TC/n_neurons
          layer_TR = W_TR[k][0]*PSC_TR/n_neurons
          layer_CI = W_CI[k][0]*PSC_CI/n_neurons
-         noise =  + t_wg_noise[k][t - 1] + poisson_background_E - poisson_background_I
+         noise = t_wg_noise[k][t - 1] + poisson_background_E - poisson_background_I
          
          v[k][t] = v_aux + dt*(
              neuron_contribution + 
@@ -160,17 +160,17 @@ def m_cells(
                                     U = U, 
                                     A = A,
                                     dt = dt)
-         r = tm_syn_inst['r']; x = tm_syn_inst['x']; I_syn = tm_syn_inst['Is'];
-         Isi[0][k] = tm_syn_inst['Ipost'];
-     
-     PSC_M = np.sum(Isi[0])
+         r = 1*tm_syn_inst['r']; 
+         x = 1*tm_syn_inst['x']; 
+         I_syn = 1*tm_syn_inst['Is'];
+         Isi[0][k] = 1*tm_syn_inst['Ipost'];
      
      m_neurons = dict()
      
      m_neurons['r'] = r
      m_neurons['x'] = x
      m_neurons['I_syn'] = I_syn
-     m_neurons['PSC_M'] = PSC_M
+     m_neurons['PSC_M'] = np.sum(Isi[0])
      m_neurons['v'] = v
      m_neurons['u'] = u
 

@@ -88,19 +88,6 @@ def plot_LFP(lfp, chop_till, sim_steps, title):
 def plot_LFPs(LFP_S, LFP_M, LFP_D, LFP_CI, LFP_TC, LFP_TR, chop_till, sim_steps, title):
     new_time= np.transpose(np.arange(len(LFP_S)))
     
-    # if (dt == 0.1):
-    #     multiplier = 1000
-    #     divider = multiplier
-    # elif (dt == 0.5):
-    #     multiplier = 200
-    #     divider = multiplier*dt
-        
-    # lim_down = chop_till
-    # lim_up = sim_steps + multiplier*dt
-    # new_arr = np.arange(lim_down, lim_up, multiplier)
-    
-    # x_ticks = list(map(int,new_arr/divider))
-    
     fig, ((ax1,ax2,ax3),(ax4,ax5,ax6)) = plt.subplots(2,3,figsize=(15, 10))
     
     ax1.plot(new_time, LFP_S)
@@ -201,16 +188,6 @@ def plot_raster(
         y_values = np.full_like(spikes[i], i + 1)
         ax1.scatter(x=spikes[i], y=y_values, color='black', s=0.5)
         
-    TR_lim = n_TR
-    TC_lim = TR_lim + n_TC
-    CI_lim = TC_lim + n_CI
-    CI_FS_lim = CI_lim - n_CI_LTS
-    D_lim = CI_lim + n_D
-    D_RS_lim = D_lim - n_D_IB
-    M_lim = D_lim + n_M
-    S_lim = M_lim + n_S
-    S_RS_lim = S_lim - n_S_IB
-        
     ax1.set_ylim(1, n_total + 1)
     ax1.set_yticks([0, 
                    TR_lim, 
@@ -234,7 +211,7 @@ def plot_raster(
                         'D - RS',
                         'D - IB',
                         'D', 
-                        'M', 
+                        'M - RS', 
                         'S - RS', 
                         'S - IB', 
                         'S',

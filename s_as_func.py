@@ -4,7 +4,6 @@
 @description: Layer S function
     
 -- OVERVIEW
-
 Receive inhibitory stimulus from:
     - Self 
     - CI
@@ -123,7 +122,7 @@ def s_cells(
          I_aux = I_dc[k]
          white_gausian_aux = a_wg_noise[k][t - 1]
          
-         if (k >= 1 and k <= n_affected):
+         if (k >= 1 and k <= (n_affected - 1)):
              I_dbss = I_dbs
          else:
              I_dbss = 0
@@ -163,17 +162,17 @@ def s_cells(
                                     U = U, 
                                     A = A,
                                     dt = dt)
-         r = tm_syn_inst['r']; x = tm_syn_inst['x']; I_syn = tm_syn_inst['Is'];
-         Isi[0][k] = tm_syn_inst['Ipost'];
-         
-     PSC_S = np.sum(Isi[0])
+         r = 1*tm_syn_inst['r']; 
+         x = 1*tm_syn_inst['x']; 
+         I_syn = 1*tm_syn_inst['Is'];
+         Isi[0][k] = 1*tm_syn_inst['Ipost'];
      
      s_neurons = dict()
      
      s_neurons['r'] = r
      s_neurons['x'] = x
      s_neurons['I_syn'] = I_syn
-     s_neurons['PSC_S'] = PSC_S
+     s_neurons['PSC_S'] = np.sum(Isi[0])
      s_neurons['v'] = v
      s_neurons['u'] = u
 

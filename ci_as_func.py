@@ -123,7 +123,7 @@ def ci_cells(
          I_aux = I_dc[k]
          white_gausian_aux = a_wg_noise[k][t - 1]
          
-         if (k >= 1 and k <= n_affected):
+         if (k >= 1 and k <= (n_affected - 1)):
              I_dbss = I_dbs
          else:
              I_dbss = 0
@@ -163,17 +163,17 @@ def ci_cells(
                                     U = U, 
                                     A = A,
                                     dt = dt)
-         r = tm_syn_inst['r']; x = tm_syn_inst['x']; I_syn = tm_syn_inst['Is'];
-         Isi[0][k] = tm_syn_inst['Ipost'];
+         r = 1*tm_syn_inst['r']; 
+         x = 1*tm_syn_inst['x']; 
+         I_syn = 1*tm_syn_inst['Is'];
+         Isi[0][k] = 1*tm_syn_inst['Ipost'];
         
-     PSC_CI = np.sum(Isi[0])
-     
      ci_neurons = dict()
      
      ci_neurons['r'] = r
      ci_neurons['x'] = x
      ci_neurons['I_syn'] = I_syn
-     ci_neurons['PSC_CI'] = PSC_CI
+     ci_neurons['PSC_CI'] = np.sum(Isi[0])
      ci_neurons['v'] = v
      ci_neurons['u'] = u
 

@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """
-Created on Sat Mar 18 14:59:45 2023
-
-@author: Avell
+@author: Celine Soeiro
+@description: Thalamo-Cortical Microcircuit Model
 """
 
 import random
@@ -16,7 +14,7 @@ sns.set()
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 
-from model_functions import tm_synapse_dbs_eq, DBS_delta, tm_synapse_poisson_eq, poissonSpikeGen
+from model_functions import tm_synapse_poisson_eq, poissonSpikeGen, I_DBS
 
 from model_plots import plot_heat_map, plot_raster_comparison, plot_LFPs
 
@@ -301,41 +299,29 @@ PSC_D_TC_on = np.zeros((1, sim_steps)) # TC
 # =============================================================================
 # VOLTAGES
 # =============================================================================
-v_TR_off = vr*np.ones((n_TR, sim_steps))
-u_TR_off = 0*v_TR_off
+v_TR_off = vr*np.ones((n_TR, sim_steps));   u_TR_off = 0*v_TR_off;
 
-v_TC_off = vr*np.ones((n_TC, sim_steps))
-u_TC_off = 0*v_TC_off
+v_TC_off = vr*np.ones((n_TC, sim_steps));   u_TC_off = 0*v_TC_off;
 
-v_CI_off = vr*np.ones((n_CI, sim_steps))
-u_CI_off = 0*v_CI_off
+v_CI_off = vr*np.ones((n_CI, sim_steps));   u_CI_off = 0*v_CI_off;
 
-v_S_off = vr*np.ones((n_S, sim_steps))
-u_S_off = 0*v_S_off
+v_S_off = vr*np.ones((n_S, sim_steps));     u_S_off = 0*v_S_off;
 
-v_M_off = vr*np.ones((n_M, sim_steps))
-u_M_off = 0*v_M_off
+v_M_off = vr*np.ones((n_M, sim_steps));     u_M_off = 0*v_M_off;
 
-v_D_off = vr*np.ones((n_D, sim_steps))
-u_D_off = 0*v_D_off
+v_D_off = vr*np.ones((n_D, sim_steps));     u_D_off = 0*v_D_off;
 # =============================================================================
-v_TR_on = vr*np.ones((n_TR, sim_steps))
-u_TR_on = 0*v_TR_on
+v_TR_on = vr*np.ones((n_TR, sim_steps));    u_TR_on = 0*v_TR_on;
 
-v_TC_on = vr*np.ones((n_TC, sim_steps))
-u_TC_on = 0*v_TC_on
+v_TC_on = vr*np.ones((n_TC, sim_steps));    u_TC_on = 0*v_TC_on;
 
-v_CI_on = vr*np.ones((n_CI, sim_steps))
-u_CI_on = 0*v_CI_on
+v_CI_on = vr*np.ones((n_CI, sim_steps));    u_CI_on = 0*v_CI_on;
 
-v_S_on = vr*np.ones((n_S, sim_steps))
-u_S_on = 0*v_S_on
+v_S_on = vr*np.ones((n_S, sim_steps));      u_S_on = 0*v_S_on;
 
-v_M_on = vr*np.ones((n_M, sim_steps))
-u_M_on = 0*v_M_on
+v_M_on = vr*np.ones((n_M, sim_steps));      u_M_on = 0*v_M_on;
 
-v_D_on = vr*np.ones((n_D, sim_steps))
-u_D_on = 0*v_D_on
+v_D_on = vr*np.ones((n_D, sim_steps));      u_D_on = 0*v_D_on;
 
 # =============================================================================
 # NEURON PARAMS
@@ -443,47 +429,31 @@ spike_times_S_on = np.zeros((n_S, sim_steps))
 # INITIALIZING MODEL - DBS OFF
 # =============================================================================
 
-dbs = dbs_modes[0]
 print('-- Running the model for DBS OFF')
-# Impact of DBS on other cortical structures via D PNs axons
-syn_fid_CI = dbs
-syn_fid_D = dbs
+
+dbs = dbs_modes[0]
+print('dbs = ',dbs)
+
+syn_fid_CI = 1*dbs
+syn_fid_D = 1*dbs
 syn_fid_M = 0*dbs
-syn_fid_S = dbs
-syn_fid_TC = dbs
-syn_fid_TR = dbs
+syn_fid_S = 1*dbs
+syn_fid_TC = 1*dbs
+syn_fid_TR = 1*dbs
 
-# =============================================================================
-# DBS
-# =============================================================================
-I_dbs = np.zeros((2, sim_steps))
-
-f_dbs = 130
-dev = 1 # devide the total simulation time in dev sections
-
-# for DBS on all the time
-dbs_duration = sim_steps
-dbs_amplitude = 0.02
-
-I_dbs_pre = DBS_delta(f_dbs, 
-                      dbs_duration, 
-                      dev, 
-                      sim_steps, 
-                      samp_freq, 
-                      dbs_amplitude, 
-                      chop_till)
-
-I_dbs_post = tm_synapse_dbs_eq(I_dbs = I_dbs_pre, 
-                               t_delay = td_syn, 
-                               dt = dt,
-                               tau_f = tau_f_E,
-                               tau_d = tau_d_E,
-                               U = U_E,
-                               A = A_E,
-                               tau_s = tau_s_E,
-                               sim_steps = sim_steps)
-I_dbs[0][:] = I_dbs_pre
-I_dbs[1][:] = I_dbs_post
+I_dbs_off = I_DBS(
+    sim_steps, 
+    chop_till, 
+    dt, 
+    td_syn, 
+    tau_f = tau_f_E, 
+    tau_d = tau_d_E, 
+    tau_s = tau_s_E, 
+    U = U_E, 
+    A = A_E, 
+    dbs = dbs,
+    samp_freq = samp_freq
+    )
 
 for t in range(1, sim_steps):
     # TR
@@ -525,13 +495,12 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_TR[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_TR[1][t - 1 - td_wl - td_syn],
         n_affected = n_TR_affected,
-        I_dbs = syn_fid_TR*I_dbs[1][t - 1],
+        I_dbs = syn_fid_TR*I_dbs_off[1][t - 1],
         spikes = spike_times_TR_off,
     )
     r_TR = tr_neurons['r'];             x_TR = tr_neurons['x'];
     I_syn_TR = tr_neurons['I_syn'];     PSC_TR_off[0][t] = tr_neurons['PSC_TR'];
     v_TR_off = tr_neurons['v'];         u_TR_off = tr_neurons['u']; 
-    print(f'PSC_TR_off[0][{t}] = ',PSC_TR_off[0][t])
         
     # TC    
     tc_neurons = tc_cells(
@@ -558,10 +527,6 @@ for t in range(1, sim_steps):
         r_D = r_T_D,
         x_D = x_T_D,
         I_syn_D = I_syn_T_D,
-        tau_f_D = tau_f_E,
-        tau_d_D = tau_d_E,
-        tau_s_D = tau_s_E,
-        U_D = U_E,
         A_D = A_E_T_D,
         PSC_S = PSC_S_off[0][t - 1 - td_ct - td_syn],
         PSC_M = PSC_M_off[0][t - 1 - td_ct - td_syn],
@@ -580,7 +545,7 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_TC[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_TC[1][t - 1 - td_wl - td_syn],
         n_affected = n_TC_affected,
-        I_dbs = syn_fid_TC*I_dbs[1][t - 1],
+        I_dbs = syn_fid_TC*I_dbs_off[1][t - 1],
         spikes = spike_times_TC_off
     )
     
@@ -628,7 +593,7 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_S[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_S[1][t - 1 - td_wl - td_syn],
         n_affected = n_S_affected,
-        I_dbs = syn_fid_S*I_dbs[1][t - 1],
+        I_dbs = syn_fid_S*I_dbs_off[1][t - 1],
         vp = vp,
         spikes = spike_times_S_off
     )
@@ -675,7 +640,7 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_M[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_M[1][t - 1 - td_wl - td_syn],
         n_affected = n_M_affected,
-        I_dbs = syn_fid_M*I_dbs[1][t - 1],
+        I_dbs = syn_fid_M*I_dbs_off[1][t - 1],
         vp = vp,
         spikes = spike_times_M_off
     )
@@ -727,7 +692,7 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_D[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_D[1][t - 1 - td_wl - td_syn],
         n_affected = n_Hyper,
-        I_dbs = syn_fid_D*I_dbs,
+        I_dbs = syn_fid_D*I_dbs_off,
         vp = vp,
         spikes = spike_times_D_off
     )
@@ -777,7 +742,7 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_CI[0][t - 1- td_wl - td_syn],
         poisson_background_I  = I_ps_CI[1][t - 1 - td_wl - td_syn],
         n_affected = n_CI_affected,
-        I_dbs = syn_fid_CI*I_dbs[1][t - 1],
+        I_dbs = syn_fid_CI*I_dbs_off[1][t - 1],
         vp = vp,
         spikes = spike_times_CI_off
     )
@@ -792,46 +757,31 @@ for t in range(1, sim_steps):
 # =============================================================================
 # INITIALIZING MODEL - DBS ON
 # =============================================================================
+print('-- Running the model for DBS ON')
 
 dbs = dbs_modes[1]
-print('-- Running the model for DBS ON')
-# Impact of DBS on other cortical structures via D PNs axons
-syn_fid_CI = dbs
-syn_fid_D = dbs
+print('dbs = ',dbs)
+
+syn_fid_CI = 1*dbs
+syn_fid_D = 1*dbs
 syn_fid_M = 0*dbs
-syn_fid_S = dbs
-syn_fid_TC = dbs
-syn_fid_TR = dbs
+syn_fid_S = 1*dbs
+syn_fid_TC = 1*dbs
+syn_fid_TR = 1*dbs
 
-# =============================================================================
-# DBS
-# =============================================================================
-I_dbs = np.zeros((2, sim_steps))
-
-dev = 3
-
-dbs_duration = int(np.round((sim_steps - chop_till)/dev))
-dbs_amplitude = 1
-    
-I_dbs_pre = DBS_delta(f_dbs, 
-                      dbs_duration, 
-                      dev, 
-                      sim_steps, 
-                      samp_freq, 
-                      dbs_amplitude, 
-                      chop_till)
-
-I_dbs_post = tm_synapse_dbs_eq(I_dbs = I_dbs_pre, 
-                               t_delay = td_syn, 
-                               dt = dt,
-                               tau_f = tau_f_E,
-                               tau_d = tau_d_E,
-                               U = U_E,
-                               A = A_E,
-                               tau_s = tau_s_E,
-                               sim_steps = sim_steps)
-I_dbs[0][:] = I_dbs_pre
-I_dbs[1][:] = I_dbs_post[0]
+I_dbs_on = I_DBS(
+    sim_steps, 
+    chop_till, 
+    dt, 
+    td_syn, 
+    tau_f = tau_f_E, 
+    tau_d = tau_d_E, 
+    tau_s = tau_s_E, 
+    U = U_E, 
+    A = A_E, 
+    dbs = dbs,
+    samp_freq = samp_freq
+    )
 
 for t in range(1, sim_steps):
     # TR
@@ -873,7 +823,7 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_TR[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_TR[1][t - 1 - td_wl - td_syn],
         n_affected = n_TR_affected,
-        I_dbs = syn_fid_TR*I_dbs[1][t - 1],
+        I_dbs = syn_fid_TR*I_dbs_on[1][t - 1],
         spikes = spike_times_TR_on,
     )
     r_TR = tr_neurons['r'];            x_TR = tr_neurons['x'];
@@ -902,14 +852,10 @@ for t in range(1, sim_steps):
         tau_s = tau_s_E,
         U = U_E,
         A = A_E,
+        A_D = A_E_T_D,
         r_D = r_T_D,
         x_D = x_T_D,
         I_syn_D = I_syn_T_D,
-        tau_f_D = tau_f_E,
-        tau_d_D = tau_d_E,
-        tau_s_D = tau_s_E,
-        U_D = U_E,
-        A_D = A_E_T_D,
         PSC_S = PSC_S_on[0][t - 1 - td_ct - td_syn],
         PSC_M = PSC_M_on[0][t - 1 - td_ct - td_syn],
         PSC_D = PSC_D_T_on[0][t - 1 - td_ct - td_syn],
@@ -927,15 +873,20 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_TC[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_TC[1][t - 1 - td_wl - td_syn],
         n_affected = n_TC_affected,
-        I_dbs = syn_fid_TC*I_dbs[1][t - 1],
+        I_dbs = syn_fid_TC*I_dbs_on[1][t - 1],
         spikes = spike_times_TC_on
     )
     
-    r_TC = tc_neurons['r'];            x_TC = tc_neurons['x'];
-    I_syn_TC = tc_neurons['I_syn'];    PSC_TC_on[0][t] = tc_neurons['PSC_TC'];
-    v_TC_on = tc_neurons['v'];         u_TC_on = tc_neurons['u'];
-    r_T_D = tc_neurons['r_D'];         x_T_D = tc_neurons['x_D'];
-    I_syn_T_D = tc_neurons['I_syn_D']; PSC_D_TC_on[0][t] = tc_neurons['PSC_D'];
+    r_TC = tc_neurons['r'];            
+    x_TC = tc_neurons['x'];
+    I_syn_TC = tc_neurons['I_syn'];    
+    PSC_TC_on[0][t] = tc_neurons['PSC_TC'];
+    v_TC_on = tc_neurons['v'];         
+    u_TC_on = tc_neurons['u'];
+    r_T_D = tc_neurons['r_D'];         
+    x_T_D = tc_neurons['x_D'];
+    I_syn_T_D = tc_neurons['I_syn_D']; 
+    PSC_D_TC_on[0][t] = tc_neurons['PSC_D'];
     
     # S
     s_neurons = s_cells(
@@ -975,7 +926,7 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_S[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_S[1][t - 1 - td_wl - td_syn],
         n_affected = n_S_affected,
-        I_dbs = syn_fid_S*I_dbs[1][t - 1],
+        I_dbs = syn_fid_S*I_dbs_on[1][t - 1],
         vp = vp,
         spikes = spike_times_S_on
     )
@@ -1022,7 +973,7 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_M[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_M[1][t - 1 - td_wl - td_syn],
         n_affected = n_M_affected,
-        I_dbs = syn_fid_M*I_dbs[1][t - 1],
+        I_dbs = syn_fid_M*I_dbs_on[1][t - 1],
         vp = vp,
         spikes = spike_times_M_on
     )
@@ -1074,7 +1025,7 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_D[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_D[1][t - 1 - td_wl - td_syn],
         n_affected = n_Hyper,
-        I_dbs = syn_fid_D*I_dbs,
+        I_dbs = syn_fid_D*I_dbs_on,
         vp = vp,
         spikes = spike_times_D_on
     )
@@ -1124,7 +1075,7 @@ for t in range(1, sim_steps):
         poisson_background_E = I_ps_CI[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_CI[1][t - 1 - td_wl - td_syn],
         n_affected = n_CI_affected,
-        I_dbs = syn_fid_CI*I_dbs[1][t - 1],
+        I_dbs = syn_fid_CI*I_dbs_on[1][t - 1],
         vp = vp,
         spikes = spike_times_CI_on
     )
@@ -1211,34 +1162,38 @@ plot_raster_comparison(
     spike_S_OFF
     )
 
+
+
+
 # =============================================================================
 # MAKING POWER SPECTRAL DENSITY PLOT (PSD)
 # PSD shows how the power of a signal is distributed over frequencies. 
 # =============================================================================
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-rho = 0.27
-dist = 100^-6
+# rho = 0.27
+# dist = 100^-6
 
-LFP_off = np.transpose(PSC_D_off)
+# multiplier = 1/(4*np.pi*rho*dist)
 
-(S, f) = plt.psd(LFP_off, Fs=samp_freq)
+# LFP_off = multiplier*np.transpose(PSC_D_off)
 
-plt.semilogy(f, S)
-plt.xlim([0, 100])
-plt.xlabel('frequency [Hz]')
-plt.ylabel('PSD [V**2/Hz]')
-plt.title('PSD OFF')
-plt.show()
+# (S, f) = plt.psd(LFP_off, Fs=samp_freq)
 
+# plt.semilogy(f, S)
+# plt.xlim([0, 100])
+# plt.xlabel('frequency [Hz]')
+# plt.ylabel('PSD [V**2/Hz]')
+# plt.title('PSD OFF')
+# plt.show()
 
-LFP_on = np.transpose(PSC_D_on)
+# LFP_on = multiplier*np.transpose(PSC_D_on)
 
-(S, f) = plt.psd(LFP_on, Fs=samp_freq)
+# (S, f) = plt.psd(LFP_on, Fs=samp_freq)
 
-plt.semilogy(f, S)
-plt.xlim([0, 100])
-plt.xlabel('frequency [Hz]')
-plt.ylabel('PSD [V**2/Hz]')
-plt.title('PSD ON')
-plt.show()
+# plt.semilogy(f, S)
+# plt.xlim([0, 100])
+# plt.xlabel('frequency [Hz]')
+# plt.ylabel('PSD [V**2/Hz]')
+# plt.title('PSD ON')
+# plt.show()

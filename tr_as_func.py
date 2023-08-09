@@ -4,7 +4,6 @@
 @description: Thalamic Reticular Nucleus (TR) function
     
 -- OVERVIEW
-
 Receive inhibitory stimulus from:
     - Self 
 
@@ -120,7 +119,7 @@ def tr_cells(
         I_aux = I_dc[k]
         white_gausian_aux = a_wg_noise[k][t - 1]
         
-        if (k >= 1 and k <= n_affected):
+        if (k >= 1 and k <= (n_affected - 1)):
             I_dbss = I_dbs
         else:
             I_dbss = 0
@@ -160,21 +159,17 @@ def tr_cells(
                                     U = U, 
                                     A = A,
                                     dt = dt)
-        r = tm_syn_inst['r']; 
-        x = tm_syn_inst['x']; 
-        I_syn = tm_syn_inst['Is'];
-        Isi[0][k] = tm_syn_inst['Ipost']; 
-    
-    print('Isi = ',Isi)
-    PSC_TR = np.sum(Isi[0])
-    print('PSC_TR = ',PSC_TR)
+        r = 1*tm_syn_inst['r']; 
+        x = 1*tm_syn_inst['x']; 
+        I_syn = 1*tm_syn_inst['Is'];
+        Isi[0][k] = 1*tm_syn_inst['Ipost']; 
     
     tr_neurons = dict()
     
     tr_neurons['r'] = r
     tr_neurons['x'] = x
     tr_neurons['I_syn'] = I_syn
-    tr_neurons['PSC_TR'] = PSC_TR
+    tr_neurons['PSC_TR'] = np.sum(Isi[0])
     tr_neurons['v'] = v
     tr_neurons['u'] = u
 

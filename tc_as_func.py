@@ -4,7 +4,6 @@
 @description: Thalamo-cortical Relay Nucleus (TC) function
     
 -- OVERVIEW
-
 Receive inhibitory stimulus from:
     - Thalamic Reticular Nucleus (TR) 
 
@@ -76,7 +75,7 @@ import numpy as np
 
 from model_functions import izhikevich_dvdt, izhikevich_dudt, tm_synapse_eq
 
-def tc_cells(
+def tc_cells(        
        t,
        dt,
        n_neurons, 
@@ -100,10 +99,6 @@ def tc_cells(
        r_D,
        x_D,
        I_syn_D,
-       tau_f_D,
-       tau_d_D,
-       tau_s_D,
-       U_D,
        A_D,
        W_TR,
        W_S,
@@ -136,7 +131,7 @@ def tc_cells(
         I_aux = I_dc[k]
         white_gausian_aux = a_wg_noise[k][t - 1]
         
-        if (k >= 1 and k <= n_affected):
+        if (k >= 1 and k <= (n_affected - 1)):
             I_dbss = I_dbs
         else:
             I_dbss = 0
@@ -166,7 +161,8 @@ def tc_cells(
             u[k][t] = u_aux + d[0][k]
             spikes[k][t] = t
         
-        rr = r;     xx = x;     Iss = I_syn;
+        rr = 1*r;     xx = 1*x;     Iss = 1*I_syn;
+
         tm_syn_inst = tm_synapse_eq(r = r, 
                                     x = x, 
                                     Is = I_syn, 
@@ -177,38 +173,39 @@ def tc_cells(
                                     U = U, 
                                     A = A,
                                     dt = dt)
-        r = tm_syn_inst['r']; x = tm_syn_inst['x']; I_syn = tm_syn_inst['Is'];
+        
+        r = 1*tm_syn_inst['r']; 
+        x = 1*tm_syn_inst['x']; 
+        I_syn = 1*tm_syn_inst['Is'];
+        Isi[0][k] = 1*tm_syn_inst['Ipost'];
         
         tm_syn_inst_dep = tm_synapse_eq(r = rr, 
                                         x = xx, 
                                         Is = Iss, 
                                         AP = AP_aux, 
-                                        tau_f = tau_f_D, 
-                                        tau_d = tau_d_D, 
-                                        tau_s = tau_s_D, 
-                                        U = U_D, 
+                                        tau_f = tau_f, 
+                                        tau_d = tau_d, 
+                                        tau_s = tau_s, 
+                                        U = U, 
                                         A = A_D,
                                         dt = dt)
-        r_D = tm_syn_inst_dep['r']; x_D = tm_syn_inst_dep['x']; I_syn_D = tm_syn_inst_dep['Is'];
+        r_D = 1*tm_syn_inst_dep['r']; 
+        x_D = 1*tm_syn_inst_dep['x']; 
+        I_syn_D = 1*tm_syn_inst_dep['Is'];
+        Isi_D[0][k] = 1*tm_syn_inst_dep['Ipost'];
         
-        Isi[0][k] = tm_syn_inst['Ipost'] 
-        Isi_D[0][k] = tm_syn_inst_dep['Ipost'] 
-        
-    PSC_TC = np.sum(Isi[0])
-    PSC_D = np.sum(Isi_D[0])
-    
     tc_neurons = dict()
     
     tc_neurons['r'] = r
     tc_neurons['x'] = x
     tc_neurons['I_syn'] = I_syn
-    tc_neurons['PSC_TC'] = PSC_TC
+    tc_neurons['PSC_TC'] = np.sum(Isi[0])
     tc_neurons['v'] = v
     tc_neurons['u'] = u
     tc_neurons['r_D'] = r_D
     tc_neurons['x_D'] = x_D
     tc_neurons['I_syn_D'] = I_syn_D
-    tc_neurons['PSC_D'] = PSC_D
+    tc_neurons['PSC_D'] = np.sum(Isi_D[0])
 
     return tc_neurons
     

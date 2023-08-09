@@ -142,7 +142,7 @@ def d_cells(
          if (n_affected == 0):
              I_dbss = 0
          else:
-             if (k >= 0 and k <= n_affected):
+             if (k >= 0 and k <= (n_affected - 1)):
                  I_dbss = I_dbs[0][t - 1]
              else:
                  I_dbss = I_dbs[1][t - 1]
@@ -172,7 +172,7 @@ def d_cells(
              u[k][t] = u_aux + d[0][k]
              spikes[k][t] = t
          
-         rr = r; xx = x; Iss = I_syn;
+         rr = 1*r; xx = 1*x; Iss = 1*I_syn;
          # Pseudo Linear
          tm_syn_inst = tm_synapse_eq(r = r, 
                                     x = x, 
@@ -184,8 +184,10 @@ def d_cells(
                                     U = U, 
                                     A = A,
                                     dt = dt)
-         r = tm_syn_inst['r']; x = tm_syn_inst['x']; I_syn = tm_syn_inst['Is'];
-         Ise[0][k] = tm_syn_inst['Ipost'];
+         r = 1*tm_syn_inst['r']; 
+         x = 1*tm_syn_inst['x']; 
+         I_syn = 1*tm_syn_inst['Is'];
+         Ise[0][k] = 1*tm_syn_inst['Ipost'];
          
          # Facilitating 
          tm_syn_inst_fac = tm_synapse_eq(r = rr, 
@@ -198,8 +200,10 @@ def d_cells(
                                         U = U, 
                                         A = A_F,
                                         dt = dt)
-         rf = tm_syn_inst_fac['r']; xf = tm_syn_inst_fac['x']; Isf = tm_syn_inst_fac['Is'];
-         Ise_F[0][k] = tm_syn_inst_fac['Ipost']
+         rf = 1*tm_syn_inst_fac['r']; 
+         xf = 1*tm_syn_inst_fac['x']; 
+         Isf = 1*tm_syn_inst_fac['Is'];
+         Ise_F[0][k] = 1*tm_syn_inst_fac['Ipost']
          
          # Depressing
          tm_syn_inst_dep = tm_synapse_eq(r = rr, 
@@ -212,7 +216,7 @@ def d_cells(
                                         U = U, 
                                         A = A_D,
                                         dt = dt)
-         Ise_D[0][k] = tm_syn_inst_dep['Ipost']
+         Ise_D[0][k] = 1*tm_syn_inst_dep['Ipost']
          
      d_neurons = dict()
      
