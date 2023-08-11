@@ -490,8 +490,8 @@ for t in range(1, sim_steps):
         W_D = W_TR_D,
         W_TC = W_TR_TC,
         W_CI = W_TR_CI,
-        a_wg_noise = kisi_TR_I,
-        t_wg_noise = zeta_TR_I,
+        zeta_noise = zeta_TR_I,
+        kisi_noise = kisi_TR_I,
         poisson_background_E = I_ps_TR[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_TR[1][t - 1 - td_wl - td_syn],
         n_affected = n_TR_affected,
@@ -540,8 +540,8 @@ for t in range(1, sim_steps):
         W_TR = W_TC_TR,
         W_TC = W_TC_self,
         W_CI = W_TC_CI,
-        a_wg_noise = kisi_TC_E,
-        t_wg_noise = zeta_TC_E,
+        zeta_noise = zeta_TC_E,
+        kisi_noise = kisi_TC_E,
         poisson_background_E = I_ps_TC[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_TC[1][t - 1 - td_wl - td_syn],
         n_affected = n_TC_affected,
@@ -588,8 +588,8 @@ for t in range(1, sim_steps):
         W_TR = W_S_TR,
         W_TC = W_S_TC,
         W_CI = W_S_CI,
-        a_wg_noise = kisi_S_E,
-        t_wg_noise = zeta_S_E,
+        zeta_noise = zeta_S_E,
+        kisi_noise = kisi_S_E,
         poisson_background_E = I_ps_S[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_S[1][t - 1 - td_wl - td_syn],
         n_affected = n_S_affected,
@@ -635,8 +635,8 @@ for t in range(1, sim_steps):
         W_TR = W_M_TR,
         W_TC = W_M_TC,
         W_CI = W_M_CI,
-        a_wg_noise = kisi_M_E,
-        t_wg_noise = zeta_M_E,
+        zeta_noise = zeta_M_E,
+        kisi_noise = kisi_M_E,
         poisson_background_E = I_ps_M[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_M[1][t - 1 - td_wl - td_syn],
         n_affected = n_M_affected,
@@ -687,8 +687,8 @@ for t in range(1, sim_steps):
         W_TR = W_D_TR,
         W_TC = W_D_TC,
         W_CI = W_D_CI,
-        a_wg_noise = kisi_D_E,
-        t_wg_noise = zeta_D_E,
+        zeta_noise = zeta_D_E,
+        kisi_noise = kisi_D_E,
         poisson_background_E = I_ps_D[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_D[1][t - 1 - td_wl - td_syn],
         n_affected = n_Hyper,
@@ -737,8 +737,8 @@ for t in range(1, sim_steps):
         PSC_TC = PSC_TC_off[0][t - 1 - td_tc - td_syn],
         PSC_TR = PSC_TR_off[0][t - 1 - td_tc - td_syn],
         PSC_CI = PSC_CI_off[0][t - 1 - td_wl - td_syn],          
-        a_wg_noise = kisi_CI_I,
-        t_wg_noise = zeta_CI_I,
+        zeta_noise = zeta_CI_I,
+        kisi_noise = kisi_CI_I,
         poisson_background_E = I_ps_CI[0][t - 1- td_wl - td_syn],
         poisson_background_I  = I_ps_CI[1][t - 1 - td_wl - td_syn],
         n_affected = n_CI_affected,
@@ -818,8 +818,8 @@ for t in range(1, sim_steps):
         W_D = W_TR_D,
         W_TC = W_TR_TC,
         W_CI = W_TR_CI,
-        a_wg_noise = kisi_TR_I,
-        t_wg_noise = zeta_TR_I,
+        zeta_noise = zeta_TR_I,
+        kisi_noise = kisi_TR_I,
         poisson_background_E = I_ps_TR[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_TR[1][t - 1 - td_wl - td_syn],
         n_affected = n_TR_affected,
@@ -868,8 +868,8 @@ for t in range(1, sim_steps):
         W_TR = W_TC_TR,
         W_TC = W_TC_self,
         W_CI = W_TC_CI,
-        a_wg_noise = kisi_TC_E,
-        t_wg_noise = zeta_TC_E,
+        zeta_noise = zeta_TC_E,
+        kisi_noise = kisi_TC_E,
         poisson_background_E = I_ps_TC[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_TC[1][t - 1 - td_wl - td_syn],
         n_affected = n_TC_affected,
@@ -921,8 +921,8 @@ for t in range(1, sim_steps):
         W_TR = W_S_TR,
         W_TC = W_S_TC,
         W_CI = W_S_CI,
-        a_wg_noise = kisi_S_E,
-        t_wg_noise = zeta_S_E,
+        zeta_noise = zeta_S_E,
+        kisi_noise = kisi_S_E,
         poisson_background_E = I_ps_S[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_S[1][t - 1 - td_wl - td_syn],
         n_affected = n_S_affected,
@@ -968,8 +968,8 @@ for t in range(1, sim_steps):
         W_TR = W_M_TR,
         W_TC = W_M_TC,
         W_CI = W_M_CI,
-        a_wg_noise = kisi_M_E,
-        t_wg_noise = zeta_M_E,
+        zeta_noise = zeta_M_E,
+        kisi_noise = kisi_M_E,
         poisson_background_E = I_ps_M[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_M[1][t - 1 - td_wl - td_syn],
         n_affected = n_M_affected,
@@ -1020,8 +1020,8 @@ for t in range(1, sim_steps):
         W_TR = W_D_TR,
         W_TC = W_D_TC,
         W_CI = W_D_CI,
-        a_wg_noise = kisi_D_E,
-        t_wg_noise = zeta_D_E,
+        zeta_noise = zeta_D_E,
+        kisi_noise = kisi_D_E,
         poisson_background_E = I_ps_D[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_D[1][t - 1 - td_wl - td_syn],
         n_affected = n_Hyper,
@@ -1070,8 +1070,8 @@ for t in range(1, sim_steps):
         PSC_TC = PSC_TC_on[0][t - 1 - td_tc - td_syn],
         PSC_TR = PSC_TR_on[0][t - 1 - td_tc - td_syn],
         PSC_CI = PSC_CI_on[0][t - 1 - td_wl - td_syn],          
-        a_wg_noise = kisi_CI_I,
-        t_wg_noise = zeta_CI_I,
+        zeta_noise = zeta_CI_I,
+        kisi_noise = kisi_CI_I,
         poisson_background_E = I_ps_CI[0][t - 1 - td_wl - td_syn],
         poisson_background_I  = I_ps_CI[1][t - 1 - td_wl - td_syn],
         n_affected = n_CI_affected,
@@ -1169,31 +1169,31 @@ plot_raster_comparison(
 # MAKING POWER SPECTRAL DENSITY PLOT (PSD)
 # PSD shows how the power of a signal is distributed over frequencies. 
 # =============================================================================
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
-# rho = 0.27
-# dist = 100^-6
+rho = 0.27
+dist = 100e-6
 
-# multiplier = 1/(4*np.pi*rho*dist)
+multiplier = 1/(4*np.pi*rho*dist)
 
-# LFP_off = multiplier*np.transpose(PSC_D_off)
+LFP_off = multiplier*np.transpose(PSC_D_off)
 
-# (S, f) = plt.psd(LFP_off, Fs=samp_freq)
+(S, f) = plt.psd(LFP_off, Fs=samp_freq)
 
-# plt.semilogy(f, S)
-# plt.xlim([0, 100])
-# plt.xlabel('frequency [Hz]')
-# plt.ylabel('PSD [V**2/Hz]')
-# plt.title('PSD OFF')
-# plt.show()
+plt.semilogy(f, S)
+plt.xlim([0, 100])
+plt.xlabel('frequency [Hz]')
+plt.ylabel('PSD [V**2/Hz]')
+plt.title('PSD OFF')
+plt.show()
 
-# LFP_on = multiplier*np.transpose(PSC_D_on)
+LFP_on = multiplier*np.transpose(PSC_D_on)
 
-# (S, f) = plt.psd(LFP_on, Fs=samp_freq)
+(S, f) = plt.psd(LFP_on, Fs=samp_freq)
 
-# plt.semilogy(f, S)
-# plt.xlim([0, 100])
-# plt.xlabel('frequency [Hz]')
-# plt.ylabel('PSD [V**2/Hz]')
-# plt.title('PSD ON')
-# plt.show()
+plt.semilogy(f, S)
+plt.xlim([0, 100])
+plt.xlabel('frequency [Hz]')
+plt.ylabel('PSD [V**2/Hz]')
+plt.title('PSD ON')
+plt.show()

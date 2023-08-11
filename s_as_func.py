@@ -103,8 +103,8 @@ def s_cells(
         W_D,
         W_TC,
         W_CI,
-        a_wg_noise,
-        t_wg_noise,
+        zeta_noise,
+        kisi_noise,
         poisson_background_E,
         poisson_background_I,
         n_affected,
@@ -117,10 +117,10 @@ def s_cells(
 
      for k in range(0, n_neurons):   
          AP_aux = 0
-         v_aux = v[k][t - 1]
-         u_aux = u[k][t - 1]
+         v_aux = 1*v[k][t - 1]
+         u_aux = 1*u[k][t - 1]
          I_aux = I_dc[k]
-         white_gausian_aux = a_wg_noise[k][t - 1]
+         white_gausian_aux = zeta_noise[k][t - 1]
          
          if (k >= 1 and k <= (n_affected - 1)):
              I_dbss = I_dbs
@@ -134,7 +134,7 @@ def s_cells(
          layer_TC = W_TC[k][0]*PSC_TC/n_neurons
          layer_TR = W_TR[k][0]*PSC_TR/n_neurons
          layer_CI = W_CI[k][0]*PSC_CI/n_neurons
-         noise = t_wg_noise[k][t - 1] + poisson_background_E - poisson_background_I
+         noise = kisi_noise[k][t - 1] + poisson_background_E - poisson_background_I
          
          v[k][t] = v_aux + dt*(
              neuron_contribution + 
@@ -145,7 +145,7 @@ def s_cells(
              )
          u[k][t] = u_aux + dt*izhikevich_dudt(v = v_aux, u = u_aux, a = a[0][k], b = b[0][k])
          
-         if (v_aux >= (vp + white_gausian_aux)):
+         if (v[k][t] >= (vp + white_gausian_aux)):
              AP_aux = 1
              v_aux = vp + white_gausian_aux
              v[k][t] = c[0][k]
