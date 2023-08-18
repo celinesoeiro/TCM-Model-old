@@ -1163,8 +1163,6 @@ plot_raster_comparison(
     )
 
 
-
-
 # =============================================================================
 # MAKING POWER SPECTRAL DENSITY PLOT (PSD)
 # PSD shows how the power of a signal is distributed over frequencies. 
@@ -1177,6 +1175,9 @@ dist = 100e-6
 multiplier = 1/(4*np.pi*rho*dist)
 
 LFP_off = multiplier*np.transpose(PSC_D_off)
+
+plt.plot(PSC_D_off)
+plt.show()
 
 (S, f) = plt.psd(LFP_off, Fs=samp_freq)
 

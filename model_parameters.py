@@ -68,11 +68,11 @@ def TCM_model_parameters():
     random_factor = np.round(random.random(),2)
     
     number_trials = 1                       # number of trials
-    dt = 0.5                                # time step in ms
+    dt = 0.1                                # time step in ms
     samp_freq = int(1000/dt)                # sampling frequency in Hz
     dbs_on = int(5*67)                      # value of synaptic fidelity when DBS on
     dbs_off = 0                             # value of synaptic fidelity when DBS off
-    simulation_time = 3                     # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
+    simulation_time = 9                     # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
     T = (simulation_time + 1)*1000          # (s) Simulation time in ms with 1 extra second to reach the steady state and trash later
     sim_steps = int(np.round(T/dt))         # number of simulation steps
     chop_till = 1*samp_freq;                       # Cut the first 1 seconds of the simulation
@@ -99,12 +99,12 @@ def TCM_model_parameters():
         t_vec = np.arange(td_cortex_thalamus + td_synapse + 1, sim_steps)
         
     # Neuron quantities
-    qnt_neurons_s = 50         # Excitatory
-    qnt_neurons_m = 50         # Excitatory
-    qnt_neurons_d = 50         # Excitatory
-    qnt_neurons_ci = 50        # Inhibitory
-    qnt_neurons_tc = 50        # Excitatory
-    qnt_neurons_tr = 20         # Inhibitory
+    qnt_neurons_s = 100         # Excitatory
+    qnt_neurons_m = 100         # Excitatory
+    qnt_neurons_d = 100         # Excitatory
+    qnt_neurons_ci = 100        # Inhibitory
+    qnt_neurons_tc = 100        # Excitatory
+    qnt_neurons_tr = 40         # Inhibitory
     
     neuron_quantities = {
         'S': qnt_neurons_s,                      # Number of neurons in Superficial layer
@@ -136,10 +136,10 @@ def TCM_model_parameters():
     neurons_d_2 = int(0.3*qnt_neurons_d)        # IB neurons
     neurons_ci_1 = int(0.5*qnt_neurons_ci)      # FS neurons
     neurons_ci_2 = int(0.5*qnt_neurons_ci)      # LTS neurons
-    neurons_tr_1 = int(0.5*qnt_neurons_tr)      # TC neurons
-    neurons_tr_2 = int(0.5*qnt_neurons_tr)      # TC neurons
-    neurons_tc_1 = int(0.7*qnt_neurons_tc)      # TR neurons
-    neurons_tc_2 = int(0.3*qnt_neurons_tc)      # TR neurons
+    neurons_tr_1 = int(0.5*qnt_neurons_tr)      # TR neurons
+    neurons_tr_2 = int(0.5*qnt_neurons_tr)      # TR neurons
+    neurons_tc_1 = int(0.7*qnt_neurons_tc)      # TC neurons
+    neurons_tc_2 = int(0.3*qnt_neurons_tc)      # TC neurons
     
     neuron_per_structure = {
         'neurons_s_1': neurons_s_1,             # Regular Spiking
@@ -190,15 +190,15 @@ def TCM_model_parameters():
     c_CI = np.c_[c[2]*np.ones((1, neurons_ci_1)), c[3]*np.ones((1, neurons_ci_2))]
     d_CI = np.c_[d[2]*np.ones((1, neurons_ci_1)), d[3]*np.ones((1, neurons_ci_2))]
     
-    a_TR = np.c_[a[5]*np.ones((1, neurons_tr_1)), a[5]*np.ones((1, neurons_tr_2))] + 0.008*random_factor
-    b_TR = np.c_[b[5]*np.ones((1, neurons_tr_1)), b[5]*np.ones((1, neurons_tr_2))] - 0.005*random_factor
-    c_TR = np.c_[c[5]*np.ones((1, neurons_tr_1)), c[5]*np.ones((1, neurons_tr_2))]
-    d_TR = np.c_[d[5]*np.ones((1, neurons_tr_1)), d[5]*np.ones((1, neurons_tr_2))]
-    
     a_TC = np.c_[a[4]*np.ones((1, neurons_tc_1)), a[4]*np.ones((1, neurons_tc_2))]
     b_TC = np.c_[b[4]*np.ones((1, neurons_tc_1)), b[4]*np.ones((1, neurons_tc_2))]
     c_TC = np.c_[c[4]*np.ones((1, neurons_tc_1)), c[4]*np.ones((1, neurons_tc_2))] + 15*random_factor**2
     d_TC = np.c_[d[4]*np.ones((1, neurons_tc_1)), d[4]*np.ones((1, neurons_tc_2))] - 0.6*random_factor**2
+    
+    a_TR = np.c_[a[5]*np.ones((1, neurons_tr_1)), a[5]*np.ones((1, neurons_tr_2))] + 0.008*random_factor
+    b_TR = np.c_[b[5]*np.ones((1, neurons_tr_1)), b[5]*np.ones((1, neurons_tr_2))] - 0.005*random_factor
+    c_TR = np.c_[c[5]*np.ones((1, neurons_tr_1)), c[5]*np.ones((1, neurons_tr_2))]
+    d_TR = np.c_[d[5]*np.ones((1, neurons_tr_1)), d[5]*np.ones((1, neurons_tr_2))]
         
     neuron_params = {
         'a_S': a_S,
