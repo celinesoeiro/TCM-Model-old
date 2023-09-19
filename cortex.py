@@ -28,11 +28,6 @@ random_factor = np.round(random.random(),2)
 
 def poissonSpikeGen(n_trials, time, fr, dt):
     spikes_matriz = np.random.rand(n_trials,len(time)) < fr*dt
-    # spikes_matriz = np.zeros((n_trials, len(time))) 
-    
-    # for t in range(len(time)):
-    #     if (np.random.rand() < fr*dt):
-    #         spikes_matriz[0][t] = int(t)
             
     return spikes_matriz
 
@@ -119,8 +114,8 @@ def get_frequency(signal, time):
 vp = 30
 vr = -65
 
-ms = 1000                                       # seconds
-sim_time = 1                                    # s
+ms = 1000                                       # 1 second = 1000 milliseconds
+sim_time = 1                                    # 1s
 dt = 10/ms                                      # 10ms
 fs = 1/dt                                       # Hz (Sampling Frequency)
 ss_time = 0                                     # s - steady state time to trash later
@@ -137,6 +132,8 @@ total_neurons = n_D + n_CI
 
 spikes_D = np.zeros((1, len(sim_steps_aux)))
 spikes_CI = np.zeros((1, len(sim_steps_aux)))
+
+f_thalamus = 12                                  # Hz (Thalamus frequency)
 
 # =============================================================================
 # DBS
@@ -193,8 +190,6 @@ PSC_TC = np.zeros((1, len(sim_steps_aux)))
 # =============================================================================
 # MAKING THALAMIC INPUT
 # =============================================================================
-f_thalamus = 8                                  # Hz (Thalamus frequency)
-
 I_Thalamus = poissonSpikeGen(1, sim_steps[0], f_thalamus, dt)
 fr_thalamus = get_frequency(I_Thalamus,sim_time_total)
 
