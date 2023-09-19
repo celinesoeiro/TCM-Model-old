@@ -348,31 +348,31 @@ I_ps_CI = np.zeros((2, sim_steps))
 I_ps_TR = np.zeros((2, sim_steps))
 I_ps_TC = np.zeros((2, sim_steps))
 
-if (w_ps != 0):
-    W_ps = w_ps*np.random.rand(6,2)
-    for l in range(5):
-        poisson_firing = 20 + 2*np.random.randn()
-        [poisson_spikes, poisson_time_vector] = poissonSpikeGen(poisson_firing, T/1000, 1, dt/1000)
-        
-    for i in range (len(poisson_time_vector)):
-        fired = poisson_spikes[0][i]
+W_ps = w_ps*np.random.rand(6,2)
 
-        if (fired == True):
-            tm_syn_E = tm_synapse_poisson_eq(i, sim_steps, td_syn, dt, tau_f_E, tau_d_E, tau_s_E, U_E, A_E)
-            tm_syn_I = tm_synapse_poisson_eq(i, sim_steps, td_syn, dt, tau_f_I, tau_d_I, tau_s_I, U_I, A_I)
+for l in range(5):
+    poisson_firing = 20 + 2*np.random.randn()
+    [poisson_spikes, poisson_time_vector] = poissonSpikeGen(poisson_firing, T/1000, 1, dt/1000)
+    
+for i in range (len(poisson_time_vector)):
+    fired = poisson_spikes[0][i]
 
-            I_ps_S[0][i] = W_ps[0][0]*tm_syn_E[3][i]
-            I_ps_S[1][i] = W_ps[0][1]*tm_syn_I[3][i]
-            I_ps_M[0][i] = W_ps[1][0]*tm_syn_E[3][i]
-            I_ps_M[1][i] = W_ps[1][1]*tm_syn_I[3][i]
-            I_ps_D[0][i] = W_ps[2][0]*tm_syn_E[3][i]
-            I_ps_D[1][i] = W_ps[2][1]*tm_syn_I[3][i]
-            I_ps_CI[0][i] = W_ps[3][0]*tm_syn_E[3][i]
-            I_ps_CI[1][i] = W_ps[3][1]*tm_syn_I[3][i]
-            I_ps_TR[0][i] = W_ps[4][0]*tm_syn_E[3][i]
-            I_ps_TR[1][i] = W_ps[4][1]*tm_syn_I[3][i]
-            I_ps_TC[0][i] = W_ps[5][0]*tm_syn_E[3][i]
-            I_ps_TC[1][i] = W_ps[5][1]*tm_syn_I[3][i]
+    if (fired == True):
+        tm_syn_E = tm_synapse_poisson_eq(i, sim_steps, td_syn, dt, tau_f_E, tau_d_E, tau_s_E, U_E, A_E)
+        tm_syn_I = tm_synapse_poisson_eq(i, sim_steps, td_syn, dt, tau_f_I, tau_d_I, tau_s_I, U_I, A_I)
+
+        I_ps_S[0][i] = W_ps[0][0]*tm_syn_E[3][i]
+        I_ps_S[1][i] = W_ps[0][1]*tm_syn_I[3][i]
+        I_ps_M[0][i] = W_ps[1][0]*tm_syn_E[3][i]
+        I_ps_M[1][i] = W_ps[1][1]*tm_syn_I[3][i]
+        I_ps_D[0][i] = W_ps[2][0]*tm_syn_E[3][i]
+        I_ps_D[1][i] = W_ps[2][1]*tm_syn_I[3][i]
+        I_ps_CI[0][i] = W_ps[3][0]*tm_syn_E[3][i]
+        I_ps_CI[1][i] = W_ps[3][1]*tm_syn_I[3][i]
+        I_ps_TR[0][i] = W_ps[4][0]*tm_syn_E[3][i]
+        I_ps_TR[1][i] = W_ps[4][1]*tm_syn_I[3][i]
+        I_ps_TC[0][i] = W_ps[5][0]*tm_syn_E[3][i]
+        I_ps_TC[1][i] = W_ps[5][1]*tm_syn_I[3][i]
             
 # =============================================================================
 # FIRED NEURONS
@@ -825,8 +825,6 @@ for dbs in dbs_modes:
     # =============================================================================
     # MAKING RASTER PLOT
     # =============================================================================
-    
-    
     print("--- Printing Raster Plot")
     plot_raster(
         dbs,

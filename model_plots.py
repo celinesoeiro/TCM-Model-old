@@ -212,8 +212,8 @@ def plot_raster(
                         ])
     
     ax1.set_xlim(chop_till - dt*100, sim_steps + dt*100)
-    ax1.set_xticks(np.arange(chop_till - dt*5, sim_steps + dt*5, dt*5))
-    ax1.set_xticklabels(np.arange(chop_till/1000 - 0.5, sim_steps/1000 + 0.5, 0.5))
+    ax1.set_xticks(np.arange(chop_till - dt*10, sim_steps + dt*10, 5000))
+    ax1.set_xticklabels(np.arange(chop_till/1000 - dt*10, sim_steps/1000 + dt*10, 5))
     
     # TR neurons
     ax1.hlines(y = TR_lim, xmin=0, xmax=sim_steps, color = 'b', linestyle='solid' )
