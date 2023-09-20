@@ -1,63 +1,67 @@
 """
-Created on Thu Mar 23 20:10:08 2023
-
 @author: Celine Soeiro
 
-@description: Thalamic Reticular Nucleus (TR) cells
-
-# Abreviations:
-    PSC: Post Synaptic Current
-    IC: Intercortical Neurons
-    SW: Synaptic Weight
-    S: Surface (Supragranular) layer
-    M: Middle (Granular) layer
-    D: Deep (Infragranular) layer
-    CI: Cortical Interneurons
-    TR: Thalamic Reticular Nucleus
-    TC: Thalamo-Cortical Relay nucleus
-    PD: Parkinsonian Desease
-
-Inputs:
-    time step: dt
-    peak voltage: vp
-    rest voltage: vr
-    simulation steps: sim_steps
-    number of neurons: n
-    neuron_params: a,b,c,d                                                          -> Izhikevich
-    membrane recovery variable: v                                                   -> Izhikevich
-    membrane potential of the neuron: u                                             -> Izhikevich
-    available neurotransmitter resources ready to be used: r                        -> TM model (u in original article)
-    neurotransmitter resources that remain available after synaptic transmission: x -> TM model
-    post-synaptic current: I                                                        -> TM model
-    PSC self contribution: PSC_self
-    PSC layer S: PSC_S
-    PSC layer M: PSC_M
-    PSC layer D: PSC_D
-    PSC layer TC: PSC_TC
-    PSC CI: PSC_CI
-    SW from self: SW_self
-    SW from S: SW_S
-    SW from M: SW_M
-    SW from D: SW_D
-    SW from CI: SW_CI
-    SW from TC: SW_TC 
-    bias current: Ib
-    time vector: time
+@description: Thalamic Reticular Nucleus (TR) function
     
------------- OVERVIEW
-
+-- OVERVIEW
 Receive inhibitory stimulus from:
     - Self 
 
 Receive excitatory stimulus from:
-    - Thalamo-cortical relay nucleus (TRN)
+    - Thalamo-cortical relay nucleus (TC)
+    - Layer D
 
 Send inhibitory stimulus to:
-    - Thalamo-cortical relay nucleus (TRN)
+    - Thalamo-cortical relay nucleus (TC)
     
 Send excitatory stimulus to:
     - None
 
+-- INPUTS:
+    t: time
+    dt: time step
+    n_neurons: number of neurons in structure
+    sim_steps: simulation steps
+    ------------------------ Izhikevich Neuron Model
+    v: membrane voltage 
+    u: membrane recovery variable 
+    I_dc: Bias current 
+    a, b, c, d: Izhikevich neuron params
+    vp: Peak voltage 
+    ------------------------ TM Synapse Model
+    r: available neurotransmitter resources ready to be used (u in original article)
+    x: neurotransmitter resources that remain available after synaptic transmission 
+    I_syn: post-synaptic current 
+    tau_f: 
+    tau_d:
+    tau_s:
+    U: 
+    A: Distribution
+    ------------------------ TCM Model
+    PSC_S: Post Synaptic Current from layer S
+    PSC_M: Post Synaptic Current from Layer M
+    PSC_D: Post Synaptic Current from layer D
+    PSC_TC: Post Synaptic Current from TC
+    PSC_TR: Post Synaptic Current from TR (Self)
+    PSC_CI: Post Synspatic Current frmo CI
+    W_TR: Synaptic weight within TR neurons
+    W_S: Synaptic weight between Layer S and TR neurons
+    W_M: Synaptic weight between Layer M and TR neurons
+    W_D: Synaptic weight between Layer D and TR neurons
+    W_TC: Synaptic weight between TC and TR neurons
+    W_CI: Synaptic weight between CI and TR neurons
+    a_wg_noise: Additive white gaussian noise
+    t_wg_noise: threshold white gaussian noise
+    I_dbs: Postsynadisplay DBS pulses
+    n_affected: Percentage of neurons that are connected with hyperdirect neurons
+
+-- OUTPUTS:
+    r: available neurotransmitter resources ready to be used (u in original article)
+    x: neurotransmitter resources that remain available after synaptic transmission 
+    Is: post-synaptic current
+    PSC_TR: Post Synaptic Current from TR (Self)
+    v: membrane voltage 
+    u: membrane recovery variable  
 """
 
 import numpy as np
@@ -66,50 +70,43 @@ from model_functions import izhikevich_dvdt, izhikevich_dudt, tm_synapse_eq
 
 def tr_cells(
        t,
+       dt,
        n_neurons, 
        sim_steps,
-       voltage,
+       v,
        u,
-       current, 
-       a_wg_noise,
-       t_wg_noise,
-       poisson_background_E,
-       poisson_background_I,
-       n_affected,
-       synaptic_fidelity,
-       I_dbs,
-       W_TR,
-       W_S,
-       W_M,
-       W_D,
-       W_TC,
-       W_CI,
+       I_dc, 
+       a,
+       b,
+       c,
+       d,
+       vp,
+       r,
+       x,
+       I_syn,
+       tau_f,
+       tau_d,
+       tau_s,
+       U,
+       A,
        PSC_S,
        PSC_M,
        PSC_D,
        PSC_TC,
        PSC_TR,
        PSC_CI,
-       td_wl,
-       td_syn,
-       td_ct,
-       td_bl,
-       a,
-       b,
-       c,
-       d,
-       r,
-       x,
-       Is,
-       tau_f,
-       tau_d,
-       tau_s,
-       U,
-       A,
-       vr, 
-       vp,
-       dt,
-       fired,
+       W_TR,
+       W_S,
+       W_M,
+       W_D,
+       W_TC,
+       W_CI,
+       zeta_noise,
+       kisi_noise,
+       poisson_background_E,
+       poisson_background_I,
+       n_affected,
+       I_dbs,
        spikes,
     ):
      
@@ -117,58 +114,63 @@ def tr_cells(
 
     for k in range(0, n_neurons):   
         AP_aux = 0
-        v_aux = voltage[k][t - 1]
-        u_aux = u[k][t - 1]
-        I_aux = current[k]
-        white_gausian_aux = a_wg_noise[k][t - 1]
+        v_aux = 1*v[k][t - 1]
+        u_aux = 1*u[k][t - 1]
+        I_aux = I_dc[k]
+        white_gausian_aux = zeta_noise[k][t - 1]
         
-        if (k >= 1 and k <= n_affected):
-            I_dbss = synaptic_fidelity*I_dbs[1][t - 1]
+        if (k >= 1 and k <= (n_affected - 1)):
+            I_dbss = I_dbs
         else:
             I_dbss = 0
             
         neuron_contribution = izhikevich_dvdt(v = v_aux, u = u_aux, I = I_aux)
-        self_feedback = W_TR[k][0]*PSC_TR[0][t - td_wl - td_syn]/n_neurons
-        layer_S = W_S[k][0]*PSC_S[0][t - td_ct - td_syn]/n_neurons
-        layer_M = W_M[k][0]*PSC_M[0][t - td_ct - td_syn]/n_neurons
-        layer_D = W_D[k][0]*PSC_D[0][t - td_ct - td_syn]/n_neurons
-        layer_TC = W_TC[k][0]*PSC_TC[0][t - td_wl - td_syn]/n_neurons
-        layer_CI = W_CI[k][0]*PSC_CI[0][t - td_ct - td_syn]/n_neurons
-        noise = I_dbss + t_wg_noise[k][t - 1] + poisson_background_E[t - td_wl - td_syn] - poisson_background_I[t - td_wl - td_syn]
+        self_feedback = W_TR[k][0]*PSC_TR/n_neurons
+        layer_S = W_S[k][0]*PSC_S/n_neurons
+        layer_M = W_M[k][0]*PSC_M/n_neurons
+        layer_D = W_D[k][0]*PSC_D/n_neurons
+        layer_TC = W_TC[k][0]*PSC_TC/n_neurons
+        layer_CI = W_CI[k][0]*PSC_CI/n_neurons
+        noise = kisi_noise[k][t - 1] + poisson_background_E - poisson_background_I
         
-        voltage[k][t] = v_aux + dt*(
+        v[k][t] = v_aux + dt*(
             neuron_contribution + 
             self_feedback + 
             layer_S + layer_M + layer_D + layer_TC + layer_CI + 
-            noise
+            noise +
+            I_dbss
             )
         u[k][t] = u_aux + dt*izhikevich_dudt(v = v_aux, u = u_aux, a = a[0][k], b = b[0][k])
         
-        if (v_aux >= (vp + white_gausian_aux)):
+        if (v[k][t] >= (vp + white_gausian_aux)):
             AP_aux = 1
             v_aux = vp + white_gausian_aux
-            voltage[k][t] = c[0][k]
+            v[k][t] = c[0][k]
             u[k][t] = u_aux + d[0][k]
             spikes[k][t] = t
         
-        [rs, xs, Isyn, Ipost] = tm_synapse_eq(r = r, 
-                                              x = x, 
-                                              Is = Is, 
-                                              AP = AP_aux, 
-                                              tau_f = tau_f, 
-                                              tau_d = tau_d, 
-                                              tau_s = tau_s, 
-                                              U = U, 
-                                              A = A,
-                                              dt = dt)
-        r = rs
-        x = xs
-        Is = Isyn
-            
-        Isi[0][k] = Ipost 
+        tm_syn_inst = tm_synapse_eq(r = r, 
+                                    x = x, 
+                                    Is = I_syn, 
+                                    AP = AP_aux, 
+                                    tau_f = tau_f, 
+                                    tau_d = tau_d, 
+                                    tau_s = tau_s, 
+                                    U = U, 
+                                    A = A,
+                                    dt = dt)
+        r = 1*tm_syn_inst['r']; 
+        x = 1*tm_syn_inst['x']; 
+        I_syn = 1*tm_syn_inst['Is'];
+        Isi[0][k] = 1*tm_syn_inst['Ipost']; 
     
-        fired[k][t] = AP_aux
-        
-    PSC_TR[0][t] = np.sum(Ipost)
+    tr_neurons = dict()
+    
+    tr_neurons['r'] = r
+    tr_neurons['x'] = x
+    tr_neurons['I_syn'] = I_syn
+    tr_neurons['PSC_TR'] = np.sum(Isi[0])
+    tr_neurons['v'] = v
+    tr_neurons['u'] = u
 
-    return r, x, Is, PSC_TR, voltage, u, fired
+    return tr_neurons

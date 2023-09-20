@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """
-Created on Fri May 12 16:43:26 2023
-
-@author: Avell
+@author: Celine Soeiro
+@description: TCM functions
 """
 
 import math
@@ -20,98 +18,107 @@ def izhikevich_dudt(v, u, a, b):
 # =============================================================================
 # TM synapse
 # =============================================================================
-def tm_r_eq(r, t_f, U, fired):
-    # fraction of available neurotransmitter resources ready to be used
-    return -(r/t_f) + U*(1 - r)*fired
-
-def tm_x_eq(x, t_d, r, U, fired):
-    # fraction of the neurotransmitter resources that remain available after synaptic transmission
-    return (1 - x)/t_d - (r + U*(1 - r))*x*fired
-    
-def tm_I_eq(I, t_s, A, U, x, r, fired):
-    # post-synaptic current
-    return -(I/t_s) + A*(r + U*(1 - r))*x*fired
-
-def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):
-    for p in range(1, 3):
-        r_aux = r[p - 1]
-        x_aux = x[p - 1]
-        Is_aux = Is[p - 1]
+def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):        
+    for p in range(3):
         # Solve EDOs using Euler method
-        r[p] = r_aux + dt*tm_r_eq(r_aux, tau_f[p - 1], U[p - 1], AP)
-        x[p] = x_aux + dt*tm_x_eq(x_aux, tau_d[p - 1], r_aux, U[p - 1], AP)
-        Is[p] = Is_aux + dt*tm_I_eq(Is_aux, tau_s, A[p - 1], U[p - 1], x_aux, r_aux, AP)
+        r[p][0] = r[p][0] + dt*(-r[p][0]/tau_f[p - 1] + U[p - 1]*(1 - r[p][0])*AP)
+        x[p][0] = x[p][0] + dt*((1 - x[p][0])/tau_d[p - 1] - (r[p][0] + U[p - 1]*(1 - r[p][0]))*x[p][0]*AP)
+        Is[p][0] = Is[p][0] + dt*(-Is[p][0]/tau_s + A[p - 1]*x[p][0]*(r[p][0] + U[p - 1]*(1 - r[p][0]))*AP)
         
     Ipost = np.sum(Is)
+    
+    tm_syn_inst = dict()
+    tm_syn_inst['r'] = r
+    tm_syn_inst['x'] = x
+    tm_syn_inst['Is'] = Is
+    tm_syn_inst['Ipost'] = Ipost
         
-    return r, x, Is, Ipost
-
-def tm_synapse_dbs_eq(I_dbs, t_delay, dt, sim_steps, tau_f, tau_d, tau_s, U, A):
-    t_vec = t_delay*np.ones((1, sim_steps))
-    
-    r = np.zeros((3, sim_steps))
-    x = np.ones((3, sim_steps))
-    Is = np.zeros((3, sim_steps))
-    
-    for p in range(1,3):
-        for q in range(1, len(t_vec)):
-            r_aux = r[p][q - 1]
-            x_aux = x[p][q - 1]
-            Is_aux = Is[p][q - 1]
-            r[p][q] = r_aux + dt*(-r_aux/tau_f + U[p - 1]*(1 - r_aux)*I_dbs[q - t_delay])
-            x[p][q] = x_aux + dt*((1-x_aux/tau_d) - r_aux*x_aux*I_dbs[q - t_delay])
-            Is[p][q] = Is_aux + dt*(-1*Is_aux/tau_s + A[p - 1]*r_aux*x_aux*I_dbs[q - t_delay])
-            # Is[p][q] = Is_aux + dt*tm_I_eq(Is_aux, tau_s, A[p - 1], U[p - 1], x_aux, r_aux, dbs[q - t_delay])
-    
-    dbs_I = np.sum(Is, axis = 0)
-    
-    return dbs_I, t_vec
+    return tm_syn_inst
 
 def tm_synapse_poisson_eq(AP_position, sim_steps, t_delay, dt, tau_f, tau_d, tau_s, U, A):
     r = np.zeros((3, sim_steps))
     x = np.zeros((3, sim_steps))
     Is = np.zeros((3, sim_steps))
-    spd = np.zeros((3, sim_steps))
+    spd = np.zeros((1, sim_steps))
     
-    for p in range(1, 3):
-        spd[p][AP_position] = 1/dt;
-        for i in range(1, sim_steps - 1):
-            j = t_delay + i
-            r_aux = r[p - 1][j - 1]
-            x_aux = x[p - 1][j - 1]
-            Is_aux = Is[p - 1][j - 1]
-            # Solve EDOs using Euler method
-            r[p][j] = r_aux + dt*tm_r_eq(r_aux, tau_f[p - 1], U[p - 1], spd[p][i])
-            x[p][j] = x_aux + dt*tm_x_eq(x_aux, tau_d[p - 1], r_aux, U[p - 1], spd[p][i])
-            Is[p][j] = Is_aux + dt*tm_I_eq(Is_aux, tau_s, A[p - 1], U[p - 1], x_aux, r_aux, spd[p][i])
+    spd[0][AP_position] = 1/dt
+    
+    for p in range(3):    
+        for i in range(1 + t_delay, sim_steps - 1):
+            r[p][i + 1] = r[p][i] + dt*(-r[p][i]/tau_f[p] + U[p]*(1 - r[p][i])*spd[0][i - t_delay])
+            x[p][i + 1] = x[p][i] + dt*((1 - x[p][i])/tau_d[p] - r[p][i]*x[p][i]*spd[0][i - t_delay])
+            Is[p][i + 1] = Is[p][i] + dt*(-Is[p][i]/tau_s + A[p]*r[p][i]*x[p][i]*spd[0][i - t_delay])
         
     Ipost = np.sum(Is, axis=0)
         
-    return r, x, Is, Ipost
+    return Ipost
+
+def tm_synapse_dbs_eq(I_dbs, t_delay, dt, sim_steps, tau_f, tau_d, tau_s, U, A):    
+    r = np.zeros((3, sim_steps))
+    x = np.ones((3, sim_steps))
+    Is = np.zeros((3, sim_steps))
+    
+    for p in range(3):
+        for i in range(1 + t_delay, sim_steps - 1):
+            r[p][i + 1] = r[p][i] + dt*(-r[p][i]/tau_f[p] + U[p]*(1 - r[p][i])*I_dbs[i- t_delay])
+            x[p][i + 1] = x[p][i] + dt*((1-x[p][i])/tau_d[p] - r[p][i]*x[p][i]*I_dbs[i - t_delay])
+            Is[p][i + 1] = Is[p][i] + dt*(-Is[p][i]/tau_s + A[p]*r[p][i]*x[p][i]*I_dbs[i - t_delay])
+            
+    dbs_I = np.sum(Is, axis = 0)
+    
+    return dbs_I.reshape(1,-1)
 
 # =============================================================================
 # DBS
 # =============================================================================
-def DBS_delta(f_dbs, dbs_duration, dev, sim_steps, Fs, dbs_amplitude, chop_till):
-    # This is to define Dirac delta pulses, no membrane current but straight dirac delta pulses that reach PNs:
-    T_dbs = np.round(Fs/f_dbs)
-    dbs = np.arange(0, dbs_duration, T_dbs)
-    I_dbs_full = np.zeros((1, dbs_duration))
+def I_DBS(sim_steps, chop_till, dt, td_syn, tau_f, tau_d, tau_s, U, A, dbs, samp_freq):    
+    I_dbs = np.zeros((2, sim_steps))
+    dev = 1 # divide the total simulation time in dev 
+    f_dbs = 130
 
-    for i in dbs:
-        I_dbs_full[0][int(i)] = dbs_amplitude 
-
-    if (dev == 1):
-        dbs_I = I_dbs_full
-    else:
-        dbs_I = np.concatenate((
-            np.zeros((1, chop_till - 1)), 
-            np.zeros((1, int(np.ceil((sim_steps - chop_till)/dev)))), 
-            I_dbs_full, 
-            np.zeros((1, int(np.ceil((sim_steps - chop_till)/dev))))
-            ),axis=None)
+    # Simulate 1/dev of DBS
+    if (dbs != 0):
+        dev = 3
         
-    return dbs_I
+    if (dev == 1):
+        print('dbd off')
+        dbs_duration = sim_steps
+        dbs_amplitude = 0.02
+    else:
+        print('dbs on')
+        dbs_duration = int(np.round((sim_steps - chop_till)/dev))
+        dbs_amplitude = 1
+    
+    T_dbs = np.round(samp_freq/f_dbs)
+    dbs_arr = np.arange(0, dbs_duration, T_dbs)
+    I_dbs_full = np.zeros((1, dbs_duration))
+    
+    for i in dbs_arr:
+        I_dbs_full[0][int(i)] = dbs_amplitude 
+        
+    if (dev == 1):
+        I_dbs_pre = I_dbs_full
+    else:
+        I_dbs_pre = np.concatenate((
+            np.zeros((1, chop_till)), 
+            np.zeros((1, dbs_duration)), 
+            I_dbs_full, 
+            np.zeros((1, dbs_duration))
+            ),axis=1)
+
+    I_dbs_post = tm_synapse_dbs_eq(I_dbs = I_dbs_pre[0], 
+                                   t_delay = td_syn, 
+                                   dt = dt,
+                                   tau_f = tau_f,
+                                   tau_d = tau_d,
+                                   U = U,
+                                   A = A,
+                                   tau_s = tau_s,
+                                   sim_steps = sim_steps)
+    I_dbs[0][:] = I_dbs_pre
+    I_dbs[1][:] = I_dbs_post
+    
+    return I_dbs
 
 # =============================================================================
 # POISSON

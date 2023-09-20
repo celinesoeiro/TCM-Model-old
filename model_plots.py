@@ -68,58 +68,74 @@ def plot_voltages(n_neurons, voltage, chop_till, sim_steps, title):
         axs[row,column].plot(new_time, voltage[:, i])
             
     plt.show()
-
-# =============================================================================
-# RASTER
-# =============================================================================
-def plot_rasters(neuron_dict, title):
-    # Create a new figure
-    plt.figure(figsize=(10, 16))
+    
+def plot_LFP(lfp, chop_till, sim_steps, title):
+    new_time= np.transpose(np.arange(len(lfp)))
+    
+    plt.figure(figsize=(15, 15))
+    
     plt.title(title)
-    
-    # Iterate over each neuron
-    for neuron_idx, spike_times in enumerate(neuron_dict.values()):
-        # Generate y-values for scatter plot
-        y_values = np.full_like(spike_times, neuron_idx + 1)
-        
-        # Plot scatter points for spike times
-        plt.scatter(spike_times, y_values, marker='o', color='black')
-    
-    # Set the y-axis limits and labels
-    plt.ylim(0.5, len(neuron_dict) + 0.5)
-    plt.yticks(range(1, len(neuron_dict) + 1), neuron_dict.keys())
+
+    plt.plot(new_time, lfp)
     
     # Set the x-axis label
     plt.xlabel('Time')
+    plt.ylabel('LFP')
     
     # Show the plot
     plt.show()
     
+def plot_LFPs(LFP_S, LFP_M, LFP_D, LFP_CI, LFP_TC, LFP_TR, chop_till, sim_steps, title):
+    new_time= np.transpose(np.arange(len(LFP_S)))
+    
+    fig, ((ax1,ax2,ax3),(ax4,ax5,ax6)) = plt.subplots(2,3,figsize=(15, 10))
+    
+    ax1.plot(new_time, LFP_S)
+    ax2.plot(new_time, LFP_M)
+    ax3.plot(new_time, LFP_D)
+    ax4.plot(new_time, LFP_CI)
+    ax5.plot(new_time, LFP_TC)
+    ax6.plot(new_time, LFP_TR)
+    
+    ax1.set_title('Layer S')
+    ax2.set_title('Layer M')
+    ax3.set_title('Layer D')
+    ax4.set_title('CI')
+    ax5.set_title('TC Nucleus')
+    ax6.set_title('TR Nucleus')
+    
+    fig.suptitle(title)
+        
+    plt.show()
+    
+# =============================================================================
+# RASTER
+# =============================================================================
 def plot_raster(
-        dbs,
-        sim_steps,
-        sim_time,
-        dt,
-        chop_till, 
-        n_TR, 
-        n_TC, 
-        n_CI, 
-        n_D, 
-        n_M, 
-        n_S, 
-        n_total,
-        n_CI_FS,
-        n_CI_LTS,
-        n_D_RS,
-        n_D_IB,
-        n_S_RS,
-        n_S_IB,
-        spike_times_TR, 
-        spike_times_TC, 
-        spike_times_CI, 
-        spike_times_D, 
-        spike_times_M,
-        spike_times_S):
+    dbs,
+    sim_steps,
+    sim_time,
+    dt,
+    chop_till, 
+    n_TR, 
+    n_TC, 
+    n_CI, 
+    n_D, 
+    n_M, 
+    n_S, 
+    n_total,
+    n_CI_FS,
+    n_CI_LTS,
+    n_D_RS,
+    n_D_IB,
+    n_S_RS,
+    n_S_IB,
+    spike_times_TR, 
+    spike_times_TC, 
+    spike_times_CI, 
+    spike_times_D, 
+    spike_times_M,
+    spike_times_S):
     
     TR_lim = n_TR
     TC_lim = TR_lim + n_TC
@@ -154,7 +170,7 @@ def plot_raster(
     fig.canvas.manager.set_window_title(f'Raster plot dbs={dbs}')
     fig.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
         
-    plt.title('raster plot')
+    plt.title(f'Raster plot dbs={dbs}')
     
     # Add a horizontal grid to the plot, but make it very light in color
     # so we can use it for reading data values but not be distracting
@@ -163,7 +179,7 @@ def plot_raster(
     
     ax1.set(
         axisbelow=True,  # Hide the grid behind plot objects
-        title='Raster plot',
+        title=f'Raster plot dbs={dbs}',
         xlabel='Time (s)',
         ylabel='Neurons',
     )
@@ -172,6 +188,97 @@ def plot_raster(
         y_values = np.full_like(spikes[i], i + 1)
         ax1.scatter(x=spikes[i], y=y_values, color='black', s=0.5)
         
+    ax1.set_ylim(1, n_total + 1)
+    ax1.set_yticks([0, 
+                   TR_lim, 
+                   TC_lim, 
+                   CI_lim, 
+                   CI_FS_lim - 20, 
+                   CI_FS_lim + 20, 
+                   D_RS_lim - 20, 
+                   D_RS_lim + 10, 
+                   D_lim, 
+                   M_lim, 
+                   S_RS_lim - 20, 
+                   S_RS_lim + 20, 
+                   S_lim])
+    ax1.set_yticklabels(['',
+                        'TR',
+                        'TC',
+                        'CI - FS',
+                        'CI - LTS',
+                        'CI',
+                        'D - RS',
+                        'D - IB',
+                        'D', 
+                        'M - RS', 
+                        'S - RS', 
+                        'S - IB', 
+                        'S',
+                        ])
+    
+    # For dt = 0.1
+    multiplier = 1000
+    lim_down = chop_till
+    lim_up = sim_steps + multiplier*dt
+    new_arr = np.arange(lim_down, lim_up, multiplier)
+    
+    # Transforming flot array to int array
+    x_ticks = list(map(int,new_arr/multiplier))
+    
+    ax1.set_xlim(lim_down, lim_up)
+    ax1.set_xticks(new_arr)
+    ax1.set_xticklabels(x_ticks)
+    
+    # TR neurons
+    ax1.hlines(y = TR_lim, xmin=0, xmax=sim_steps, color = 'b', linestyle='solid' )
+    # TC neurons
+    ax1.hlines(y = TC_lim, xmin=0, xmax=sim_steps, color = 'g', linestyle='solid' )
+    # CI neurons
+    ax1.hlines(y = CI_lim, xmin=0, xmax=sim_steps, color = 'r', linestyle='solid' )
+    ax1.hlines(y = CI_FS_lim, xmin=0, xmax=sim_steps, color = 'lightcoral', linestyle='solid')
+    # D neurons
+    ax1.hlines(y = D_lim, xmin=0, xmax=sim_steps, color = 'c', linestyle='solid' )
+    ax1.hlines(y = D_RS_lim, xmin=0, xmax=sim_steps, color = 'paleturquoise', linestyle='solid' )
+    # M neurons
+    ax1.hlines(y = M_lim, xmin=0, xmax=sim_steps, color = 'm', linestyle='solid' )
+    # S neurons
+    ax1.hlines(y = S_lim, xmin=0, xmax=sim_steps, color = 'gold', linestyle='solid' )
+    ax1.hlines(y = S_RS_lim, xmin=0, xmax=sim_steps, color = 'khaki', linestyle='solid' )
+    plt.show()
+    
+def plot_raster_comparison(
+    sim_steps,
+    sim_time,
+    dt,
+    chop_till, 
+    n_TR, 
+    n_TC, 
+    n_CI, 
+    n_D, 
+    n_M, 
+    n_S, 
+    n_total,
+    n_CI_FS,
+    n_CI_LTS,
+    n_D_RS,
+    n_D_IB,
+    n_S_RS,
+    n_S_IB,
+    spike_TR_ON, 
+    spike_TC_ON, 
+    spike_CI_ON, 
+    spike_D_ON, 
+    spike_M_ON,
+    spike_S_ON,
+    spike_TR_OFF, 
+    spike_TC_OFF, 
+    spike_CI_OFF, 
+    spike_D_OFF, 
+    spike_M_OFF,
+    spike_S_OFF,
+    ):
+    
     TR_lim = n_TR
     TC_lim = TR_lim + n_TC
     CI_lim = TC_lim + n_CI
@@ -181,8 +288,51 @@ def plot_raster(
     M_lim = D_lim + n_M
     S_lim = M_lim + n_S
     S_RS_lim = S_lim - n_S_IB
+    
+    spikes_ON = np.concatenate([spike_TR_ON, spike_TC_ON, spike_CI_ON, spike_D_ON, spike_M_ON, spike_S_ON])
+    spikes_OFF = np.concatenate([spike_TR_OFF, spike_TC_OFF, spike_CI_OFF, spike_D_OFF, spike_M_OFF, spike_S_OFF])
+    
+    fig, (ax1, ax2) = plt.subplots(2, figsize=(10, 18))
+    fig.canvas.manager.set_window_title('Raster plots')
+    fig.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
+    
+    fig.subplots_adjust(wspace=0.3)
+    fig.suptitle('Raster plots')
+        
+    plt.title('Raster plots')
+    
+    # Add a horizontal grid to the plot, but make it very light in color
+    # so we can use it for reading data values but not be distracting
+    ax1.yaxis.grid(True, linestyle='-', which='major', color='lightgrey',
+                   alpha=0.5)
+    
+    ax1.set(
+        axisbelow=True,  # Hide the grid behind plot objects
+        title='Raster plot - DBS OFF',
+        xlabel='Time (s)',
+        ylabel='Neurons',
+    )
+    
+    ax2.yaxis.grid(True, linestyle='-', which='major', color='lightgrey',
+                   alpha=0.5)
+    
+    ax2.set(
+        axisbelow=True,  # Hide the grid behind plot objects
+        title='Raster plot - DBS ON',
+        xlabel='Time (s)',
+        ylabel='Neurons',
+    )
+        
+    for i in range(n_total):  
+        y_values_OFF = np.full_like(spikes_OFF[i], i + 1)
+        ax1.scatter(x=spikes_OFF[i], y=y_values_OFF, color='black', s=0.5)
+        
+        y_values_ON = np.full_like(spikes_OFF[i], i + 1)
+        ax2.scatter(x=spikes_ON[i], y=y_values_ON, color='black', s=0.5)
         
     ax1.set_ylim(1, n_total + 1)
+    ax2.set_ylim(1, n_total + 1)
+    
     ax1.set_yticks([0, 
                    TR_lim, 
                    TC_lim, 
@@ -210,10 +360,56 @@ def plot_raster(
                         'S - IB', 
                         'S',
                         ])
+    ax2.set_yticks([0, 
+                   TR_lim, 
+                   TC_lim, 
+                   CI_lim, 
+                   CI_FS_lim - 20, 
+                   CI_FS_lim + 20, 
+                   D_RS_lim - 20, 
+                   D_RS_lim + 10, 
+                   D_lim, 
+                   M_lim, 
+                   S_RS_lim - 20, 
+                   S_RS_lim + 20, 
+                   S_lim])
+    ax2.set_yticklabels(['',
+                        'TR',
+                        'TC',
+                        'CI - FS',
+                        'CI - LTS',
+                        'CI',
+                        'D - RS',
+                        'D - IB',
+                        'D', 
+                        'M', 
+                        'S - RS', 
+                        'S - IB', 
+                        'S',
+                        ])
     
-    ax1.set_xlim(chop_till - dt*100, sim_steps + dt*100)
-    ax1.set_xticks(np.arange(chop_till - dt*10, sim_steps + dt*10, 5000))
-    ax1.set_xticklabels(np.arange(chop_till/1000 - dt*10, sim_steps/1000 + dt*10, 5))
+    # For dt = 0.1
+    if (dt == 0.1):
+        multiplier = 1000
+        divider = multiplier
+    elif (dt == 0.5):
+        multiplier = 200
+        divider = multiplier*dt
+        
+    lim_down = chop_till
+    lim_up = sim_steps + multiplier*dt
+    new_arr = np.arange(lim_down, lim_up, multiplier)
+    
+    # Transforming flot array to int array
+    x_ticks = list(map(int,new_arr/divider))
+    
+    ax1.set_xlim(lim_down, lim_up)
+    ax1.set_xticks(new_arr)
+    ax1.set_xticklabels(x_ticks)
+    
+    ax2.set_xlim(lim_down, lim_up)
+    ax2.set_xticks(new_arr)
+    ax2.set_xticklabels(x_ticks)
     
     # TR neurons
     ax1.hlines(y = TR_lim, xmin=0, xmax=sim_steps, color = 'b', linestyle='solid' )
@@ -230,5 +426,21 @@ def plot_raster(
     # S neurons
     ax1.hlines(y = S_lim, xmin=0, xmax=sim_steps, color = 'gold', linestyle='solid' )
     ax1.hlines(y = S_RS_lim, xmin=0, xmax=sim_steps, color = 'khaki', linestyle='solid' )
-    plt.show()
     
+    # TR neurons
+    ax2.hlines(y = TR_lim, xmin=0, xmax=sim_steps, color = 'b', linestyle='solid' )
+    # TC neurons
+    ax2.hlines(y = TC_lim, xmin=0, xmax=sim_steps, color = 'g', linestyle='solid' )
+    # CI neurons
+    ax2.hlines(y = CI_lim, xmin=0, xmax=sim_steps, color = 'r', linestyle='solid' )
+    ax2.hlines(y = CI_FS_lim, xmin=0, xmax=sim_steps, color = 'lightcoral', linestyle='solid')
+    # D neurons
+    ax2.hlines(y = D_lim, xmin=0, xmax=sim_steps, color = 'c', linestyle='solid' )
+    ax2.hlines(y = D_RS_lim, xmin=0, xmax=sim_steps, color = 'paleturquoise', linestyle='solid' )
+    # M neurons
+    ax2.hlines(y = M_lim, xmin=0, xmax=sim_steps, color = 'm', linestyle='solid' )
+    # S neurons
+    ax2.hlines(y = S_lim, xmin=0, xmax=sim_steps, color = 'gold', linestyle='solid' )
+    ax2.hlines(y = S_RS_lim, xmin=0, xmax=sim_steps, color = 'khaki', linestyle='solid' )
+    
+    plt.show()

@@ -48,8 +48,9 @@ TRN:
     - Thalamic Reticular (TR)
     
 # SYNAPTIC INPUTS
-    Connections between the neurons in the network modal were considered as a combination of Facilitating (F),
-Depressing (D) and Pseudo-Linear (P) synapses with distribution:
+    Connections between the neurons in the network modal were considered as a 
+    combination of Facilitating (F), Depressing (D) and Pseudo-Linear (P) 
+    synapses with distribution:
     F: 8%
     D: 75%
     P: 15%
@@ -57,37 +58,39 @@ Depressing (D) and Pseudo-Linear (P) synapses with distribution:
     Connection between TCR and Layer D -> Pure Depressing
     
 # NETWORK CONNECTIONS
-"""
 
+"""
+import random
 import numpy as np
 
 def TCM_model_parameters():
-    random_factor = np.round(np.random.sample(),2)
+    random.seed(0)
+    random_factor = np.round(random.random(),2)
     
-    number_trials = 1                           # number of trials
-    dt = 0.1                                    # time step in ms
-    Fs = int(1000/dt)                           # sampling frequency in Hz
-    dbs_on = int(5*67)                          # value of synaptic fidelity when DBS on
-    dbs_off = 0                                 # value of synaptic fidelity when DBS off
-    simulation_time = 10                         # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
-    T = (simulation_time + 1)*1000              # (s) Simulation time in ms with 1 extra second to reach the steady state and trash later
-    sim_steps = int(np.round(T/dt))             # number of simulation steps
-    chop_till = 1*Fs;                           # Cut the first 1 seconds of the simulation
+    number_trials = 1                       # number of trials
+    dt = 0.1                                # time step in ms
+    samp_freq = int(1000/dt)                # sampling frequency in Hz
+    dbs_on = int(5*67)                      # value of synaptic fidelity when DBS on
+    dbs_off = 0                             # value of synaptic fidelity when DBS off
+    simulation_time = 3                     # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
+    T = (simulation_time + 1)*1000          # (s) Simulation time in ms with 1 extra second to reach the steady state and trash later
+    sim_steps = int(np.round(T/dt))         # number of simulation steps
+    chop_till = 1*samp_freq;                       # Cut the first 1 seconds of the simulation
 
-    td_synapse = 1                              # Synaptic transmission delay (fixed for all synapses in the TCM)
-    td_thalamus_cortex = 15 # 25                # time delay between thalamus and cortex (ms) (transmission time delay)
-    td_cortex_thalamus = 20                     # time delay between cortex and thalamus (ms) (transmission time delay)  
-    td_layers = 8                               # time delay between the layers in corticex and nuclei in thalamus (ms)
-    td_within_layers = 1                        # time delay within a structure (ms)
+    td_synapse = 1                          # Synaptic transmission delay (fixed for all synapses in the TCM)
+    td_thalamus_cortex = 20 # 25            # time delay from thalamus to cortex (ms) (transmission time delay)
+    td_cortex_thalamus = 15                 # time delay from cortex to thalamus (ms) (transmission time delay)  
+    td_layers = 8                           # time delay between the layers in cortex and nuclei in thalamus (ms) (PSC delay)
+    td_within_layers = 1                    # time delay within a structure (ms)
     
-    hyperdirect_neurons = 0.1                   # percentage of PNs that are hyperdirect
+    hyperdirect_neurons = 0.1               # percentage of PNs that are hyperdirect
     
-    connectivity_factor_normal = 2.5            # For 100 neurons
-    connectivity_factor_PD = 5                  # For 100 neurons
+    connectivity_factor_normal = 2.5        # For 100 neurons
+    connectivity_factor_PD = 5              # For 100 neurons
     
-    Idc_tune = 0.1                              # 
-    vr = -65                                    # membrane potential resting value 
-    vp = 30                                     # membrane peak voltage value
+    Idc_tune = 0.1                          # 
+    vr = -65                                # membrane potential resting value 
+    vp = 30                                 # membrane peak voltage value
     
     # Time vector
     if (td_thalamus_cortex >= td_cortex_thalamus): 
@@ -133,10 +136,10 @@ def TCM_model_parameters():
     neurons_d_2 = int(0.3*qnt_neurons_d)        # IB neurons
     neurons_ci_1 = int(0.5*qnt_neurons_ci)      # FS neurons
     neurons_ci_2 = int(0.5*qnt_neurons_ci)      # LTS neurons
-    neurons_tr_1 = int(0.5*qnt_neurons_tr)      # TC neurons
-    neurons_tr_2 = int(0.5*qnt_neurons_tr)      # TC neurons
-    neurons_tc_1 = int(0.7*qnt_neurons_tc)      # TR neurons
-    neurons_tc_2 = int(0.3*qnt_neurons_tc)      # TR neurons
+    neurons_tr_1 = int(0.5*qnt_neurons_tr)      # TR neurons
+    neurons_tr_2 = int(0.5*qnt_neurons_tr)      # TR neurons
+    neurons_tc_1 = int(0.7*qnt_neurons_tc)      # TC neurons
+    neurons_tc_2 = int(0.3*qnt_neurons_tc)      # TC neurons
     
     neuron_per_structure = {
         'neurons_s_1': neurons_s_1,             # Regular Spiking
@@ -187,15 +190,15 @@ def TCM_model_parameters():
     c_CI = np.c_[c[2]*np.ones((1, neurons_ci_1)), c[3]*np.ones((1, neurons_ci_2))]
     d_CI = np.c_[d[2]*np.ones((1, neurons_ci_1)), d[3]*np.ones((1, neurons_ci_2))]
     
-    a_TR = np.c_[a[5]*np.ones((1, neurons_tr_1)), a[5]*np.ones((1, neurons_tr_2))] + 0.008*random_factor
-    b_TR = np.c_[b[5]*np.ones((1, neurons_tr_1)), b[5]*np.ones((1, neurons_tr_2))] - 0.005*random_factor
-    c_TR = np.c_[c[5]*np.ones((1, neurons_tr_1)), c[5]*np.ones((1, neurons_tr_2))]
-    d_TR = np.c_[d[5]*np.ones((1, neurons_tr_1)), d[5]*np.ones((1, neurons_tr_2))]
-    
     a_TC = np.c_[a[4]*np.ones((1, neurons_tc_1)), a[4]*np.ones((1, neurons_tc_2))]
     b_TC = np.c_[b[4]*np.ones((1, neurons_tc_1)), b[4]*np.ones((1, neurons_tc_2))]
     c_TC = np.c_[c[4]*np.ones((1, neurons_tc_1)), c[4]*np.ones((1, neurons_tc_2))] + 15*random_factor**2
     d_TC = np.c_[d[4]*np.ones((1, neurons_tc_1)), d[4]*np.ones((1, neurons_tc_2))] - 0.6*random_factor**2
+    
+    a_TR = np.c_[a[5]*np.ones((1, neurons_tr_1)), a[5]*np.ones((1, neurons_tr_2))] + 0.008*random_factor
+    b_TR = np.c_[b[5]*np.ones((1, neurons_tr_1)), b[5]*np.ones((1, neurons_tr_2))] - 0.005*random_factor
+    c_TR = np.c_[c[5]*np.ones((1, neurons_tr_1)), c[5]*np.ones((1, neurons_tr_2))]
+    d_TR = np.c_[d[5]*np.ones((1, neurons_tr_1)), d[5]*np.ones((1, neurons_tr_2))]
         
     neuron_params = {
         'a_S': a_S,
@@ -230,7 +233,7 @@ def TCM_model_parameters():
         'simulation_time': simulation_time, # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
         'simulation_time_ms': T,
         'dt': dt, # time step
-        'sampling_frequency': Fs, # in Hz
+        'sampling_frequency': samp_freq, # in Hz
         'simulation_steps': sim_steps,
         'chop_till': chop_till, # cut the first 1s of simulation
         'time_delay_between_layers': td_layers,
@@ -252,19 +255,19 @@ def TCM_model_parameters():
     white_gaussian_add = 1.5; cn = 1 # additive white Gaussian noise strength
     white_gaussian_thr = 0.5 # threshold white Gaussian noise strength
 
-    random_S = np.random.randn(qnt_neurons_s, Fs)
-    random_M = np.random.randn(qnt_neurons_m, Fs)
-    random_D = np.random.randn(qnt_neurons_d, Fs)
-    random_CI = np.random.randn(qnt_neurons_ci, Fs)
-    random_TR = np.random.randn(qnt_neurons_tr, Fs)
-    random_TC = np.random.randn(qnt_neurons_tc, Fs)
+    random_S = np.random.randn(qnt_neurons_s, samp_freq)
+    random_M = np.random.randn(qnt_neurons_m, samp_freq)
+    random_D = np.random.randn(qnt_neurons_d, samp_freq)
+    random_CI = np.random.randn(qnt_neurons_ci, samp_freq)
+    random_TR = np.random.randn(qnt_neurons_tr, samp_freq)
+    random_TC = np.random.randn(qnt_neurons_tc, samp_freq)
     
-    random_S_diff = np.random.randn(qnt_neurons_s, sim_steps - Fs)
-    random_M_diff = np.random.randn(qnt_neurons_m, sim_steps - Fs)
-    random_D_diff = np.random.randn(qnt_neurons_d, sim_steps - Fs)
-    random_CI_diff = np.random.randn(qnt_neurons_ci, sim_steps - Fs)
-    random_TR_diff = np.random.randn(qnt_neurons_tr, sim_steps - Fs)
-    random_TC_diff = np.random.randn(qnt_neurons_tc, sim_steps - Fs)
+    random_S_diff = np.random.randn(qnt_neurons_s, sim_steps - samp_freq)
+    random_M_diff = np.random.randn(qnt_neurons_m, sim_steps - samp_freq)
+    random_D_diff = np.random.randn(qnt_neurons_d, sim_steps - samp_freq)
+    random_CI_diff = np.random.randn(qnt_neurons_ci, sim_steps - samp_freq)
+    random_TR_diff = np.random.randn(qnt_neurons_tr, sim_steps - samp_freq)
+    random_TC_diff = np.random.randn(qnt_neurons_tc, sim_steps - samp_freq)
 
     zeta_S_E = white_gaussian_thr*np.c_[ random_S, cn*random_S_diff ]
     zeta_M_E = white_gaussian_thr*np.c_[ random_M, cn*random_M_diff ]    
@@ -336,8 +339,8 @@ def TCM_model_parameters():
         't_d': [138, 671, 329],
         'U': [0.09, 0.5, 0.29],
         'distribution': [0.2, 0.63, 0.17],
-        'distribution_D': [0, 1, 0],
-        'distribution_D_F': [1, 0, 0],
+        'distribution_T_D': [0, 1, 0], # Depressing
+        'distribution_D_T': [1, 0, 0], # Facilitating
         't_s': 3,
         }
     
@@ -373,13 +376,15 @@ def TCM_model_parameters():
     x_TC = np.zeros((3, 1))
     I_syn_TC = np.zeros((3, 1))
     
-    r_D_TC = np.zeros((3, 1))
-    x_D_TC = np.zeros((3, 1))
-    I_syn_D_TC = np.zeros((3, 1))
+    # Thalamus to D (Depresssing)
+    r_T_D = np.zeros((3, 1))
+    x_T_D = np.zeros((3, 1))
+    I_syn_T_D = np.zeros((3, 1))
     
-    r_D_F = np.zeros((3, 1))
-    x_D_F = np.zeros((3, 1))
-    I_syn_D_F = np.zeros((3, 1))
+    # D to Thalamus (Facilitating)
+    r_D_T = np.zeros((3, 1))
+    x_D_T = np.zeros((3, 1))
+    I_syn_D_T = np.zeros((3, 1))
     
     synapse_initial_values = {
         'r_S': r_S,
@@ -400,12 +405,12 @@ def TCM_model_parameters():
         'r_TC': r_TC,
         'x_TC': x_TC,
         'I_syn_TC': I_syn_TC,
-        'r_D_F': r_D_F,
-        'x_D_F': x_D_F,
-        'I_syn_D_F': I_syn_D_F,
-        'r_D_TC': r_D_TC,
-        'x_D_TC': x_D_TC,
-        'I_syn_D_TC': I_syn_D_TC,
+        'r_T_D': r_T_D,
+        'x_T_D': x_T_D,
+        'I_syn_T_D': I_syn_T_D,
+        'r_D_T': r_D_T,
+        'x_D_T': x_D_T,
+        'I_syn_D_T': I_syn_D_T,
     }
     
     # Export all dictionaries
