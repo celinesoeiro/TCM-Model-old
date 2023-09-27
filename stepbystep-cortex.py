@@ -83,6 +83,50 @@ I_CI = np.c_[Idc[2]*np.ones((1, 1)), Idc[3]*np.ones((1, 0))]
 I_TC = np.c_[Idc[4]*np.ones((1, 1)), Idc[4]*np.ones((1, 0))]
 
 # =============================================================================
+# Post Synaptic Currents
+# =============================================================================
+PSC_D = np.zeros((1, num_steps))
+PSC_CI = np.zeros((1, num_steps))
+PSC_TC = np.zeros((1, num_steps))
+
+# =============================================================================
+# DBS
+# =============================================================================
+connectivity_factor_normal = 2.5 
+connectivity_factor_PD = 5
+connectivity_factor = connectivity_factor_normal
+
+# =============================================================================
+# CONNECTION MATRIX
+# =============================================================================
+r_D = 0 + 1*np.random.rand(n_D, 1)
+r_CI = 0 + 1*np.random.rand(n_CI, 1)
+
+# D to D coupling
+aee_d = -1e1/connectivity_factor;            
+W_D = aee_d*r_D;
+
+# D to CI Coupling
+aei_D_CI = -7.5e3/connectivity_factor;   
+W_D_CI = aei_D_CI*r_D;
+
+# D to Thalamus coupling
+aee_D_TC = 1e1/connectivity_factor;      
+W_D_TC = aee_D_TC*r_D;
+
+# CI to CI coupling
+aii_ci = -5e2/connectivity_factor;          
+W_CI = aii_ci*r_CI;
+
+# CI to D coupling
+aie_CI_D = 2e2/connectivity_factor;     
+W_CI_D = aie_CI_D*r_CI;
+
+# CI to Thalamus coupling
+aie_CI_TC = 1e1/connectivity_factor;    
+W_CI_TC = aie_CI_TC*r_CI;
+
+# =============================================================================
 # MAKING THALAMIC INPUT
 # =============================================================================
 Thalamus_spikes, I_Thalamus = poisson_spike_generator(
@@ -100,7 +144,6 @@ plot_voltage(title="Thalamus spikes", y=I_Thalamus[0], dt=dt, sim_time=sim_time)
 # =============================================================================
 # LAYER D & LAYER CI
 # =============================================================================
-
 for t in range(1, num_steps):
     # D
     v_D_aux = v_D[0][t - 1]
@@ -113,7 +156,13 @@ for t in range(1, num_steps):
     else:
         dvdt_D = izhikevich_dvdt(v_D_aux, u_D_aux, I_D[0][0])
         dudt_D = izhikevich_dudt(v_D_aux, u_D_aux, a_D[0][0], b_D[0][0])
-        v_D[0][t] = v_D_aux + dvdt_D*dt
+        
+        # Self feedback - Inhibitory
+        coupling_D = W_D*PSC_D[0][t]
+        # Coupling D to CI - Excitatory 
+        coupling_CI = W_D_CI*PSC_CI[0][t]
+        
+        v_D[0][t] = v_D_aux + dt*(dvdt_D + coupling_CI + coupling_D)
         u_D[0][t] = u_D_aux + dudt_D*dt
     
     # CI
@@ -127,7 +176,13 @@ for t in range(1, num_steps):
     else:
         dvdt_CI = izhikevich_dvdt(v_CI_aux, u_CI_aux, I_CI[0][0])
         dudt_CI = izhikevich_dudt(v_CI_aux, u_CI_aux, a_CI[0][0], b_CI[0][0])
-        v_CI[0][t] = v_CI_aux + dvdt_CI*dt
+        
+        # Self feeback - Inhibitory
+        coupling_CI = W_CI*PSC_CI[0][t]
+        # Coupling CI to D - Inhibitory
+        coupling_D = W_CI_D*PSC_D[0][t]
+        
+        v_CI[0][t] = v_CI_aux + dt*(dvdt_CI + coupling_CI + coupling_D)
         u_CI[0][t] = u_CI_aux + dudt_CI*dt
     
 plot_voltage(title="Layer D spikes", y=v_D[0], dt=dt, sim_time=sim_time)
