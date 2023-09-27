@@ -43,11 +43,11 @@ def izhikevich_dudt(v, u, a, b):
     return a*(b*v - u)
 
 def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):        
-    for p in range(1, 3):
+    for p in range(0, 3):
         # Solve EDOs using Euler method
-        r[p][0] = r[p][0] + dt*(-r[p][0]/tau_f[p - 1] + U[p - 1]*(1 - r[p][0])*AP)
-        x[p][0] = x[p][0] + dt*((1 - x[p][0])/tau_d[p - 1] - (r[p][0] + U[p - 1]*(1 - r[p][0]))*x[p][0]*AP)
-        Is[p][0] = Is[p][0] + dt*(-Is[p][0]/tau_s + A[p - 1]*x[p][0]*(r[p][0] + U[p - 1]*(1 - r[p][0]))*AP)
+        r[0][p] = r[0][p] + dt*(-r[0][p]/tau_f[p] + U[p]*(1 - r[0][p])*AP)
+        x[0][p] = x[0][p] + dt*((1 - x[0][p])/tau_d[p - 1] - (r[0][p] + U[p]*(1 - r[0][p]))*x[0][p]*AP)
+        Is[0][p] = Is[0][p] + dt*(-Is[0][p]/tau_s + A[p]*x[0][p]*(r[0][p] + U[p]*(1 - r[0][p]))*AP)
         
     Ipost = np.sum(Is)
     
