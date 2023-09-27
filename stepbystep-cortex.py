@@ -37,8 +37,8 @@ total_neurons = n_D + n_CI
 spikes_D = np.zeros((1, num_steps))
 spikes_CI = np.zeros((1, num_steps))
 
-f_thalamus = 22                                  # Hz (Thalamus frequency)
-c_thalamus = 40                                 # mA (Thalamus input value to the cortex)
+f_thalamus = 8                                  # Hz (Thalamus frequency)
+c_thalamus = 10                                 # mA (Thalamus input value to the cortex)
 
 # =============================================================================
 # Izhikevich neuron parameters
@@ -98,22 +98,37 @@ plot_raster(title="Thalamus Raster Plot", num_neurons=1, spike_times=Thalamus_sp
 plot_voltage(title="Thalamus spikes", y=I_Thalamus[0], dt=dt, sim_time=sim_time)
 
 # =============================================================================
-# LAYER D
+# LAYER D & LAYER CI
 # =============================================================================
 
 for t in range(1, num_steps):
-    v_aux = v_D[0][t - 1]
-    u_aux = u_D[0][t - 1]
+    # D
+    v_D_aux = v_D[0][t - 1]
+    u_D_aux = u_D[0][t - 1]
     
-    if(v_aux >= v_threshold):
-        v_aux = 1*v_D[0][t]
+    if(v_D_aux >= v_threshold):
+        v_D_aux = 1*v_D[0][t]
         v_D[0][t] = 1*c_D[0][0]
-        u_D[0][t] = u_aux + d_D[0][0]
+        u_D[0][t] = u_D_aux + d_D[0][0]
     else:
-        dvdt = izhikevich_dvdt(v_aux, u_aux, I_D[0][0])
-        dudt = izhikevich_dudt(v_aux, u_aux, a_D[0][0], b_D[0][0])
-        v_D[0][t] = v_aux + dvdt*dt
-        u_D[0][t] = u_aux + dudt*dt
+        dvdt_D = izhikevich_dvdt(v_D_aux, u_D_aux, I_D[0][0])
+        dudt_D = izhikevich_dudt(v_D_aux, u_D_aux, a_D[0][0], b_D[0][0])
+        v_D[0][t] = v_D_aux + dvdt_D*dt
+        u_D[0][t] = u_D_aux + dudt_D*dt
+    
+    # CI
+    v_CI_aux = v_CI[0][t - 1]
+    u_CI_aux = u_CI[0][t - 1]
+    
+    if(v_CI_aux >= v_threshold):
+        v_CI_aux = 1*v_CI[0][t]
+        v_CI[0][t] = 1*c_CI[0][0]
+        u_CI[0][t] = u_CI_aux + d_CI[0][0]
+    else:
+        dvdt_CI = izhikevich_dvdt(v_CI_aux, u_CI_aux, I_CI[0][0])
+        dudt_CI = izhikevich_dudt(v_CI_aux, u_CI_aux, a_CI[0][0], b_CI[0][0])
+        v_CI[0][t] = v_CI_aux + dvdt_CI*dt
+        u_CI[0][t] = u_CI_aux + dudt_CI*dt
     
 plot_voltage(title="Layer D spikes", y=v_D[0], dt=dt, sim_time=sim_time)
-    
+plot_voltage(title="Layer CI spikes", y=v_CI[0], dt=dt, sim_time=sim_time)
