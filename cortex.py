@@ -18,131 +18,37 @@ DBS:
 
 import random
 import numpy as np
-from matplotlib import pyplot as plt
-import seaborn as sns
-sns.set()
-from scipy.signal import welch
 
 random.seed(0)
 random_factor = np.round(random.random(),2)
 
-def poissonSpikeGen(time, fr, dt, n_neurons):
-    # Calculate the number of spikes expected per neuron in the given time step
-    mean_spikes = fr * dt
-    spike_times = []
-    
-    for _ in range(n_neurons):
-        num_steps = int(time/dt)    
-        spike_train = np.random.poisson(mean_spikes, num_steps)*dt
-        spike_times.append(spike_train)
-        
-    #spikes_matriz = np.random.rand(n_trials,len(time)) < fr*dt
-            
-    return spike_times
+from cortex_functions import poisson_spike_generator, izhikevich_dvdt, izhikevich_dudt, plot_raster, plot_voltage, get_frequency
 
-def plot_raster(title, spikes, spikes_time, fr, n_total, dt):
-    # plt.figure(figsize=(15, 10))
-    # plt.figure(figsize=(8, 4))
-    plt.eventplot(spikes, color='black', linewidths=1)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Neuron')
-    plt.title(f'{title} - spikes at {fr}Hz')
-    plt.xlim(0, sim_time_total)
-    plt.ylim(0, 1)
-    plt.yticks([])
-    plt.show()
-
-def plot_voltage(title, x, y):
-    # plt.figure(figsize=(15, 15))
-
-    plt.title(title)
-
-    plt.plot(x, y)
-
-    # Set the x-axis label
-    plt.xlabel('Time')
-    plt.ylabel('Voltage')
-
-    # Show the plot
-    plt.show()
-    
-def plot_lfp(title, x, y):
-    # plt.figure(figsize=(15, 15))
-
-    plt.title(title)
-
-    plt.plot(x, y)
-
-    # Set the x-axis label
-    plt.xlabel('Time')
-    plt.ylabel('Current')
-
-    # Show the plot
-    plt.show()
-    
-def plot_psd_welch(title, signal, frequency):
-    frequencie, psd = welch(signal, fs = frequency,  nperseg=1024)
-
-    # Create a plot
-    # plt.figure(figsize=(8, 4))
-    plt.semilogy(frequencie.reshape(1, len(frequencie)), psd)
-    plt.xlabel('Frequency (Hz)')
-    plt.ylabel('Power/Frequency (dB/Hz)')
-    plt.title(title)
-    plt.grid(True)
-    plt.show()
-
-def izhikevich_dvdt(v, u, I):
-    return 0.04*v**2 + 5*v + 140 - u + I
-
-def izhikevich_dudt(v, u, a, b):
-    return a*(b*v - u)
-
-def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):        
-    for p in range(1, 3):
-        # Solve EDOs using Euler method
-        r[p][0] = r[p][0] + dt*(-r[p][0]/tau_f[p - 1] + U[p - 1]*(1 - r[p][0])*AP)
-        x[p][0] = x[p][0] + dt*((1 - x[p][0])/tau_d[p - 1] - (r[p][0] + U[p - 1]*(1 - r[p][0]))*x[p][0]*AP)
-        Is[p][0] = Is[p][0] + dt*(-Is[p][0]/tau_s + A[p - 1]*x[p][0]*(r[p][0] + U[p - 1]*(1 - r[p][0]))*AP)
-        
-    Ipost = np.sum(Is)
-    
-    tm_syn_inst = dict()
-    tm_syn_inst['r'] = r
-    tm_syn_inst['x'] = x
-    tm_syn_inst['Is'] = Is
-    tm_syn_inst['Ipost'] = Ipost
-        
-    return tm_syn_inst
-
-def get_frequency(signal, time):
-    return int(np.count_nonzero(signal)/time)
 # =============================================================================
-# GLOBAL PARAMS
+# SIMULATION PARAMETERS
 # =============================================================================
-vp = 30
-vr = -65
-
 ms = 1000                                       # 1 second = 1000 milliseconds
-sim_time = 1                                    # 1s
-dt = 10/ms                                      # 10ms
+sim_time = 3                                    # seconds
+dt = 1/ms                                      # seconds
 fs = 1/dt                                       # Hz (Sampling Frequency)
-ss_time = 0                                     # s - steady state time to trash later
-sim_time_total = int((sim_time + ss_time)*ms)   # ms
-sim_steps_aux = np.arange(0, sim_time_total, dt)
-sim_steps = sim_steps_aux.reshape(1, len(sim_steps_aux))
-chop_till = int(ss_time*ms); 
-n_trials = 20
+
+# Voltage parameters
+v_threshold = 30
+v_resting = -65
+
+# Calculate the number of time steps
+num_steps = int(sim_time / dt)
 
 n_D = 1
 n_CI = 1
 n_TC = 1
 total_neurons = n_D + n_CI
 
-spikes_D = np.zeros((1, len(sim_steps_aux)))
-spikes_CI = np.zeros((1, len(sim_steps_aux)))
+spikes_D = np.zeros((1, num_steps))
+spikes_CI = np.zeros((1, num_steps))
 
-f_thalamus = 8                                  # Hz (Thalamus frequency)
+f_thalamus = 22                                  # Hz (Thalamus frequency)
+c_thalamus = 40                                 # mA (Thalamus input value to the cortex)
 
 # =============================================================================
 # DBS
@@ -172,47 +78,31 @@ b_CI = np.c_[b[2]*np.ones((1, 1)), b[3]*np.ones((1, 0))] - 0.005*random_factor
 c_CI = np.c_[c[2]*np.ones((1, 1)), c[3]*np.ones((1, 0))]
 d_CI = np.c_[d[2]*np.ones((1, 1)), d[3]*np.ones((1, 0))]
 
-v_D = np.zeros((1,len(sim_steps_aux)))
-v_D[0][0] = vr
-u_D = np.zeros((1,len(sim_steps_aux)))
-u_D[0][0] = b_D*v_D[0][0]
+v_D = np.zeros((1, num_steps))
+u_D = np.zeros((1, num_steps))
 
-v_CI = np.zeros((1, len(sim_steps_aux)))
-v_CI[0][0] = vr
-u_CI = np.zeros((1, len(sim_steps_aux)))
-u_CI[0][0] = b_CI*v_CI[0][0]
+v_CI = np.zeros((1, num_steps))
+u_CI = np.zeros((1, num_steps))
+
+v_D[0][0] = v_resting
+u_D[0][0] = b_D*v_resting
+
+v_CI[0][0] = v_resting
+u_CI[0][0] = b_CI*v_resting
 # =============================================================================
 # Noise
 # =============================================================================
 mean = 0
 std = 1
-zeta_noise = np.random.normal(mean, std, size=len(sim_steps_aux))
+zeta_noise = np.random.normal(mean, std, size=num_steps)
 kisi_noise = zeta_noise/2
 
 # =============================================================================
 # Post Synaptic Currents
 # =============================================================================
-PSC_D = np.zeros((1, len(sim_steps_aux)))
-PSC_CI = np.zeros((1, len(sim_steps_aux)))
-PSC_TC = np.zeros((1, len(sim_steps_aux)))
-
-# =============================================================================
-# MAKING THALAMIC INPUT
-# =============================================================================
-I_Thalamus = poissonSpikeGen(sim_time, f_thalamus, dt, 1)
-fr_thalamus = get_frequency(I_Thalamus,sim_time_total)
-
-plt.figure(figsize=(10, 6))
-for i, spike_train in enumerate(I_Thalamus):
-    plt.plot(np.arange(0, sim_time, dt), spike_train, '|')
-
-plt.xlabel('Time (s)')
-plt.ylabel('Neuron')
-plt.title('Poisson Spike Generator (dt=10ms)')
-plt.show()
-
-#plot_voltage('Thalamus', sim_steps[0], I_Thalamus[0])
-#plot_raster('Thalamus', I_Thalamus[0], sim_time_total, fr_thalamus, 1, dt)
+PSC_D = np.zeros((1, num_steps))
+PSC_CI = np.zeros((1, num_steps))
+PSC_TC = np.zeros((1, num_steps))
 
 # =============================================================================
 # Idc
@@ -286,26 +176,41 @@ Is_D = np.zeros((1, n_D))
 Is_CI = np.zeros((1, n_CI))
 
 # =============================================================================
+# MAKING THALAMIC INPUT
+# =============================================================================
+Thalamus_spikes, I_Thalamus = poisson_spike_generator(
+    num_steps = num_steps, 
+    dt = dt, 
+    num_neurons = n_TC, 
+    thalamic_firing_rate = f_thalamus,
+    current_value = c_thalamus)
+
+get_frequency(I_Thalamus, sim_time)
+
+plot_raster(title="Thalamus Raster Plot", num_neurons=1, spike_times=Thalamus_spikes, sim_time=sim_time, dt=dt)
+
+# =============================================================================
 # LOOPING THROUGH
 # =============================================================================
-for t in range(1, len(sim_steps[0])):
+for t in range(num_steps):
     # D Layer
     for k in range(n_D):
-        v_D_aux = 1*v_D[0][t - 1]
-        u_D_aux = 1*u_D[0][t - 1]
+        print('k - D')
+        v_D_aux = 1*v_D[k][t - 1]
+        u_D_aux = 1*u_D[k][t - 1]
         AP_D = 0
         
-        coupling_D_D = W_D*PSC_D[0][t - 1]/n_D
-        coupling_D_CI = W_D_CI*PSC_CI[0][t - 1]/n_CI
-        coupling_D_T = W_D_TC*I_Thalamus[0][t - 1]/n_TC
+        coupling_D_D = W_D[0][0]*PSC_D[k][t - 1]/n_D
+        coupling_D_CI = W_D_CI[0][0]*PSC_CI[k][t - 1]/n_CI
+        coupling_D_T = W_D_TC[0][0]*I_Thalamus[k][t - 1]/n_TC
         
         izhikevich_v_D = izhikevich_dvdt(v_D_aux, u_D_aux, I_D[0][0])
         izhikevich_u_D = izhikevich_dudt(v_D_aux, u_D_aux, a_D[0][0], b_D[0][0])
         
-        v_D[0][t] = v_D_aux + dt*(izhikevich_v_D + coupling_D_D + coupling_D_CI + coupling_D_T + zeta_noise[t - 1]) 
-        u_D[0][t] = u_D_aux + dt*izhikevich_u_D
+        v_D[k][t] = v_D_aux + dt*(izhikevich_v_D + coupling_D_D + coupling_D_CI + coupling_D_T + zeta_noise[t - 1]) 
+        u_D[k][t] = u_D_aux + dt*izhikevich_u_D
         
-        if (v_D[0][t] >= vp):
+        if (v_D[0][t] >= v_threshold):
             AP_D = 1
             v_D[0][t] = 1*c_D[0][0]
             u_D[0][t] = 1*(u_D_aux + d_D[0][0])
@@ -327,21 +232,22 @@ for t in range(1, len(sim_steps[0])):
         
     # CI layer
     for k in range(n_CI):
-        v_CI_aux = 1*v_CI[0][t - 1]
-        u_CI_aux = 1*u_CI[0][t - 1]
+        print('k - CI')
+        v_CI_aux = 1*v_CI[k][t - 1]
+        u_CI_aux = 1*u_CI[k][t - 1]
         AP_CI = 0
         
-        coupling_CI_CI = W_D_CI*PSC_CI[0][t - 1]/n_CI
-        coupling_CI_D = W_CI_D*PSC_D[0][t - 1]/n_D
-        coupling_CI_T = W_CI_TC*I_Thalamus[0][t - 1]/n_TC
+        coupling_CI_CI = W_D_CI[0][0]*PSC_CI[k][t - 1]/n_CI
+        coupling_CI_D = W_CI_D[0][0]*PSC_D[k][t - 1]/n_D
+        coupling_CI_T = W_CI_TC[0][0]*I_Thalamus[k][t - 1]/n_TC
         
         izhikevich_v_CI = izhikevich_dvdt(v_CI_aux, u_CI_aux, I_CI[0][0])
         izhikevich_u_CI = izhikevich_dudt(v_CI_aux, u_CI_aux, a_CI[0][0], b_CI[0][0]) 
         
-        v_CI[0][t] = v_CI_aux +  dt*(izhikevich_v_CI + coupling_CI_CI + coupling_CI_D + coupling_CI_T + zeta_noise[t - 1])
-        u_CI[0][t] = u_CI_aux + dt*izhikevich_u_CI
+        v_CI[k][t] = v_CI_aux +  dt*(izhikevich_v_CI + coupling_CI_CI + coupling_CI_D + coupling_CI_T + zeta_noise[t - 1])
+        u_CI[k][t] = u_CI_aux + dt*izhikevich_u_CI
         
-        if(v_CI_aux >= vp):
+        if(v_CI_aux >= v_threshold):
             AP_CI = 1
             v_CI[0][t] = 1*c_CI[0][0]
             u_CI[0][t] = 1*(u_CI_aux + d_CI[0][0])
@@ -364,26 +270,28 @@ for t in range(1, len(sim_steps[0])):
 # =============================================================================
 # PLOTS - VOLTAGE
 # =============================================================================
-plot_voltage('membrane potential - Layer D', sim_steps[0], v_D[0])
-plot_voltage('membrane potential - Layer CI', sim_steps[0], v_CI[0])
+plot_voltage('membrane potential - Layer D', v_D[0], dt, sim_time)
+plot_voltage('membrane potential - Layer CI', v_CI[0], dt, sim_time)
+plot_voltage('LFP - Layer D', PSC_D[0], dt, sim_time)
+plot_voltage('LFP - CI', PSC_CI[0], dt, sim_time)
 
-# =============================================================================
-# PLOTS - RASTER PLOTS
-# =============================================================================
-f_D = get_frequency(spikes_D, sim_time_total)    # Hz
-f_CI = get_frequency(spikes_CI, sim_time_total)  # Hz
+# # =============================================================================
+# # PLOTS - RASTER PLOTS
+# # =============================================================================
+# f_D = get_frequency(spikes_D, sim_time_total)    # Hz
+# f_CI = get_frequency(spikes_CI, sim_time_total)  # Hz
 
-plot_raster('Layer D', spikes_D, sim_time_total, f_D, n_D, dt)
-plot_raster('Layer CI', spikes_CI, sim_time_total, f_CI, n_CI, dt)
+# plot_raster('Layer D', spikes_D, sim_time_total, f_D, n_D, dt)
+# plot_raster('Layer CI', spikes_CI, sim_time_total, f_CI, n_CI, dt)
 
-# =============================================================================
-# PLOTS - PSC = LFP 
-# =============================================================================
-plot_lfp('LFP - Layer D', sim_steps[0], PSC_D[0])
-plot_lfp('LFP - Layer CI', sim_steps[0], PSC_CI[0])
+# # =============================================================================
+# # PLOTS - PSC = LFP 
+# # =============================================================================
+# plot_lfp('LFP - Layer D', sim_steps[0], PSC_D[0])
+# plot_lfp('LFP - Layer CI', sim_steps[0], PSC_CI[0])
 
-# =============================================================================
-# PLOTS - POWER SPECTRAL DENSITY
-# =============================================================================
-plot_psd_welch('PSD - Layer D', PSC_D, fs)
-plot_psd_welch('PSD - Layer CI', PSC_CI, fs)
+# # =============================================================================
+# # PLOTS - POWER SPECTRAL DENSITY
+# # =============================================================================
+# plot_psd_welch('PSD - Layer D', PSC_D, fs)
+# plot_psd_welch('PSD - Layer CI', PSC_CI, fs)
