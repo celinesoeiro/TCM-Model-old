@@ -195,8 +195,10 @@ for t in range(1, num_steps):
         coupling_D_D = W_D*PSC_D[0][t]
         # Coupling D to CI - Excitatory 
         coupling_D_CI = W_D_CI*PSC_CI[0][t]
+        # Coupling D to Thalamus - Excitatory
+        coupling_D_T = W_D_TC*I_Thalamus[0][t]
         
-        v_D[0][t] = v_D_aux + dt*(dvdt_D + coupling_D_CI + coupling_D_D)
+        v_D[0][t] = v_D_aux + dt*(dvdt_D + coupling_D_CI + coupling_D_D + coupling_D_T)
         u_D[0][t] = u_D_aux + dudt_D*dt
         
     # Synaptic connection
@@ -226,8 +228,10 @@ for t in range(1, num_steps):
         coupling_CI_CI = W_CI*PSC_CI[0][t]
         # Coupling CI to D - Inhibitory
         coupling_CI_D = W_CI_D*PSC_D[0][t]
+        # Coupling CI to T - Excitatory
+        coupling_CI_T = W_CI_TC*I_Thalamus[0][t]
         
-        v_CI[0][t] = v_CI_aux + dt*(dvdt_CI + coupling_CI_D + coupling_CI_CI)
+        v_CI[0][t] = v_CI_aux + dt*(dvdt_CI + coupling_CI_D + coupling_CI_CI + coupling_CI_T)
         u_CI[0][t] = u_CI_aux + dudt_CI*dt
         
     # Synaptic connection
