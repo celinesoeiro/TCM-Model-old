@@ -33,14 +33,14 @@ n_S = 1
 n_D = 1
 n_CI = 1
 n_TC = 1
-total_neurons = n_D + n_CI + n_S
+n_TR = 1
+total_neurons = n_S + n_D + n_CI + n_TC + n_TR
 
 spikes_S = np.zeros((n_S, num_steps))
 spikes_D = np.zeros((n_D, num_steps))
 spikes_CI = np.zeros((n_CI, num_steps))
 
-f_thalamus = 22                                  # Hz (Thalamus frequency)
-c_thalamus = 0.5                                 # mA (Thalamus input value to the cortex)
+f_thalamus = 8                                  # Hz (Thalamus frequency)
 
 # =============================================================================
 # Izhikevich neuron parameters
@@ -127,7 +127,9 @@ aee_S_D = 5e2/connectivity_factor;       W_S_D = aee_S_D*r_S;
 ## S to CI
 aei_S_CI = -5e2/connectivity_factor;     W_S_CI = aei_S_CI*r_S;
 ## S to TC
-aee_S_TC = 0/connectivity_factor;        W_S_TC = aee_S_TC*r_S;     
+aee_S_TC = 0/connectivity_factor;        W_S_TC = aee_S_TC*r_S;    
+## S to TR 
+aei_S_TR = 0/connectivity_factor;        W_S_TR = aei_S_TR*r_S;
 
 # D COUPLINGS
 ## D to D 
@@ -136,8 +138,10 @@ aee_D = -1e1/connectivity_factor;        W_D = aee_D*r_D;
 aee_D_S = 3e2/connectivity_factor;       W_D_S = aee_D_S*r_D;
 # D to CI
 aei_D_CI = -7.5e3/connectivity_factor;   W_D_CI = aei_D_CI*r_D;
-# D to Thalamus 
+# D to TC 
 aee_D_TC = 1e1/connectivity_factor;      W_D_TC = aee_D_TC*r_D;
+# D to TR
+aei_D_TR = 0/connectivity_factor;        W_D_TR = aei_D_TR*r_D;
 
 # CI COUPLINGS
 # CI to CI
@@ -146,8 +150,10 @@ aii_CI = -5e2/connectivity_factor;       W_CI = aii_CI*r_CI;
 aie_CI_S = 2e2/connectivity_factor;     W_CI_S = aie_CI_S*r_CI;
 # CI to D
 aie_CI_D = 2e2/connectivity_factor;      W_CI_D = aie_CI_D*r_CI;
-# CI to Thalamus
+# CI to TC
 aie_CI_TC = 1e1/connectivity_factor;     W_CI_TC = aie_CI_TC*r_CI;
+# CI to TR
+aii_CI_TR = 0/connectivity_factor;      W_CI_TR = aii_CI_TR*r_CI;
 
 # =============================================================================
 # TM synapse
@@ -189,17 +195,29 @@ Ipost_CI = np.zeros((1,n_CI))
 # =============================================================================
 # MAKING THALAMIC INPUT
 # =============================================================================
-Thalamus_spikes, I_Thalamus = poisson_spike_generator(
+TC_spikes, I_TC = poisson_spike_generator(
     num_steps = num_steps, 
     dt = dt, 
     num_neurons = n_TC, 
     thalamic_firing_rate = f_thalamus,
-    current_value = c_thalamus)
+    current_value = Idc[4])
 
-get_frequency(I_Thalamus, sim_time)
+get_frequency(I_TC, sim_time)
 
-plot_raster(title="Thalamus Raster Plot", num_neurons=1, spike_times=Thalamus_spikes, sim_time=sim_time, dt=dt)
-plot_voltage(title="Thalamus spikes", y=I_Thalamus[0], dt=dt, sim_time=sim_time)
+plot_raster(title="TC Raster Plot", num_neurons=1, spike_times=TC_spikes, sim_time=sim_time, dt=dt)
+plot_voltage(title="TC spikes", y=I_TC[0], dt=dt, sim_time=sim_time)
+
+TR_spikes, I_TR = poisson_spike_generator(
+    num_steps = num_steps, 
+    dt = dt, 
+    num_neurons = n_TR, 
+    thalamic_firing_rate = f_thalamus,
+    current_value = Idc[4])
+
+get_frequency(I_TR, sim_time)
+
+plot_raster(title="TR Raster Plot", num_neurons=1, spike_times=TR_spikes, sim_time=sim_time, dt=dt)
+plot_voltage(title="TR spikes", y=I_TR[0], dt=dt, sim_time=sim_time)
 
 # =============================================================================
 # LAYER D & LAYER CI & LAYER S
@@ -226,13 +244,15 @@ for t in range(1, num_steps):
         coupling_S_D = W_S_D*PSC_D[0][t]
         # Coupling S to CI - Excitatory 
         coupling_S_CI = W_S_CI*PSC_CI[0][t]
-        # Coupliong S to TC - Excitatory
-        coupling_S_TC = W_S_TC*I_Thalamus[0][t]
+        # Coupling S to TC - Excitatory
+        coupling_S_TC = W_S_TC*I_TC[0][t]
+        # Coupling S to TR - Inhibitory
+        coupling_S_TR = W_S_TR*I_TR[0][t]
         
-        v_S[0][t] = v_S_aux + dt*(dvdt_S + coupling_S_CI + coupling_S_S + coupling_S_D + coupling_S_TC)
+        v_S[0][t] = v_S_aux + dt*(dvdt_S + coupling_S_S + coupling_S_D + coupling_S_CI + coupling_S_TC + coupling_S_TR)
         u_S[0][t] = u_S_aux + dudt_S*dt
         
-    # Synaptic connection
+    # Synaptic connection - within cortex
     syn_S = tm_synapse_eq(r=r_S, x=x_S, Is=Is_S, AP=AP_S, tau_f=t_f_E, tau_d=t_f_E, tau_s=t_s_E, U=U_E, A=A_E, dt=dt)
     r_S = syn_S['r']
     x_S = syn_S['x']
@@ -262,10 +282,12 @@ for t in range(1, num_steps):
         coupling_D_S = W_D_S*PSC_S[0][t]
         # Coupling D to CI - Excitatory 
         coupling_D_CI = W_D_CI*PSC_CI[0][t]
-        # Coupling D to Thalamus - Excitatory
-        coupling_D_TC = W_D_TC*I_Thalamus[0][t]
+        # Coupling D to TC - Excitatory
+        coupling_D_TC = W_D_TC*I_TC[0][t]
+        # Coupling D to TR - Inhibitory
+        coupling_D_TR = W_D_TR*I_TR[0][t]
         
-        v_D[0][t] = v_D_aux + dt*(dvdt_D + coupling_D_CI + coupling_D_D + coupling_D_TC + coupling_D_S)
+        v_D[0][t] = v_D_aux + dt*(dvdt_D + coupling_D_S + coupling_D_D + coupling_D_CI + coupling_D_TC + coupling_D_TR)
         u_D[0][t] = u_D_aux + dudt_D*dt
         
     # Synaptic connection - Within Cortex
@@ -298,13 +320,15 @@ for t in range(1, num_steps):
         coupling_CI_S = W_CI_S*PSC_S[0][t]
         # Coupling CI to D - Inhibitory
         coupling_CI_D = W_CI_D*PSC_D[0][t]
-        # Coupling CI to T - Excitatory
-        coupling_CI_TC = W_CI_TC*I_Thalamus[0][t]
+        # Coupling CI to TC - Inhibitory
+        coupling_CI_TC = W_CI_TC*I_TC[0][t]
+        # Coupling CI to TR - Inhibitory
+        coupling_CI_TR = W_CI_TR*I_TR[0][t]
         
-        v_CI[0][t] = v_CI_aux + dt*(dvdt_CI + coupling_CI_D + coupling_CI_CI + coupling_CI_TC + coupling_CI_S)
+        v_CI[0][t] = v_CI_aux + dt*(dvdt_CI + coupling_CI_S + coupling_CI_D + coupling_CI_CI + coupling_CI_TC + coupling_CI_TR)
         u_CI[0][t] = u_CI_aux + dudt_CI*dt
         
-    # Synaptic connection
+    # Synaptic connection - Within cortex
     syn_CI = tm_synapse_eq(r=r_CI, x=x_CI, Is=Is_CI, AP=AP_CI, tau_f=t_f_I, tau_d=t_d_I, tau_s=t_s_I, U=U_I, A=A_I, dt=dt)
     r_CI = syn_CI['r']
     x_CI = syn_CI['x']
