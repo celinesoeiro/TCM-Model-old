@@ -141,4 +141,26 @@ def plot_psd_welch(title, signal, frequency):
     plt.title(title)
     plt.grid(True)
     plt.show()
+    
+def plot_heat_map(matrix_normal): 
+    fig, (ax1, ax2) = plt.subplots(1,2, figsize=(17,7))
+    
+    fig.subplots_adjust(wspace=0.3)
+    fig.suptitle('Matriz de conexão')
+    
+    sns.heatmap(matrix_normal, 
+                vmin=-1, vmax=1, 
+                yticklabels=['S', 'M', 'D', 'CI'], 
+                annot=True, 
+                fmt=".3f", 
+                linewidth=.75,
+                cmap=sns.color_palette("coolwarm", as_cmap=True),
+                ax=ax1,
+                )
+    ax1.set(xlabel="", ylabel="")
+    ax1.xaxis.tick_top()
+    ax1.set_title('Condição normal')
+    
+    plt.show()
+    
 

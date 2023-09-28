@@ -6,11 +6,13 @@ Created on Wed Sep 27 08:14:59 2023
 
 import random
 import numpy as np
+import pandas as pd
 
 random.seed(0)
 random_factor = np.round(random.random(),2)
 
 from cortex_functions import poisson_spike_generator, izhikevich_dvdt, izhikevich_dudt, plot_raster, plot_voltage, get_frequency, tm_synapse_eq
+from cortex_functions import plot_heat_map
 
 # =============================================================================
 # SIMULATION PARAMETERS
@@ -190,6 +192,37 @@ aie_CI_TC = 1e1/connectivity_factor;     W_CI_TC = aie_CI_TC*r_CI;
 ## CI to TR
 aii_CI_TR = 0/connectivity_factor;       W_CI_TR = aii_CI_TR*r_CI;
 
+# Initialize matrix (4 structures -> 4x4 matrix)
+matrix = np.zeros((4,4))
+# Main Diagonal
+matrix[0][0] = np.mean(W_S)
+matrix[1][1] = np.mean(W_M)
+matrix[2][2] = np.mean(W_D)
+matrix[3][3] = np.mean(W_CI)
+# First column - Layer S
+matrix[1][0] = np.mean(W_S_M)
+matrix[2][0] = np.mean(W_S_D)
+matrix[3][0] = np.mean(W_S_CI)
+# Second column - Layer M
+matrix[0][1] = np.mean(W_M_S)
+matrix[2][1] = np.mean(W_M_D)
+matrix[3][1] = np.mean(W_M_CI)
+# Thid column - Layer D
+matrix[0][2] = np.mean(W_D_S)
+matrix[1][2] = np.mean(W_D_M)
+matrix[3][2] = np.mean(W_D_CI)
+# Fourth column - Structure CI
+matrix[0][3] = np.mean(W_CI_S)
+matrix[1][3] = np.mean(W_CI_M)
+matrix[2][3] = np.mean(W_CI_D)
+
+# normalizing Normal coupling matrix
+matrix_norm = matrix/np.linalg.norm(matrix)
+
+print("-- Printing the coupling matrixes")
+
+CM_Normal = pd.DataFrame(matrix_norm, columns=['S', 'M', 'D', 'CI'])
+plot_heat_map(matrix_normal = CM_Normal)
 # =============================================================================
 # TM synapse
 # =============================================================================
