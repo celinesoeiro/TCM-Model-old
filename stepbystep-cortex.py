@@ -20,7 +20,7 @@ from cortex_functions import plot_heat_map
 ms = 1000                                       # 1 second = 1000 milliseconds
 sim_time = 3                                    # seconds
 dt = 1/ms                                       # seconds
-fs = 1/dt                                       # Hz (Sampling Frequency)
+fs = int(1/dt)                                       # Hz (Sampling Frequency)
 
 # Voltage parameters
 v_threshold = 30
@@ -223,6 +223,41 @@ print("-- Printing the coupling matrixes")
 
 CM_Normal = pd.DataFrame(matrix_norm, columns=['S', 'M', 'D', 'CI'])
 plot_heat_map(matrix_normal = CM_Normal)
+
+# =============================================================================
+#     Noise terms
+# =============================================================================
+white_gaussian_add = 1.5; cn = 1 # additive white Gaussian noise strength
+white_gaussian_thr = 0.5 # threshold white Gaussian noise strength
+
+random_S = np.random.randn(n_S, fs)
+random_M = np.random.randn(n_M, fs)
+random_D = np.random.randn(n_D, fs)
+random_CI = np.random.randn(n_CI, fs)
+random_TR = np.random.randn(n_TR, fs)
+random_TC = np.random.randn(n_TC, fs)
+
+random_S_diff = np.random.randn(n_S, num_steps - fs)
+random_M_diff = np.random.randn(n_M, num_steps - fs)
+random_D_diff = np.random.randn(n_D, num_steps - fs)
+random_CI_diff = np.random.randn(n_CI, num_steps - fs)
+random_TR_diff = np.random.randn(n_TR, num_steps - fs)
+random_TC_diff = np.random.randn(n_TC, num_steps - fs)
+
+zeta_S = white_gaussian_thr*np.c_[ random_S, cn*random_S_diff ]
+zeta_M = white_gaussian_thr*np.c_[ random_M, cn*random_M_diff ]    
+zeta_D = white_gaussian_thr*np.c_[ random_D, cn*random_D_diff ]
+zeta_CI = white_gaussian_thr*np.c_[ random_CI, cn*random_CI_diff ]
+zeta_TR = white_gaussian_thr*np.c_[ random_TR, cn*random_TR_diff ]
+zeta_TC = white_gaussian_thr*np.c_[ random_TC, cn*random_TC_diff ]
+
+kisi_S = white_gaussian_add*np.c_[ random_S, cn*random_S_diff ]
+kisi_M = white_gaussian_add*np.c_[ random_M, cn*random_M_diff ]    
+kisi_D = white_gaussian_add*np.c_[ random_D, cn*random_D_diff ]
+kisi_CI = white_gaussian_add*np.c_[ random_CI, cn*random_CI_diff ]
+kisi_TC = white_gaussian_add*np.c_[ random_TC, cn*random_TC_diff ]
+kisi_TR = white_gaussian_add*np.c_[ random_TR, cn*random_TR_diff ]
+
 # =============================================================================
 # TM synapse
 # =============================================================================
@@ -303,7 +338,7 @@ for t in range(1, num_steps):
     u_S_aux = u_S[0][t - 1]
     AP_S = 0
     
-    if(v_S_aux >= v_threshold):
+    if(v_S_aux >= v_threshold + zeta_S[0][t - 1]):
         v_S_aux = 1*v_S[0][t]
         v_S[0][t] = 1*c_S[0][0]
         u_S[0][t] = u_S_aux + d_S[0][0]
@@ -345,7 +380,7 @@ for t in range(1, num_steps):
     u_M_aux = u_M[0][t - 1]
     AP_M = 0
     
-    if(v_M_aux >= v_threshold):
+    if(v_M_aux >= v_threshold + zeta_M[0][t - 1]):
         v_M_aux = 1*v_M[0][t]
         v_M[0][t] = 1*c_M[0][0]
         u_M[0][t] = u_M_aux + d_M[0][0]
@@ -387,7 +422,7 @@ for t in range(1, num_steps):
     u_D_aux = u_D[0][t - 1]
     AP_D = 0
     
-    if(v_D_aux >= v_threshold):
+    if(v_D_aux >= v_threshold + zeta_D[0][t - 1]):
         v_D_aux = 1*v_D[0][t]
         v_D[0][t] = 1*c_D[0][0]
         u_D[0][t] = u_D_aux + d_D[0][0]
@@ -429,7 +464,7 @@ for t in range(1, num_steps):
     u_CI_aux = u_CI[0][t - 1]
     AP_CI = 0
     
-    if(v_CI_aux >= v_threshold):
+    if(v_CI_aux >= v_threshold + zeta_CI[0][t - 1]):
         v_CI_aux = 1*v_CI[0][t]
         v_CI[0][t] = 1*c_CI[0][0]
         u_CI[0][t] = u_CI_aux + d_CI[0][0]
