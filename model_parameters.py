@@ -99,12 +99,12 @@ def TCM_model_parameters():
         t_vec = np.arange(td_cortex_thalamus + td_synapse + 1, sim_steps)
         
     # Neuron quantities
-    qnt_neurons_s = 100         # Excitatory
-    qnt_neurons_m = 100         # Excitatory
-    qnt_neurons_d = 100         # Excitatory
-    qnt_neurons_ci = 100        # Inhibitory
-    qnt_neurons_tc = 100        # Excitatory
-    qnt_neurons_tr = 40         # Inhibitory
+    qnt_neurons_s = 10         # Excitatory
+    qnt_neurons_m = 10         # Excitatory
+    qnt_neurons_d = 10         # Excitatory
+    qnt_neurons_ci = 10        # Inhibitory
+    qnt_neurons_tc = 10        # Excitatory
+    qnt_neurons_tr = 4         # Inhibitory
     
     neuron_quantities = {
         'S': qnt_neurons_s,                      # Number of neurons in Superficial layer

@@ -88,8 +88,9 @@ def get_frequency(signal, sim_time):
     
 def plot_raster(title, spike_times, sim_time, dt, num_neurons):
     plt.figure(figsize=(10, 6))
-    
+    print('num_neurons = ', num_neurons)
     for neuron_id, times in enumerate(spike_times):
+        # print(neuron_id, times)
         plt.scatter(times, [neuron_id] * len(times), c='k', marker='|', linewidths=0.75)
 
     plt.xlabel('Time (s)')

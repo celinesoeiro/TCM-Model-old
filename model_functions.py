@@ -81,7 +81,7 @@ def I_DBS(sim_steps, chop_till, dt, td_syn, tau_f, tau_d, tau_s, U, A, dbs, samp
         dev = 3
         
     if (dev == 1):
-        print('dbd off')
+        print('dbs off')
         dbs_duration = sim_steps
         dbs_amplitude = 0.02
     else:

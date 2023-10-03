@@ -455,7 +455,7 @@ I_dbs_off = I_DBS(
     samp_freq = samp_freq
     )
 
-for t in range(1, sim_steps):
+for t in time:
     # TR
     tr_neurons = tr_cells(
         t = t,
