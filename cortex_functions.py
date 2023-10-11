@@ -26,13 +26,15 @@ def poisson_spike_generator(num_steps, dt, num_neurons, thalamic_firing_rate, cu
             
             # If the random number is less than the firing probability, spike
             if rand_num < firing_prob:
-                spike_times[neuron_id].append(t * dt)
+                spike_times[neuron_id].append(t)
     
     # Creating a vector to be used as current input
     input_current = np.zeros((1, num_steps))
-    for spike in spike_times:
-        spike_indice = np.array(spike)/dt
-        input_current[0][spike_indice.astype(int)] = current_value
+    for sub_spike in spike_times:
+        for spike in sub_spike:
+            spike_indice = np.array(spike)
+            value = np.random.normal(loc=0.25, scale=0.05)
+            input_current[0][spike_indice.astype(int)] = value
                 
     return spike_times, input_current
 
@@ -55,7 +57,7 @@ def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):
     tm_syn_inst['r'] = r
     tm_syn_inst['x'] = x
     tm_syn_inst['Is'] = Is
-    tm_syn_inst['Ipost'] = Ipost
+    tm_syn_inst['Ipost'] = np.around(Ipost, decimals=6)
         
     return tm_syn_inst
 
@@ -88,7 +90,7 @@ def get_frequency(signal, sim_time):
     
 def plot_raster(title, spike_times, sim_time, dt, num_neurons):
     plt.figure(figsize=(10, 6))
-    print('num_neurons = ', num_neurons)
+
     for neuron_id, times in enumerate(spike_times):
         # print(neuron_id, times)
         plt.scatter(times, [neuron_id] * len(times), c='k', marker='|', linewidths=0.75)
@@ -143,7 +145,7 @@ def plot_psd_welch(title, signal, frequency):
     plt.grid(True)
     plt.show()
     
-def plot_heat_map(matrix_normal): 
+def plot_heat_map(matrix_normal, labels): 
     fig, (ax1, ax2) = plt.subplots(1,2, figsize=(17,7))
     
     fig.subplots_adjust(wspace=0.3)
@@ -151,7 +153,7 @@ def plot_heat_map(matrix_normal):
     
     sns.heatmap(matrix_normal, 
                 vmin=-1, vmax=1, 
-                yticklabels=['S', 'M', 'D', 'CI'], 
+                yticklabels=labels, 
                 annot=True, 
                 fmt=".3f", 
                 linewidth=.75,
