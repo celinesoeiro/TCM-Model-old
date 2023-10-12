@@ -384,6 +384,11 @@ TC_spikes, PSC_TC = poisson_spike_generator(
 
 get_frequency(PSC_TC[0], sim_time)
 
+# from matplotlib import pyplot as plt
+# for neuron_id, times in enumerate(TC_spikes):
+#     print(neuron_id, times)
+#     plt.scatter(times, [neuron_id] * len(times), c='k', marker='|', linewidths=0.75)
+
 plot_raster(title="TC Raster Plot", num_neurons=n_TC, spike_times=TC_spikes, sim_time=sim_time, dt=dt)
 plot_voltage(title="TC spikes", y=PSC_TC[0], dt=dt, sim_time=sim_time)
 

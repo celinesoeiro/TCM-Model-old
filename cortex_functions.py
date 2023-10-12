@@ -64,42 +64,22 @@ def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):
 def get_frequency(signal, sim_time):
     # Couting non zero values in the signal per second
     return print('Signal frequency = ',int(np.count_nonzero(signal)/sim_time))
-
-# def plot_raster(title, num_neurons, spike_times, threshold):
-#     # num_neurons - Number of neurons
-#     # num_spikes - Number of spikes per neuron
-#     # spike_times - Random spike times
-    
-#     num_spikes = sum(1 for item in spike_times if item > threshold)
-    
-#     plt.figure(figsize=(10, 6))
-        
-#     for neuron_idx, spikes in enumerate(spike_times):
-#         plt.scatter(spikes, np.ones(num_spikes) * neuron_idx, s=5)
-    
-#     plt.title(title)
-#     plt.xlabel("Time (ms)")
-#     plt.ylabel("Neuron")
-#     plt.xlim(0, len(spike_times))  # Adjust the x-axis limits as needed
-#     plt.ylim(0, num_neurons)
-#     plt.yticks(range(num_neurons), [f'Neuron {i + 1}' for i in range(num_neurons)])
-#     plt.legend(loc='upper right')
-#     plt.grid(True)
-    
-#     plt.show()
     
 def plot_raster(title, spike_times, sim_time, dt, num_neurons):
-    plt.figure(figsize=(10, 6))
+    # plt.figure(figsize=(10, 6))
 
     for neuron_id, times in enumerate(spike_times):
-        # print(neuron_id, times)
-        plt.scatter(times, [neuron_id] * len(times), c='k', marker='|', linewidths=0.75)
+        spikes = []
+        for item in times:
+            spikes.append(item*dt)
+            
+        plt.scatter(spikes, [neuron_id] * len(times), c='k', marker='|', linewidths=0.75)
 
     plt.xlabel('Time (s)')
     plt.ylabel('Neuron')
     plt.title(title)
-    plt.ylim(-1, num_neurons)
-    plt.xlim(0, sim_time)
+    plt.ylim(-0.5, num_neurons)
+    plt.xlim(0, sim_time + 0.25)
     plt.tight_layout()
     plt.show()
 
@@ -115,20 +95,6 @@ def plot_voltage(title, y, dt, sim_time):
     # Set the x-axis label
     plt.xlabel('Time')
     plt.ylabel('Voltage')
-
-    # Show the plot
-    plt.show()
-    
-def plot_lfp(title, x, y):
-    # plt.figure(figsize=(15, 15))
-
-    plt.title(title)
-
-    plt.plot(x, y)
-
-    # Set the x-axis label
-    plt.xlabel('Time')
-    plt.ylabel('Current')
 
     # Show the plot
     plt.show()
