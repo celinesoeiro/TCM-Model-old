@@ -12,7 +12,7 @@ random.seed(0)
 random_factor = np.round(random.random(),2)
 
 from cortex_functions import poisson_spike_generator, izhikevich_dvdt, izhikevich_dudt, plot_raster, plot_voltage, get_frequency, tm_synapse_eq
-from cortex_functions import plot_heat_map
+from cortex_functions import plot_heat_map, plot_raster_cortex
 
 # =============================================================================
 # SIMULATION PARAMETERS
@@ -21,6 +21,7 @@ ms = 1000                                       # 1 second = 1000 milliseconds
 sim_time = 3                                    # seconds
 dt = 1/ms                                       # seconds
 fs = int(1/dt)                                  # Hz (Sampling Frequency)
+chop_till = int(0.1/dt)
 
 # Voltage parameters
 v_threshold = 30
@@ -33,26 +34,47 @@ n_S = 10
 n_M = 10
 n_D = 10
 n_CI = 10
-n_TC = 1
-n_TR = 1
+n_TC = 10
+n_TR = 4
 total_neurons = n_S + n_M + n_D + n_CI + n_TC + n_TR
 
 # Distribution of neurons in each structure
 n_S_1 = int(0.5*n_S)        # RS neurons
 n_S_2 = int(0.5*n_S)        # IB neurons
-n_M_1 = int(1*n_M)          # RS neurons
-n_M_2 = int(0*n_M)          # IB neurons
+n_M_1 = int(0.5*n_M)        # RS neurons
+n_M_2 = int(0.5*n_M)        # IB neurons
 n_D_1 = int(0.7*n_D)        # RS neurons
 n_D_2 = int(0.3*n_D)        # IB neurons
 n_CI_1 = int(0.5*n_CI)      # FS neurons
 n_CI_2 = int(0.5*n_CI)      # LTS neurons
+n_TR_1 = int(0.5*n_TR)      # TR neurons
+n_TR_2 = int(0.5*n_TR)      # TR neurons
+n_TC_1 = int(0.7*n_TC)      # TC neurons
+n_TC_2 = int(0.3*n_TC)      # TC neurons
+
+if (n_S%2 != 0 or n_M%2 != 0 or n_D%2 != 0 or n_CI%2 != 0 or n_TC%2 != 0 or n_TR%2 != 0):
+    # Distribution of neurons in each structure
+    n_S_1 = int(1*n_S)        # RS neurons
+    n_S_2 = int(0*n_S)        # IB neurons
+    n_M_1 = int(1*n_M)        # RS neurons
+    n_M_2 = int(0*n_M)        # IB neurons
+    n_D_1 = int(1*n_D)        # RS neurons
+    n_D_2 = int(0*n_D)        # IB neurons
+    n_CI_1 = int(1*n_CI)      # FS neurons
+    n_CI_2 = int(0*n_CI)      # LTS neurons
+    n_TR_1 = int(1*n_TR)      # TR neurons
+    n_TR_2 = int(0*n_TR)      # TR neurons
+    n_TC_1 = int(1*n_TC)      # TC neurons
+    n_TC_2 = int(0*n_TC)      # TC neurons
 
 spikes_S = np.zeros((n_S, num_steps))
 spikes_M = np.zeros((n_M, num_steps))
 spikes_D = np.zeros((n_D, num_steps))
 spikes_CI = np.zeros((n_CI, num_steps))
+spikes_TC = np.zeros((n_TC, num_steps))
+spikes_TR = np.zeros((n_TR, num_steps))
 
-f_thalamus = 8                                  # Hz (Thalamus frequency)
+f_thalamus = 8                # Hz (Thalamus frequency)
 
 # =============================================================================
 # Izhikevich neuron parameters
@@ -118,7 +140,7 @@ u_CI[:, 0] = b_CI*v_resting
 # Idc
 # =============================================================================
 Idc = [3.6, 3.7, 3.9, 0.5, 0.7]
-Idc = [value * 5 for value in Idc]
+Idc = [value * 4 for value in Idc]
 
 I_S = np.c_[Idc[0]*np.ones((1, n_S_1)), Idc[1]*np.ones((1, n_S_2))]
 I_M = np.c_[Idc[0]*np.ones((1, n_M_1)), Idc[0]*np.ones((1, n_M_2))]
@@ -327,29 +349,17 @@ kisi_TR = white_gaussian_add*np.c_[ random_TR, cn*random_TR_diff ]
 # =============================================================================
 # TM synapse
 # =============================================================================
-r_S = np.zeros((1, 3))
-x_S = np.zeros((1, 3))
-Is_S = np.zeros((1, 3))
+r_S = np.zeros((1, 3)); x_S = np.zeros((1, 3)); Is_S = np.zeros((1, 3));
 
-r_M = np.zeros((1, 3))
-x_M = np.zeros((1, 3))
-Is_M = np.zeros((1, 3))
+r_M = np.zeros((1, 3)); x_M = np.zeros((1, 3)); Is_M = np.zeros((1, 3));
 
-r_D = np.zeros((1, 3))
-x_D = np.zeros((1, 3))
-Is_D = np.zeros((1, 3))
+r_D = np.zeros((1, 3)); x_D = np.zeros((1, 3)); Is_D = np.zeros((1, 3));
 
-r_CI = np.zeros((1, 3))
-x_CI = np.zeros((1, 3))
-Is_CI = np.zeros((1, 3))
+r_CI = np.zeros((1, 3)); x_CI = np.zeros((1, 3)); Is_CI = np.zeros((1, 3));
 
-r_TC = np.zeros((1, 3))
-x_TC = np.zeros((1, 3))
-Is_TC = np.zeros((1, 3))
+r_TC = np.zeros((1, 3)); x_TC = np.zeros((1, 3)); Is_TC = np.zeros((1, 3));
 
-r_TR = np.zeros((1, 3))
-x_TR = np.zeros((1, 3))
-Is_TR = np.zeros((1, 3))
+r_TR = np.zeros((1, 3)); x_TR = np.zeros((1, 3)); Is_TR = np.zeros((1, 3));
 
 t_f_E = [670, 17, 326]
 t_d_E = [138, 671, 329]
@@ -384,11 +394,6 @@ TC_spikes, PSC_TC = poisson_spike_generator(
 
 get_frequency(PSC_TC[0], sim_time)
 
-# from matplotlib import pyplot as plt
-# for neuron_id, times in enumerate(TC_spikes):
-#     print(neuron_id, times)
-#     plt.scatter(times, [neuron_id] * len(times), c='k', marker='|', linewidths=0.75)
-
 plot_raster(title="TC Raster Plot", num_neurons=n_TC, spike_times=TC_spikes, sim_time=sim_time, dt=dt)
 plot_voltage(title="TC spikes", y=PSC_TC[0], dt=dt, sim_time=sim_time)
 
@@ -407,126 +412,83 @@ plot_voltage(title="TR spikes", y=PSC_TR[0], dt=dt, sim_time=sim_time)
 # =============================================================================
 # LAYER D & LAYER CI & LAYER S
 # =============================================================================
-for t in range(1, num_steps):
-# =============================================================================
-#     # S
-# =============================================================================
-    for s in range(n_S):
-        v_S_aux = v_S[s][t - 1]
-        u_S_aux = u_S[s][t - 1]
-        AP_S = 0
+for t in range(1, num_steps):    
+
+# # =============================================================================
+# #     # S
+# # =============================================================================
+#     for s in range(n_S):
+#         v_S_aux = v_S[s][t - 1]
+#         u_S_aux = u_S[s][t - 1]
+#         AP_S = 0
         
-        if(v_S_aux >= v_threshold + zeta_S[s][t - 1]):
-            v_S_aux = 1*v_S[s][t]
-            v_S[s][t] = 1*c_S[0][s]
-            u_S[s][t] = u_S_aux + d_S[0][s]
-            AP_S = 1
-            spikes_S[s][t] = t
-        else:
-            dvdt_S = izhikevich_dvdt(v_S_aux, u_S_aux, I_S[0][s])
-            dudt_S = izhikevich_dudt(v_S_aux, u_S_aux, a_S[0][s], b_S[0][s])
+#         if(v_S_aux >= v_threshold + zeta_S[s][t - 1]):
+#             v_S_aux = 1*v_S[s][t]
+#             v_S[s][t] = 1*c_S[0][s]
+#             u_S[s][t] = u_S_aux + d_S[0][s]
+#             AP_S = 1
+#             spikes_S[s][t] = t
+#         else:
+#             dvdt_S = izhikevich_dvdt(v_S_aux, u_S_aux, I_S[0][s])
+#             dudt_S = izhikevich_dudt(v_S_aux, u_S_aux, a_S[0][s], b_S[0][s])
             
-            # Self feedback - Inhibitory
-            coupling_S_S = W_S[s][0]*PSC_S[0][t]
-            # Coupling S to M - Excitatory
-            coupling_S_M = W_S_M[s][0]*PSC_M[0][t]
-            # Coupling S to D - Excitatory
-            coupling_S_D = W_S_D[s][0]*PSC_D[0][t]
-            # Coupling S to CI - Excitatory 
-            coupling_S_CI = W_S_CI[s][0]*PSC_CI[0][t]
-            # Coupling S to TC - Excitatory
-            coupling_S_TC = W_S_TC[s][0]*PSC_TC[0][t]
-            # Coupling S to TR - Inhibitory
-            coupling_S_TR = W_S_TR[s][0]*PSC_TR[0][t]
+#             # Self feedback - Inhibitory
+#             coupling_S_S = W_S[s][0]*PSC_S[0][t]
+#             # Coupling S to M - Excitatory
+#             coupling_S_M = W_S_M[s][0]*PSC_M[0][t]
+#             # Coupling S to D - Excitatory
+#             coupling_S_D = W_S_D[s][0]*PSC_D[0][t]
+#             # Coupling S to CI - Excitatory 
+#             coupling_S_CI = W_S_CI[s][0]*PSC_CI[0][t]
+#             # Coupling S to TC - Excitatory
+#             coupling_S_TC = W_S_TC[s][0]*PSC_TC[0][t]
+#             # Coupling S to TR - Inhibitory
+#             coupling_S_TR = W_S_TR[s][0]*PSC_TR[0][t]
             
-            v_S[s][t] = v_S_aux + dt*(dvdt_S + coupling_S_S + coupling_S_M + coupling_S_D + coupling_S_CI + coupling_S_TC + coupling_S_TR)
-            u_S[s][t] = u_S_aux + dudt_S*dt
+#             v_S[s][t] = v_S_aux + dt*(dvdt_S + coupling_S_S + coupling_S_M + coupling_S_D + coupling_S_CI + coupling_S_TC + coupling_S_TR)
+#             u_S[s][t] = u_S_aux + dudt_S*dt
             
-        # Synaptic connection - within cortex
-        syn_S = tm_synapse_eq(r=r_S, x=x_S, Is=Is_S, AP=AP_S, tau_f=t_f_E, tau_d=t_f_E, tau_s=t_s_E, U=U_E, A=A_E, dt=dt)
-        r_S = syn_S['r']
-        x_S = syn_S['x']
-        Is_S = syn_S['Is']
-        Ipost_S = syn_S['Ipost']
+#         # Synaptic connection - within cortex
+#         syn_S = tm_synapse_eq(r=r_S, x=x_S, Is=Is_S, AP=AP_S, tau_f=t_f_E, tau_d=t_f_E, tau_s=t_s_E, U=U_E, A=A_E, dt=dt)
+#         r_S = syn_S['r']
+#         x_S = syn_S['x']
+#         Is_S = syn_S['Is']
+#         Ipost_S = syn_S['Ipost']
             
-    PSC_S[0][t] = np.sum(Ipost_S)
-    
-# =============================================================================
-#     # M
-# =============================================================================
-    for m in range(n_M):
-        v_M_aux = v_M[m][t - 1]
-        u_M_aux = u_M[m][t - 1]
-        AP_M = 0
-        
-        if(v_M_aux >= v_threshold + zeta_M[m][t - 1]):
-            v_M_aux = 1*v_M[m][t]
-            v_M[m][t] = 1*c_M[0][m]
-            u_M[m][t] = u_M_aux + d_M[0][m]
-            AP_M = 1
-            spikes_M[m][t] = t
-        else:
-            dvdt_M = izhikevich_dvdt(v_M_aux, u_M_aux, I_M[0][m])
-            dudt_M = izhikevich_dudt(v_M_aux, u_M_aux, a_M[0][m], b_M[0][m])
-            
-            # Self feedback - Inhibitory
-            coupling_M_M = W_M[m][0]*PSC_M[0][t]
-            # Coupling M to S - Excitarory
-            coupling_M_S = W_M_S[m][0]*PSC_S[0][t]
-            # Coupling M to D - Excitatory
-            coupling_M_D = W_S_D[m][0]*PSC_D[0][t]
-            # Coupling M to CI - Excitatory 
-            coupling_M_CI = W_S_CI[m][0]*PSC_CI[0][t]
-            # Coupling M to TC - Excitatory
-            coupling_M_TC = W_S_TC[m][0]*PSC_TC[0][t]
-            # Coupling M to TR - Inhibitory
-            coupling_M_TR = W_S_TR[m][0]*PSC_TR[0][t]
-            
-            v_M[m][t] = v_M_aux + dt*(dvdt_M + coupling_M_S + coupling_M_M + coupling_M_D + coupling_S_CI + coupling_S_TC + coupling_S_TR)
-            u_M[m][t] = u_M_aux + dudt_M*dt
-            
-        # Synaptic connection - within cortex
-        syn_M = tm_synapse_eq(r=r_M, x=x_M, Is=Is_M, AP=AP_M, tau_f=t_f_E, tau_d=t_f_E, tau_s=t_s_E, U=U_E, A=A_E, dt=dt)
-        r_M = syn_S['r']
-        x_M = syn_S['x']
-        Is_M = syn_S['Is']
-        Ipost_M = syn_S['Ipost']
-            
-    PSC_M[0][t] = np.sum(Ipost_M)
-    
+#     PSC_S[0][t] = np.sum(Ipost_S)
 # =============================================================================
 #     # D
 # =============================================================================
     for d in range(n_D):
-        v_D_aux = v_D[d][t - 1]
-        u_D_aux = u_D[d][t - 1]
+        v_D_aux = 1*v_D[d][t - 1]
+        u_D_aux = 1*u_D[d][t - 1]
         AP_D = 0
+        
+        # Izhikevich neuron model
+        dvdt_D = izhikevich_dvdt(v_D_aux, u_D_aux, I_D[0][d])
+        dudt_D = izhikevich_dudt(v_D_aux, u_D_aux, a_D[0][d], b_D[0][d])
+        # Self feedback - Inhibitory
+        coupling_D_D = W_D[d][0]*PSC_D[0][t]
+        # Coupling D to S - Excitatory
+        coupling_D_S = W_D_S[d][0]*PSC_S[0][t]
+        # Coupling D to M - Excitatory
+        coupling_D_M = W_D_M[d][0]*PSC_M[0][t]
+        # Coupling D to CI - Excitatory 
+        coupling_D_CI = W_D_CI[d][0]*PSC_CI[0][t]
+        # Coupling D to TC - Excitatory
+        coupling_D_TC = W_D_TC[d][0]*PSC_TC[0][t]
+        # Coupling D to TR - Inhibitory
+        coupling_D_TR = W_D_TR[d][0]*PSC_TR[0][t]
         
         if(v_D_aux >= v_threshold + zeta_D[d][t - 1]):
             v_D_aux = 1*v_D[d][t]
             v_D[d][t] = 1*c_D[0][d]
-            u_D[d][t] = u_D_aux + d_D[0][d]
+            u_D[d][t] = 1*(u_D_aux + d_D[0][d])
             AP_D = 1
             spikes_D[d][t] = t
-        else:
-            dvdt_D = izhikevich_dvdt(v_D_aux, u_D_aux, I_D[0][d])
-            dudt_D = izhikevich_dudt(v_D_aux, u_D_aux, a_D[0][d], b_D[0][d])
             
-            # Self feedback - Inhibitory
-            coupling_D_D = W_D[d][0]*PSC_D[0][t]
-            # Coupling D to S - Excitatory
-            coupling_D_S = W_D_S[d][0]*PSC_S[0][t]
-            # Coupling D to M - Excitatory
-            coupling_D_M = W_D_M[d][0]*PSC_M[0][t]
-            # Coupling D to CI - Excitatory 
-            coupling_D_CI = W_D_CI[d][0]*PSC_CI[0][t]
-            # Coupling D to TC - Excitatory
-            coupling_D_TC = W_D_TC[d][0]*PSC_TC[0][t]
-            # Coupling D to TR - Inhibitory
-            coupling_D_TR = W_D_TR[d][0]*PSC_TR[0][t]
-            
-            v_D[d][t] = v_D_aux + dt*(dvdt_D + coupling_D_S + coupling_D_M + coupling_D_D + coupling_D_CI + coupling_D_TC + coupling_D_TR)
-            u_D[d][t] = u_D_aux + dudt_D*dt
+        v_D[d][t] = v_D_aux + dt*(dvdt_D + coupling_D_S + coupling_D_M + coupling_D_D + coupling_D_CI + coupling_D_TC + coupling_D_TR)
+        u_D[d][t] = u_D_aux + dudt_D*dt
             
         # Synaptic connection - Within Cortex
         syn_D = tm_synapse_eq(r=r_D, x=x_D, Is=Is_D, AP=AP_D, tau_f=t_f_E, tau_d=t_f_E, tau_s=t_s_E, U=U_E, A=A_E, dt=dt)
@@ -553,35 +515,35 @@ for t in range(1, num_steps):
 #     # CI
 # =============================================================================
     for ci in range(n_CI):
-        v_CI_aux = v_CI[ci][t - 1]
-        u_CI_aux = u_CI[ci][t - 1]
+        v_CI_aux = 1*v_CI[ci][t - 1]
+        u_CI_aux = 1*u_CI[ci][t - 1]
         AP_CI = 0
+        
+        # Izhikevich neuron model
+        dvdt_CI = izhikevich_dvdt(v_CI_aux, u_CI_aux, I_CI[0][ci])
+        dudt_CI = izhikevich_dudt(v_CI_aux, u_CI_aux, a_CI[0][ci], b_CI[0][ci])        
+        # Self feeback - Inhibitory
+        coupling_CI_CI = W_CI[ci][0]*PSC_CI[0][t]
+        # Coupling CI to S - Inhibitory
+        coupling_CI_S = W_CI_S[ci][0]*PSC_S[0][t]
+        # coupling CI to M - Excitatory
+        coupling_CI_M = W_CI_M[ci][0]*PSC_M[0][t]
+        # Coupling CI to D - Inhibitory
+        coupling_CI_D = W_CI_D[ci][0]*PSC_D[0][t]
+        # Coupling CI to TC - Inhibitory
+        coupling_CI_TC = W_CI_TC[ci][0]*PSC_TC[0][t]
+        # Coupling CI to TR - Inhibitory
+        coupling_CI_TR = W_CI_TR[ci][0]*PSC_TR[0][t]
         
         if(v_CI_aux >= v_threshold + zeta_CI[ci][t - 1]):
             v_CI_aux = 1*v_CI[ci][t]
             v_CI[ci][t] = 1*c_CI[0][ci]
-            u_CI[ci][t] = u_CI_aux + d_CI[0][ci]
+            u_CI[ci][t] = 1*(u_CI_aux + d_CI[0][ci])
             AP_CI = 1
             spikes_CI[ci][t] = t
-        else:
-            dvdt_CI = izhikevich_dvdt(v_CI_aux, u_CI_aux, I_CI[0][ci])
-            dudt_CI = izhikevich_dudt(v_CI_aux, u_CI_aux, a_CI[0][ci], b_CI[0][ci])
             
-            # Self feeback - Inhibitory
-            coupling_CI_CI = W_CI[ci][0]*PSC_CI[0][t]
-            # Coupling CI to S - Inhibitory
-            coupling_CI_S = W_CI_S[ci][0]*PSC_S[0][t]
-            # coupling CI to M - Excitatory
-            coupling_CI_M = W_CI_M[ci][0]*PSC_M[0][t]
-            # Coupling CI to D - Inhibitory
-            coupling_CI_D = W_CI_D[ci][0]*PSC_D[0][t]
-            # Coupling CI to TC - Inhibitory
-            coupling_CI_TC = W_CI_TC[ci][0]*PSC_TC[0][t]
-            # Coupling CI to TR - Inhibitory
-            coupling_CI_TR = W_CI_TR[ci][0]*PSC_TR[0][t]
-            
-            v_CI[ci][t] = v_CI_aux + dt*(dvdt_CI + coupling_CI_S + coupling_CI_M + coupling_CI_D + coupling_CI_CI + coupling_CI_TC + coupling_CI_TR)
-            u_CI[ci][t] = u_CI_aux + dudt_CI*dt
+        v_CI[ci][t] = v_CI_aux + dt*(dvdt_CI + coupling_CI_S + coupling_CI_M + coupling_CI_D + coupling_CI_CI + coupling_CI_TC + coupling_CI_TR)
+        u_CI[ci][t] = u_CI_aux + dudt_CI*dt
             
         # Synaptic connection - Within cortex
         syn_CI = tm_synapse_eq(r=r_CI, x=x_CI, Is=Is_CI, AP=AP_CI, tau_f=t_f_I, tau_d=t_d_I, tau_s=t_s_I, U=U_I, A=A_I, dt=dt)
@@ -704,3 +666,29 @@ plot_raster(title="S Raster Plot", num_neurons=n_S, spike_times=spikes_S, sim_ti
 plot_raster(title="M Raster Plot", num_neurons=n_M, spike_times=spikes_M, sim_time=sim_time, dt=dt)
 plot_raster(title="D Raster Plot", num_neurons=n_D, spike_times=spikes_D, sim_time=sim_time, dt=dt)
 plot_raster(title="CI Raster Plot", num_neurons=n_CI, spike_times=spikes_CI, sim_time=sim_time, dt=dt)
+
+spikes_TR = TR_spikes
+spikes_TC = TC_spikes
+
+plot_raster_cortex(
+    n_TR = n_TR, 
+    n_TC = n_TC, 
+    n_CI = n_CI, 
+    n_D = n_D, 
+    n_M = n_M, 
+    n_S = n_S, 
+    spike_times_TR = spikes_TR, 
+    spike_times_TC = spikes_TC, 
+    spike_times_CI = spikes_CI, 
+    spike_times_D = spikes_D, 
+    spike_times_M = spikes_M,
+    spike_times_S = spikes_S,
+    dbs = 0,
+    sim_steps = num_steps,
+    dt = dt,
+    chop_till = chop_till, 
+    n_total = total_neurons,
+    n_CI_LTS = n_CI_2,
+    n_D_IB = n_D_2,
+    n_S_IB = n_S_2,
+    )
