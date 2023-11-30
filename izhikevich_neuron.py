@@ -33,6 +33,7 @@ equations:
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 from random import seed, random
 
 def izhikevich_neuron(
@@ -80,7 +81,7 @@ def izhikevich_neuron(
     I = np.zeros(len(time))
     
     if (current_finish == -1):
-        I = current_value
+        I[:] = current_value
     else:
         I[current_start:current_finish] = current_value
     

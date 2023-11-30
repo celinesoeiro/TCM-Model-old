@@ -67,19 +67,20 @@ def TCM_model_parameters():
     random.seed(0)
     random_factor = np.round(random.random(),2)
     
+    ms = 1000                               # 1 second = 1000 miliseconds
     number_trials = 1                       # number of trials
-    dt = 0.1                                # time step in ms
-    samp_freq = int(1000/dt)                # sampling frequency in Hz
+    dt = 10/ms                              # time step of 10 ms
+    samp_freq = int(1/dt)                  # sampling frequency in Hz
     dbs_on = int(5*67)                      # value of synaptic fidelity when DBS on
     dbs_off = 0                             # value of synaptic fidelity when DBS off
     simulation_time = 3                     # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
-    T = (simulation_time + 1)*1000          # (s) Simulation time in ms with 1 extra second to reach the steady state and trash later
+    T = int((simulation_time + 0.5)*ms)          # Simulation time in ms with 1 extra second to reach the steady state and trash later
     sim_steps = int(np.round(T/dt))         # number of simulation steps
-    chop_till = 1*samp_freq;                       # Cut the first 1 seconds of the simulation
+    chop_till = 1*samp_freq;                # Cut the first 1 seconds of the simulation
 
     td_synapse = 1                          # Synaptic transmission delay (fixed for all synapses in the TCM)
-    td_thalamus_cortex = 20 # 25            # time delay from thalamus to cortex (ms) (transmission time delay)
-    td_cortex_thalamus = 15                 # time delay from cortex to thalamus (ms) (transmission time delay)  
+    td_thalamus_cortex = 15                 # time delay from thalamus to cortex (ms) (transmission time delay)
+    td_cortex_thalamus = 20                 # time delay from cortex to thalamus (ms) (transmission time delay)  
     td_layers = 8                           # time delay between the layers in cortex and nuclei in thalamus (ms) (PSC delay)
     td_within_layers = 1                    # time delay within a structure (ms)
     

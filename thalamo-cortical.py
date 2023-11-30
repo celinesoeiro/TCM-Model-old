@@ -17,25 +17,34 @@ from cortex_functions import plot_heat_map, plot_raster_cortex
 # =============================================================================
 # SIMULATION PARAMETERS
 # =============================================================================
-ms = 1000                                       # 1 second = 1000 milliseconds
-sim_time = 3                                    # seconds
-dt = 1/ms                                       # seconds
-fs = int(1/dt)                                       # Hz (Sampling Frequency)
-chop_till = int(0.1/dt)
+ms = 1000                   # 1 second = 1000 milliseconds
+ss_time = 0.5               # time to get to steady state
+sim_time = 3                # seconds
+dt = 1/ms                   # seconds
+fs = int(1/dt)              # Hz (Sampling Frequency)
+chop_till = int(ss_time/dt)
+
+td_layers = 8               # time delay between the layers in cortex and nuclei in thalamus (ms) (PSC delay)
+td_within_layers = 1        # time delay within a structure (ms)
+td_thalamus_cortex = 15     # time delay from thalamus to cortex (ms) (transmission time delay)
+td_cortex_thalamus = 20     # time delay from cortex to thalamus (ms) (transmission time delay)  
+td_synapse = 1              # Synaptic transmission delay (fixed for all synapses in the TCM)
 
 # Voltage parameters
 v_threshold = 30
 v_resting = -65
 
 # Calculate the number of time steps
-num_steps = int(sim_time / dt)
+num_steps = int((ss_time + sim_time)/dt)
+# Making the time vector based on the layers and synaptic delays
+t_vec = np.arange(td_cortex_thalamus + td_synapse + 1, num_steps)
 
 n_S = 10
 n_M = 10
 n_D = 10
 n_CI = 10
 n_TC = 10
-n_TR = 40
+n_TR = 4
 total_neurons = n_S + n_M + n_D + n_CI + n_TC + n_TR
 
 # Distribution of neurons in each structure
@@ -410,7 +419,8 @@ Ipost_TR = np.zeros((1,n_TR))
 # =============================================================================
 # RUN THE MODEL
 # =============================================================================
-for t in range(1, num_steps):
+for t_float in t_vec:
+    t = int(t_float)
 # =============================================================================
 # S
 # =============================================================================
@@ -420,19 +430,19 @@ for t in range(1, num_steps):
         AP_S = 0
         
         # Self feedback - Inhibitory
-        coupling_S_S = W_S[s][0]*PSC_S[0][t - 1]
+        coupling_S_S = W_S[s][0]*PSC_S[0][t - td_within_layers - td_synapse - 1]
         # Coupling S to M - Excitatory
-        coupling_S_M = W_S_M[s][0]*PSC_M[0][t - 1]
+        coupling_S_M = W_S_M[s][0]*PSC_M[0][t - td_layers - td_synapse - 1]
         # Coupling S to D - Excitatory
-        coupling_S_D = W_S_D[s][0]*PSC_D[0][t - 1]
+        coupling_S_D = W_S_D[s][0]*PSC_D[0][t - td_layers - td_synapse - 1]
         # Coupling S to CI - Excitatory 
-        coupling_S_CI = W_S_CI[s][0]*PSC_CI[0][t - 1]
+        coupling_S_CI = W_S_CI[s][0]*PSC_CI[0][t - td_within_layers - td_synapse - 1]
         # Coupling S to TC - Excitatory
-        coupling_S_TC = W_S_TC[s][0]*PSC_TC[0][t - 1]
+        coupling_S_TC = W_S_TC[s][0]*PSC_TC[0][t - td_thalamus_cortex - td_synapse - 1]
         # Coupling S to TR - Inhibitory
-        coupling_S_TR = W_S_TR[s][0]*PSC_TR[0][t - 1]
+        coupling_S_TR = W_S_TR[s][0]*PSC_TR[0][t - td_thalamus_cortex - td_synapse - 1]
         
-        if(v_S_aux >= v_threshold + zeta_S[s][t - 1]):
+        if(v_S_aux >= v_threshold + zeta_S[s][t - td_within_layers - td_synapse - 1]):
             v_S_aux = 1*v_S[s][t]
             v_S[s][t] = 1*c_S[0][s]
             u_S[s][t] = 1*(u_S_aux + d_S[0][s])
@@ -442,7 +452,14 @@ for t in range(1, num_steps):
             dvdt_S = izhikevich_dvdt(v_S_aux, u_S_aux, I_S[0][s])
             dudt_S = izhikevich_dudt(v_S_aux, u_S_aux, a_S[0][s], b_S[0][s])
             
-            v_S[s][t] = v_S_aux + dt*(dvdt_S + coupling_S_S + coupling_S_M + coupling_S_D + coupling_S_CI + coupling_S_TC + coupling_S_TR)
+            v_S[s][t] = v_S_aux + dt*(dvdt_S + 
+                                      coupling_S_S + 
+                                      coupling_S_M + 
+                                      coupling_S_D + 
+                                      coupling_S_CI + 
+                                      coupling_S_TC + 
+                                      coupling_S_TR + 
+                                      kisi_S[s][t - td_within_layers - td_synapse - 1])
             u_S[s][t] = u_S_aux + dudt_S*dt
             
         # Synaptic connection - within cortex
@@ -463,19 +480,19 @@ for t in range(1, num_steps):
         AP_M = 0
         
         # Self feedback - Inhibitory
-        coupling_M_M = W_M[m][0]*PSC_M[0][t - 1]
+        coupling_M_M = W_M[m][0]*PSC_M[0][t - td_within_layers - td_synapse - 1]
         # Coupling M to S - Excitarory
-        coupling_M_S = W_M_S[m][0]*PSC_S[0][t - 1]
+        coupling_M_S = W_M_S[m][0]*PSC_S[0][t - td_layers - td_synapse - 1]
         # Coupling M to D - Excitatory
-        coupling_M_D = W_S_D[m][0]*PSC_D[0][t - 1]
+        coupling_M_D = W_S_D[m][0]*PSC_D[0][t - td_layers - td_synapse - 1]
         # Coupling M to CI - Excitatory 
-        coupling_M_CI = W_S_CI[m][0]*PSC_CI[0][t - 1]
+        coupling_M_CI = W_S_CI[m][0]*PSC_CI[0][t - td_layers - td_synapse - 1]
         # Coupling M to TC - Excitatory
-        coupling_M_TC = W_S_TC[m][0]*PSC_TC[0][t - 1]
+        coupling_M_TC = W_S_TC[m][0]*PSC_TC[0][t - td_thalamus_cortex - td_synapse - 1]
         # Coupling M to TR - Inhibitory
-        coupling_M_TR = W_S_TR[m][0]*PSC_TR[0][t - 1]
+        coupling_M_TR = W_S_TR[m][0]*PSC_TR[0][t - td_thalamus_cortex - td_synapse - 1]
         
-        if(v_M_aux >= v_threshold + zeta_M[m][t]):
+        if(v_M_aux >= v_threshold + zeta_M[m][t - td_within_layers - td_synapse - 1]):
             v_M_aux = 1*v_M[m][t]
             v_M[m][t] = 1*c_M[0][m]
             u_M[m][t] = 1*(u_M_aux + d_M[0][m])
@@ -485,7 +502,14 @@ for t in range(1, num_steps):
             dvdt_M = izhikevich_dvdt(v_M_aux, u_M_aux, I_M[0][m])
             dudt_M = izhikevich_dudt(v_M_aux, u_M_aux, a_M[0][m], b_M[0][m])
             
-            v_M[m][t] = v_M_aux + dt*(dvdt_M + coupling_M_S + coupling_M_M + coupling_M_D + coupling_S_CI + coupling_S_TC + coupling_S_TR)
+            v_M[m][t] = v_M_aux + dt*(dvdt_M + 
+                                      coupling_M_S + 
+                                      coupling_M_M + 
+                                      coupling_M_D + 
+                                      coupling_M_CI + 
+                                      coupling_M_TC + 
+                                      coupling_M_TR + 
+                                      kisi_M[m][t - td_within_layers - td_synapse - 1])
             u_M[m][t] = u_M_aux + dudt_M*dt
             
         # Synaptic connection - within cortex
@@ -506,19 +530,19 @@ for t in range(1, num_steps):
         AP_D = 0
         
         # Self feedback - Inhibitory
-        coupling_D_D = W_D[d][0]*PSC_D[0][t - 1]
+        coupling_D_D = W_D[d][0]*PSC_D[0][t - td_within_layers - td_synapse - 1]
         # Coupling D to S - Excitatory
-        coupling_D_S = W_D_S[d][0]*PSC_S[0][t - 1]
+        coupling_D_S = W_D_S[d][0]*PSC_S[0][t - td_layers - td_synapse - 1]
         # Coupling D to M - Excitatory
-        coupling_D_M = W_D_M[d][0]*PSC_M[0][t - 1]
+        coupling_D_M = W_D_M[d][0]*PSC_M[0][t - td_layers - td_synapse - 1]
         # Coupling D to CI - Excitatory 
-        coupling_D_CI = W_D_CI[d][0]*PSC_CI[0][t - 1]
+        coupling_D_CI = W_D_CI[d][0]*PSC_CI[0][t - td_layers - td_synapse - 1]
         # Coupling D to TC - Excitatory
-        coupling_D_TC = W_D_TC[d][0]*PSC_TC_Cortex[0][t - 1]
+        coupling_D_TC = W_D_TC[d][0]*PSC_TC_Cortex[0][t - td_thalamus_cortex - td_synapse - 1]
         # Coupling D to TR - Inhibitory
-        coupling_D_TR = W_D_TR[d][0]*PSC_TR[0][t - 1]
+        coupling_D_TR = W_D_TR[d][0]*PSC_TR[0][t - td_thalamus_cortex - td_synapse - 1]
         
-        if(v_D_aux >= v_threshold + zeta_D[d][t]):
+        if(v_D_aux >= v_threshold + zeta_D[d][t - td_within_layers - td_synapse - 1]):
             v_D_aux = 1*v_D[d][t]
             v_D[d][t] = 1*c_D[0][d]
             u_D[d][t] = 1*(u_D_aux + d_D[0][d])
@@ -528,7 +552,14 @@ for t in range(1, num_steps):
             dvdt_D = izhikevich_dvdt(v_D_aux, u_D_aux, I_D[0][d])
             dudt_D = izhikevich_dudt(v_D_aux, u_D_aux, a_D[0][d], b_D[0][d])
             
-            v_D[d][t] = v_D_aux + dt*(dvdt_D + coupling_D_S + coupling_D_M + coupling_D_D + coupling_D_CI + coupling_D_TC + coupling_D_TR)
+            v_D[d][t] = v_D_aux + dt*(dvdt_D + 
+                                      coupling_D_S + 
+                                      coupling_D_M + 
+                                      coupling_D_D + 
+                                      coupling_D_CI + 
+                                      coupling_D_TC + 
+                                      coupling_D_TR + 
+                                      kisi_D[d][t - td_within_layers - td_synapse - 1])
             u_D[d][t] = u_D_aux + dudt_D*dt
             
         rt = 1*r_D; xt = 1*x_D; ist = 1*Is_D; 
@@ -558,19 +589,19 @@ for t in range(1, num_steps):
         AP_CI = 0
         
         # Self feeback - Inhibitory
-        coupling_CI_CI = W_CI[ci][0]*PSC_CI[0][t - 1]
+        coupling_CI_CI = W_CI[ci][0]*PSC_CI[0][t - td_within_layers - td_synapse - 1]
         # Coupling CI to S - Inhibitory
-        coupling_CI_S = W_CI_S[ci][0]*PSC_S[0][t - 1]
+        coupling_CI_S = W_CI_S[ci][0]*PSC_S[0][t - td_within_layers - td_synapse - 1]
         # coupling CI to M - Excitatory
-        coupling_CI_M = W_CI_M[ci][0]*PSC_M[0][t - 1]
+        coupling_CI_M = W_CI_M[ci][0]*PSC_M[0][t - td_within_layers - td_synapse - 1]
         # Coupling CI to D - Inhibitory
-        coupling_CI_D = W_CI_D[ci][0]*PSC_D[0][t - 1]
+        coupling_CI_D = W_CI_D[ci][0]*PSC_D[0][t - td_within_layers - td_synapse - 1]
         # Coupling CI to TC - Inhibitory
-        coupling_CI_TC = W_CI_TC[ci][0]*PSC_TC[0][t - 1]
+        coupling_CI_TC = W_CI_TC[ci][0]*PSC_TC[0][t - td_thalamus_cortex - td_synapse - 1]
         # Coupling CI to TR - Inhibitory
-        coupling_CI_TR = W_CI_TR[ci][0]*PSC_TR[0][t - 1]
+        coupling_CI_TR = W_CI_TR[ci][0]*PSC_TR[0][t - td_thalamus_cortex - td_synapse - 1]
         
-        if(v_CI_aux >= v_threshold + zeta_CI[ci][t]):
+        if(v_CI_aux >= v_threshold + zeta_CI[ci][t - td_within_layers - td_synapse - 1]):
             v_CI_aux = 1*v_CI[ci][t]
             v_CI[ci][t] = 1*c_CI[0][ci]
             u_CI[ci][t] = 1*(u_CI_aux + d_CI[0][ci])
@@ -580,7 +611,14 @@ for t in range(1, num_steps):
             dvdt_CI = izhikevich_dvdt(v_CI_aux, u_CI_aux, I_CI[0][ci])
             dudt_CI = izhikevich_dudt(v_CI_aux, u_CI_aux, a_CI[0][ci], b_CI[0][ci])
             
-            v_CI[ci][t] = v_CI_aux + dt*(dvdt_CI + coupling_CI_S + coupling_CI_M + coupling_CI_D + coupling_CI_CI + coupling_CI_TC + coupling_CI_TR)
+            v_CI[ci][t] = v_CI_aux + dt*(dvdt_CI + 
+                                         coupling_CI_S + 
+                                         coupling_CI_M + 
+                                         coupling_CI_D + 
+                                         coupling_CI_CI + 
+                                         coupling_CI_TC + 
+                                         coupling_CI_TR + 
+                                         kisi_CI[ci][t - td_within_layers - td_synapse - 1])
             u_CI[ci][t] = u_CI_aux + dudt_CI*dt
             
         # Synaptic connection - Within cortex
@@ -601,19 +639,19 @@ for t in range(1, num_steps):
         AP_TC = 0
         
         # Self feeback - Inhibitory
-        coupling_TC_TC = W_TC_TC[tc][0]*PSC_TC[0][t - 1]
+        coupling_TC_TC = W_TC_TC[tc][0]*PSC_TC[0][t - td_within_layers - td_synapse - 1]
         # Coupling TC to S - Inhibitory
-        coupling_TC_S = W_TC_S[tc][0]*PSC_S[0][t - 1]
+        coupling_TC_S = W_TC_S[tc][0]*PSC_S[0][t - td_cortex_thalamus - td_synapse - 1]
         # coupling TC to M - Excitatory
-        coupling_TC_M = W_TC_M[tc][0]*PSC_M[0][t - 1]
+        coupling_TC_M = W_TC_M[tc][0]*PSC_M[0][t - td_cortex_thalamus - td_synapse - 1]
         # Coupling TC to D - Inhibitory
-        coupling_TC_D = W_TC_D[tc][0]*PSC_D_Thalamus[0][t - 1]
+        coupling_TC_D = W_TC_D[tc][0]*PSC_D_Thalamus[0][t - td_cortex_thalamus - td_synapse - 1]
         # Coupling TC to CI - Inhibitory
-        coupling_TC_CI = W_TC_CI[tc][0]*PSC_CI[0][t - 1]
+        coupling_TC_CI = W_TC_CI[tc][0]*PSC_CI[0][t - td_cortex_thalamus - td_synapse - 1]
         # Coupling TC to TR - Inhibitory
-        coupling_TC_TR = W_TC_TR[tc][0]*PSC_TR[0][t - 1]
+        coupling_TC_TR = W_TC_TR[tc][0]*PSC_TR[0][t - td_layers - td_synapse - 1]
     
-        if(v_TC_aux >= v_threshold + zeta_TC[tc][t]):
+        if(v_TC_aux >= v_threshold + zeta_TC[tc][t - td_within_layers - td_synapse - 1]):
             v_TC_aux = 1*v_TC[tc][t]
             v_TC[tc][t] = 1*c_TC[0][tc]
             u_TC[tc][t] = 1*(u_TC_aux + d_TC[0][tc])
@@ -623,7 +661,14 @@ for t in range(1, num_steps):
             dvdt_TC = izhikevich_dvdt(v_TC_aux, u_TC_aux, I_TC[0][tc])
             dudt_TC = izhikevich_dudt(v_TC_aux, u_TC_aux, a_TC[0][tc], b_TC[0][tc])
             
-            v_TC[tc][t] = v_TC_aux + dt*(dvdt_TC + coupling_TC_S + coupling_TC_M + coupling_TC_D + coupling_TC_CI + coupling_TC_TC + coupling_TC_TR)
+            v_TC[tc][t] = v_TC_aux + dt*(dvdt_TC + 
+                                         coupling_TC_S + 
+                                         coupling_TC_M + 
+                                         coupling_TC_D + 
+                                         coupling_TC_CI + 
+                                         coupling_TC_TC + 
+                                         coupling_TC_TR + 
+                                         kisi_TC[tc][t - td_within_layers - td_synapse - 1])
             u_TC[tc][t] = u_TC_aux + dudt_TC*dt
             
         rd = 1*r_TC; xd = 1*x_TC; isd = 1*Is_TC;
@@ -652,19 +697,19 @@ for t in range(1, num_steps):
         AP_TR = 0
         
         # Self feeback - Inhibitory
-        coupling_TR_TR = W_TR_TR[tr][0]*PSC_TR[0][t - 1]
+        coupling_TR_TR = W_TR_TR[tr][0]*PSC_TR[0][t - td_layers - td_synapse - 1]
         # Coupling TR to S - Inhibitory
-        coupling_TR_S = W_TR_S[tr][0]*PSC_S[0][t - 1]
+        coupling_TR_S = W_TR_S[tr][0]*PSC_S[0][t - td_cortex_thalamus - td_synapse - 1]
         # coupling TR to M - Excitatory
-        coupling_TR_M = W_TR_M[tr][0]*PSC_M[0][t - 1]
+        coupling_TR_M = W_TR_M[tr][0]*PSC_M[0][t - td_cortex_thalamus - td_synapse - 1]
         # Coupling TR to D - Inhibitory
-        coupling_TR_D = W_TR_D[tr][0]*PSC_D_Thalamus[0][t - 1]
+        coupling_TR_D = W_TR_D[tr][0]*PSC_D_Thalamus[0][t - td_cortex_thalamus - td_synapse - 1]
         # Coupling TR to CI - Inhibitory
-        coupling_TR_CI = W_TR_CI[tr][0]*PSC_CI[0][t - 1]
+        coupling_TR_CI = W_TR_CI[tr][0]*PSC_CI[0][t - td_cortex_thalamus - td_synapse - 1]
         # Coupling TR to TC - Inhibitory
-        coupling_TR_TC = W_TR_TC[tr][0]*PSC_TC[0][t - 1]
+        coupling_TR_TC = W_TR_TC[tr][0]*PSC_TC[0][t - td_layers - td_synapse - 1]
 
-        if (v_TR_aux >= v_threshold + zeta_TR[tr][t]):
+        if (v_TR_aux >= v_threshold + zeta_TR[tr][t - td_within_layers - td_synapse - 1]):
             v_TR_aux = 1*v_TR[tr][t]
             v_TR[tr][t] = 1*c_TR[0][tr]
             u_TR[tr][t] = 1*(u_TR_aux + d_TR[0][tr])
@@ -674,7 +719,14 @@ for t in range(1, num_steps):
             dvdt_TR = izhikevich_dvdt(v_TR_aux, u_TR_aux, I_TR[0][tr])
             dudt_TR = izhikevich_dudt(v_TR_aux, u_TR_aux, a_TR[0][tr], b_TR[0][tr])
             
-            v_TR[tr][t] = v_TR_aux + dt*(dvdt_TR + coupling_TR_S + coupling_TR_M + coupling_TR_D + coupling_TR_CI + coupling_TR_TC + coupling_TR_TR)
+            v_TR[tr][t] = v_TR_aux + dt*(dvdt_TR + 
+                                         coupling_TR_S + 
+                                         coupling_TR_M + 
+                                         coupling_TR_D + 
+                                         coupling_TR_CI + 
+                                         coupling_TR_TC + 
+                                         coupling_TR_TR + 
+                                         kisi_TR[tr][t - td_within_layers - td_synapse - 1])
             u_TR[tr][t] = u_TR_aux + dudt_TR*dt
             
         # Synaptic connection - Within Thalamus

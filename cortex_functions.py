@@ -213,12 +213,9 @@ def plot_raster_cortex(
                    TC_lim, 
                    CI_lim, 
                    CI_FS_lim, 
-                   CI_FS_lim, 
-                   D_RS_lim , 
                    D_RS_lim , 
                    D_lim, 
                    M_lim, 
-                   S_RS_lim , 
                    S_RS_lim , 
                    S_lim])
     ax1.set_yticklabels(['',
@@ -226,14 +223,11 @@ def plot_raster_cortex(
                         'TC',
                         'CI - FS',
                         'CI - LTS',
-                        'CI',
                         'D - RS',
                         'D - IB',
-                        'D', 
                         'M - RS', 
                         'S - RS', 
                         'S - IB', 
-                        'S',
                         ])
     
     # For dt = 0.1
