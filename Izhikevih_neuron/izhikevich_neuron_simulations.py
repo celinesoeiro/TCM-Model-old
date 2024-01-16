@@ -27,6 +27,9 @@ TR:
 from izhikevich_neuron import izhikevich_neuron
 
 import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set()
+
 
 regular_spiking_neuron, I_RS = izhikevich_neuron(
     params = {'a': 0.02, 'b': 0.2, 'c': -65, 'd': 8}, 
@@ -34,7 +37,7 @@ regular_spiking_neuron, I_RS = izhikevich_neuron(
     voltage_pick = 30, 
     simulation_time = 100, 
     time_step = 0.01, 
-    current_value = 10, 
+    current_value = 5, 
     current_start = 500, 
     current_finish = 10000,
     )
@@ -45,7 +48,7 @@ intrinsically_bursting_neuron, I_IB = izhikevich_neuron(
     voltage_pick = 30, 
     simulation_time = 100, 
     time_step = 0.01, 
-    current_value = 10, 
+    current_value = 5, 
     current_start = 500, 
     current_finish = 10000,
     )
@@ -67,20 +70,20 @@ fast_spiking_neuron, I_FS = izhikevich_neuron(
     voltage_pick = 30, 
     simulation_time = 100, 
     time_step = 0.01, 
-    current_value = 10, 
-    current_start = 500, 
+    current_value = 2, 
+    current_start = 0, 
     current_finish = 10000,
     )
 
 thalamo_cortical_depolarized_neuron, I_TC_d = izhikevich_neuron(
-    params = {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 0.05}, 
+    params = {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 2.05}, 
     neuron_type = 'excitatory', 
     voltage_pick = 30, 
     simulation_time = 100, 
     time_step = 0.01, 
-    current_value = 10, 
-    current_start = 100, 
-    current_finish = 900,
+    current_value = 2, 
+    current_start = 0, 
+    current_finish = 4000,
     initial_voltage = -60
     )
 
@@ -90,9 +93,9 @@ thalamo_cortical_hyperpolarized_neuron, I_TC_h = izhikevich_neuron(
     voltage_pick = 30, 
     simulation_time = 100, 
     time_step = 0.01, 
-    current_value = 10, 
-    current_start = 100, 
-    current_finish = 900,
+    current_value = 5, 
+    current_start = 500, 
+    current_finish = 10000,
     initial_voltage = -90
     )
 
@@ -113,7 +116,7 @@ low_threshold_spiking_neuron, I_LTS = izhikevich_neuron(
     voltage_pick = 30, 
     simulation_time = 100, 
     time_step = 0.01, 
-    current_value = 10, 
+    current_value = 2, 
     current_start = 500, 
     current_finish = 10000,
     )
@@ -251,6 +254,7 @@ plt.figure(5)
 plt.suptitle("Izhikevich model - Thalamo-Cortical Depolarized")
 plt.subplot(2,1,1)
 plt.plot(thalamo_cortical_depolarized_neuron, 'b', label='voltage (mV)')
+plt.yticks([20,0,-20,-40,-60,-80,-100])
 plt.legend(shadow=True, fancybox=True)
 plt.grid(True)
 plt.subplot(2,1,2)

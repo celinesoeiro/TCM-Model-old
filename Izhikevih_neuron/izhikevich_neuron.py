@@ -83,6 +83,8 @@ def izhikevich_neuron(
         I = current_value
     else:
         I[current_start:current_finish] = current_value
+        
+    print('I = ',I)
     
     # membrane potential vector
     v = np.zeros(len(time))    
@@ -106,6 +108,7 @@ def izhikevich_neuron(
         v_aux = v[t - 1]
         u_aux = u[t - 1]
         I_aux = I[t - 1]
+        # print(I_aux)
         
         if (v_aux >= voltage_pick):
             v_aux = v[t]
