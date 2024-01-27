@@ -39,38 +39,14 @@ time = np.arange(1, sim_steps)
 vp = 30     # voltage peak
 vr = -65    # voltage threshold
 rs_params = {'a': 0.02, 'b': 0.2, 'c': -65, 'd': 8}  # Regular Spiking
-fs_params = {'a': 0.1, 'b': 0.2, 'c': -65, 'd': 2}   # Fast Spiking
-lts_params = {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 2} # Low Threshold Spiking
-
 I_rs = 3.5*7
-I_fs = 3.8*4
-I_lts = 0.6*7
+
+a_rs = rs_params['a']
+b_rs = rs_params['b']
+c_rs = rs_params['c'] + 15*random_factor**2
+d_rs = rs_params['d'] - 6*random_factor**2
 
 # Tsodkys and Markram synapse model
-
-## Facilitation synapses parameters for excitatory synapses
-t_f_E_F = 670
-t_d_E_F = 138
-U_E_F = 0.09
-A_E_F = 1
-
-## Facilitation synapses parameters for inhibitory synapses
-t_f_I_F = 376
-t_d_I_F = 45
-U_I_F = 0.016
-A_I_F = 1
-
-## Depression synapses parameters for excitatory synapses
-t_f_E_D = 17
-t_d_E_D = 671
-U_E_D = 0.5
-A_E_D = 0.2
-
-## Depression synapses parameters for inhibitory synapses
-t_f_I_D = 21
-t_d_I_D = 706
-U_I_D = 0.25
-A_I_D = 1
 
 ## Without pseudo-linear synapse contribution
 ## column 0 is for STF synapses and column 1 is for STD synapses
@@ -80,76 +56,54 @@ p = 2 # if pseudo-linear is NOT considered
 t_f_E = [670, 17]     # decay time constant of u (resources ready for use)
 t_d_E = [138, 671]    # recovery time constant of x (available resources)
 t_s_E = 3             # decay time constante of I (PSC current)
-U_E = [0.09, 0.5]       # increment of u produced by a spike
-A_E = [0.37, 0.63]      # absolute synaptic efficacy
+U_E = [0.09, 0.5]     # increment of u produced by a spike
+A_E = [0.3, 0.7]      # absolute synaptic efficacy
 
 t_f_I = [376, 21]     # decay time constant of u (resources ready for use)
 t_d_I = [45, 706]     # recovery time constant of x (available resources)
 t_s_I = 11            # decay time constante of I (PSC current)
-U_I = [0.016, 0.25]     # increment of u produced by a spike
-A_I = [0.08, 0.92]      # absolute synaptic efficacy
+U_I = [0.016, 0.25]   # increment of u produced by a spike
+A_I = [0.18, 0.82]    # absolute synaptic efficacy
 
 # =============================================================================
 # VARIABLES
 # =============================================================================
-u_E = np.zeros((1, p)) 
-R_E = np.zeros((1, p))
+# u_E_aux = np.zeros((1, p))
+# R_E_aux = np.ones((1, p))
+# I_E_aux = np.zeros((1, p))
+
+u_E = np.zeros((1, p))
+R_E = np.ones((1, p))
 I_E = np.zeros((1, p))
-R_E[0][0] = 1
+
+# u_I_aux = np.zeros((1, p))
+# R_I_aux = np.ones((1, p))
+# I_I_aux = np.zeros((1, p))
 
 u_I = np.zeros((1, p))  
-R_I = np.zeros((1, p))
+R_I = np.ones((1, p))
 I_I = np.zeros((1, p))
-R_I[0][0] = 1
-
-R_E_F = np.zeros((1, sim_steps)) # R for Excitatory Facilitation
-u_E_F = np.zeros((1, sim_steps)) # u for Excitatory Facilitation
-I_E_F = np.zeros((1, sim_steps))
-
-R_E_D = np.zeros((1, sim_steps)) # R for Excitatory Depression
-u_E_D = np.zeros((1, sim_steps)) # u for Excitatory Depression
-I_E_D = np.zeros((1, sim_steps))
-
-R_I_F = np.zeros((1, sim_steps)) # R for Inhibitory Facilitation
-u_I_F = np.zeros((1, sim_steps)) # u for Inhibitory Facilitation
-I_I_F = np.zeros((1, sim_steps))
-
-R_I_D = np.zeros((1, sim_steps)) # R for Inhibitory Depression
-u_I_D = np.zeros((1, sim_steps)) # u for Inhibotory Depression
-I_I_D = np.zeros((1, sim_steps))
 
 n_rs = 1  # number of RS neurons
-n_fs = 1  # number of FS neurons
-n_lts = 1 # number of LTS neurons
 
 v_rs = np.zeros((n_rs, sim_steps)); v_rs[0][0] = vr
 u_rs = np.zeros((n_rs, sim_steps)); u_rs[0][0] = vr*rs_params['b']
 
-v_fs = np.zeros((n_fs, sim_steps)); v_fs[0][0] = vr
-u_fs = np.zeros((n_fs, sim_steps)); u_fs[0][0] = vr*fs_params['b']
-
-v_lts = np.zeros((n_lts, sim_steps)); v_lts[0][0] = vr
-u_lts = np.zeros((n_lts, sim_steps)); u_lts[0][0] = vr*lts_params['b']
-
-PSC_rs_D = np.zeros((n_rs, sim_steps))
-PSC_rs_F = np.zeros((n_rs, sim_steps))
-PSC_fs = np.zeros((n_fs, sim_steps))
-PSC_lts = np.zeros((n_lts, sim_steps))
+PSC_E = np.zeros((n_rs, sim_steps))
+PSC_I = np.zeros((n_rs, sim_steps))
 
 # =============================================================================
 # EQUATIONS IN FORM OF FUNCTIONS
 # =============================================================================
 def tm_synapse_eq(u, R, I, AP, t_f, t_d, t_s, U, A, dt):
     # Solve EDOs using Euler method
-    for j in range(p - 1):
-        # variable just after the spike
-        next_u = u[0][j] + U[j]*(1 - u[0][j]) 
+    for j in range(p):
         # u -> utilization factor -> resources ready for use
-        u[0][j + 1] = u[0][j] + dt*(-u[0][j]/t_f[j] + U[j]*(1 - u[0][j])*AP)
+        u[0][j] = u[0][j - 1] + -dt*u[0][j - 1]/t_f[j] + U[j]*(1 - u[0][j - 1])*AP
         # x -> availabe resources -> Fraction of resources that remain available after neurotransmitter depletion
-        R[0][j + 1] = R[0][j] + dt*((1 - R[0][j])/t_d[j] - next_u*R[0][j]*AP)
+        R[0][j] = R[0][j - 1] + dt*(1 - R[0][j - 1])/t_d[j - 1] - u[0][j]*R[0][j - 1]*AP
         # PSC
-        I[0][j + 1] = I[0][j] + dt*(-I[0][j]/t_s + A[j]*R[0][j]*next_u*AP)
+        I[0][j] = I[0][j - 1] + -dt*I[0][j - 1]/t_s + A[j - 1]*R[0][j - 1]*u[0][j - 1]*AP
         
     Ipost = np.sum(I)
     
@@ -160,18 +114,6 @@ def tm_synapse_eq(u, R, I, AP, t_f, t_d, t_s, U, A, dt):
     tm_syn_inst['Ipost'] = np.around(Ipost, decimals=6)
         
     return tm_syn_inst
-
-def get_PSC(voltage, vp, u, x, Is, tau_f, tau_d, tau_s, U, A, dt):
-    tm_values = []
-    for i in voltage:
-        if (i > vp):
-            tm = tm_synapse_eq(u, x, Is, 1, tau_f, tau_d, tau_s, U, A, dt)
-            tm_values.append(tm['Ipost'])
-        else:
-            tm = tm_synapse_eq(u, x, Is, 0, tau_f, tau_d, tau_s, U, A, dt)
-            tm_values.append(tm['Ipost'])
-    
-    return tm_values
 
 def print_signal(signal, title):
     plt.figure(1)
@@ -211,183 +153,47 @@ def synapse_recovery(R, tau_d, u_next, AP, dt):
 
 def synapse_current(I, tau_s, A, R, u_next, AP, dt):
     return -(dt/tau_s)*I + A*R*u_next*AP
-    return a*(b*v - u)
-
-a_rs = rs_params['a']
-b_rs = rs_params['b']
-c_rs = rs_params['c'] + 15*random_factor**2
-d_rs = rs_params['d'] - 6*random_factor**2
 
 # =============================================================================
 # MAIN - STD
 # =============================================================================
 for t in time:
     # RS NEURON - Excitatory
-    AP_aux_rs = 0
+    AP_aux = 0
     for i in range(n_rs):
-        v_aux_rs = 1*v_rs[i][t - 1]
-        u_aux_rs = 1*u_rs[i][t - 1]
-        syn_u_aux_rs = 1*u_E_D[i][t - 1]
-        syn_R_aux_rs = 1*R_E_D[i][t - 1]
-        syn_I_aux_rs = 1*I_E_D[i][t - 1]
+        v_aux = 1*v_rs[i][t - 1]
+        u_aux = 1*u_rs[i][t - 1]
                 
-        if (v_aux_rs >= vp):
-            AP_aux_rs = 1
-            v_aux_rs = v_rs[i][t]
+        if (v_aux >= vp):
+            AP_aux = 1
+            v_aux = v_rs[i][t]
             v_rs[i][t] = c_rs
-            u_rs[i][t] = u_aux_rs + d_rs
+            u_rs[i][t] = u_aux + d_rs
         else:
-            AP_aux_rs = 0
-            dv_rs = izhikevich_dvdt(v = v_aux_rs, u = u_aux_rs, I = I_rs)
-            du_rs = izhikevich_dudt(v = v_aux_rs, u = u_aux_rs, a = a_rs, b = b_rs)
+            AP_aux = 0
+            dv_rs = izhikevich_dvdt(v = v_aux, u = u_aux, I = I_rs)
+            du_rs = izhikevich_dudt(v = v_aux, u = u_aux, a = a_rs, b = b_rs)
         
-            v_rs[i][t] = v_aux_rs + dt*dv_rs
-            u_rs[i][t] = u_aux_rs + dt*du_rs
+            v_rs[i][t] = v_aux + dt*dv_rs
+            u_rs[i][t] = u_aux + dt*du_rs
             
-        # Synapse
-        syn_du = synapse_utilization(u = syn_u_aux_rs, tau_f = t_f_E_D, U = U_E_D, AP=AP_aux_rs, dt = dt)
-        u_E_D[i][t] = syn_u_aux_rs + syn_du
+        # Synapse        
+        syn_E = tm_synapse_eq(u = u_E, R = R_E, I = I_E, AP = AP_aux, t_f = t_f_E, t_d = t_d_E, t_s = t_s_E, U = U_E, A = A_E, dt = dt)
         
-        syn_dR = synapse_recovery(R = syn_R_aux_rs, tau_d = t_d_E_D, u_next = u_E_D[i][t], AP = AP_aux_rs, dt = dt)
-        R_E_D[i][t] = syn_R_aux_rs + syn_dR
+        R_E = syn_E['R']
+        u_E = syn_E['u']
+        I_E = syn_E['I']
+        PSC_E[0][t] = syn_E['Ipost']
         
-        syn_dI = synapse_current(I = syn_I_aux_rs, tau_s = t_s_E, A = A_E_D, R = syn_R_aux_rs, u_next = u_E_D[i][t], AP = AP_aux_rs, dt = dt)
-        I_E_D[i][t] = syn_I_aux_rs + syn_dI
+        syn_I = tm_synapse_eq(u = u_I, R = R_I, I = I_I, AP = AP_aux, t_f = t_f_I, t_d = t_d_I, t_s = t_s_I, U = U_I, A = A_I, dt = dt)
         
-        PSC_rs_D[i][t] = I_E_D[i][t]
+        R_I = syn_I['R']
+        u_I = syn_I['u']
+        I_I = syn_I['I']
+        PSC_I[0][t] = syn_I['Ipost']
+        
 
-    # FS NEURON - Inhibitory
-    AP_aux_fs = 0
-    for i in range(n_rs):
-        v_aux_fs = 1*v_fs[i][t - 1]
-        u_aux_fs = 1*u_fs[i][t - 1]
-        syn_u_aux_fs = 1*u_I_D[i][t - 1]
-        syn_R_aux_fs = 1*R_I_D[i][t - 1]
-        syn_I_aux_fs = 1*I_I_D[i][t - 1]
-        
-        a_fs = fs_params['a'] + 0.08*random_factor
-        b_fs = fs_params['b'] - 0.05*random_factor
-        c_fs = fs_params['c']
-        d_fs = fs_params['d']
-        
-        if (v_aux_fs >= vp):
-            AP_aux_fs = 1
-            v_aux_fs = v_fs[i][t]
-            v_fs[i][t] = c_fs
-            u_fs[i][t] = u_aux_fs + d_fs
-        else:
-            AP_aux_fs = 0
-            dv = izhikevich_dvdt(v = v_aux_fs, u = u_aux_fs, I = I_fs)
-            du = izhikevich_dudt(v = v_aux_fs, u = u_aux_fs, a = a_fs, b = b_fs)
-            
-            rs_contribution = PSC_rs_D[i][t]*-5e2/2.5
-            # rs_contribution = 0
-        
-            v_fs[i][t] = v_aux_fs + dt*(dv + rs_contribution)
-            u_fs[i][t] = u_aux_fs + dt*du
-            
-        # Synapse
-        syn_du_fs = synapse_utilization(u = syn_u_aux_fs, tau_f = t_f_I_D, U = U_I_D, AP=AP_aux_fs, dt = dt)
-        u_I_D[i][t] = syn_u_aux_fs + syn_du_fs
-        
-        syn_dR_fs = synapse_recovery(R = syn_R_aux_fs, tau_d = t_d_I_D, u_next = u_I_D[i][t], AP = AP_aux_fs, dt = dt)
-        R_I_D[i][t] = syn_R_aux_fs + syn_dR_fs
-        
-        syn_dI_fs = synapse_current(I = syn_I_aux_fs, tau_s = t_s_I, A = A_I_D, R = syn_R_aux_rs, u_next = u_I_D[i][t], AP = AP_aux_fs, dt = dt)
-        I_I_D[i][t] = syn_I_aux_fs + syn_dI_fs
-        
-        PSC_fs[i][t] = I_I_D[i][t]
+print_comparison(voltage = v_rs[0], PSC = PSC_E[0], title = 'Regular Spiking - Excitatory')
+print_comparison(voltage = v_rs[0], PSC = PSC_I[0], title = 'Regular Spiking - Inhibitory')
 
-print_signal(v_rs[0], "Izhikevich model - Regular Spiking")
-print_signal(v_fs[0], "Izhikevich model - Fast Spiking")
 
-print_signal(PSC_rs_D[0], "synapse - Regular Spiking - Depression")
-print_signal(PSC_fs[0], "synapse - Fast Spiking - Depression")
-
-del v_aux_rs, u_aux_rs, syn_u_aux_rs, syn_R_aux_rs, syn_I_aux_rs, AP_aux_rs, syn_du, syn_dR, syn_dI
-
-# =============================================================================
-# MAIN - STF
-# =============================================================================
-for t in time:
-    # RS NEURON - Excitatory
-    EPSC = 0
-    AP_aux_rs = 0
-    for i in range(n_rs):
-        v_aux_rs = 1*v_rs[i][t - 1]
-        u_aux_rs = 1*u_rs[i][t - 1]
-        syn_u_aux_rs = 1*u_E_F[i][t - 1]
-        syn_R_aux_rs = 1*R_E_F[i][t - 1]
-        syn_I_aux_rs = 1*I_E_F[i][t - 1]
-
-        if (v_aux_rs >= vp):
-            AP_aux_rs = 1
-            v_aux_rs = v_rs[i][t]
-            v_rs[i][t] = c_rs
-            u_rs[i][t] = u_aux_rs + d_rs
-        else:
-            AP_aux_rs = 0
-            dv_rs = izhikevich_dvdt(v = v_aux_rs, u = u_aux_rs, I = I_rs)
-            du_rs = izhikevich_dudt(v = v_aux_rs, u = u_aux_rs, a = a_rs, b = b_rs)
-        
-            v_rs[i][t] = v_aux_rs + dt*dv_rs
-            u_rs[i][t] = u_aux_rs + dt*du_rs
-        
-        # Synapse
-        syn_du = synapse_utilization(u = syn_u_aux_rs, tau_f = t_f_E_F, U = U_E_F, AP=AP_aux_rs, dt = dt)
-        u_E_F[i][t] = syn_u_aux_rs + syn_du
-        
-        syn_dR = synapse_recovery(R = syn_R_aux_rs, tau_d = t_d_E_F, u_next = u_E_F[i][t], AP = AP_aux_rs, dt = dt)
-        R_E_F[i][t] = syn_R_aux_rs + syn_dR
-        
-        syn_dI = synapse_current(I = syn_I_aux_rs, tau_s = t_s_E, A = A_E_F, R = syn_R_aux_rs, u_next = syn_u_aux_rs, AP = AP_aux_rs, dt = dt)
-        I_E_F[i][t] = syn_I_aux_rs + syn_dI
-        
-        PSC_rs_F[i][t] = I_E_F[i][t]
-        EPSC = I_E_F[i][t]
-            
-    # LTS NEURON - Inhibitory
-    AP_aux_lts = 0
-    for i in range(n_lts):
-        v_aux_lts = 1*v_lts[i][t - 1]
-        u_aux_lts = 1*u_lts[i][t - 1]
-        syn_u_aux_lts = 1*u_I_F[i][t - 1]
-        syn_R_aux_lts = 1*R_I_F[i][t - 1]
-        syn_I_aux_lts = 1*I_I_F[i][t - 1]
-        
-        a_lts = lts_params['a'] + 0.08*random_factor
-        b_lts = lts_params['b'] - 0.05*random_factor
-        c_lts = lts_params['c']
-        d_lts = lts_params['d']
-        
-        if (v_aux_lts >= vp):
-            AP_aux_lts = 1
-            v_aux_lts = v_lts[i][t]
-            v_lts[i][t] = c_lts
-            u_lts[i][t] = u_aux_lts + d_lts
-        else:
-            AP_aux_lts = 0
-            dv = izhikevich_dvdt(v = v_aux_lts, u = u_aux_lts, I = I_lts)
-            du = izhikevich_dudt(v = v_aux_lts, u = u_aux_lts, a = a_lts, b = b_lts)
-        
-            rs_contribution = EPSC*-5e2/2.5
-            
-            v_lts[i][t] = v_aux_lts + dt*(dv)
-            u_lts[i][t] = u_aux_lts + dt*du
-            
-        syn_du_lts = synapse_utilization(u = syn_u_aux_lts, tau_f = t_f_I_F, U = U_I_F, AP=AP_aux_lts, dt = dt)
-        u_I_F[i][t] = syn_u_aux_lts + syn_du_lts
-        
-        syn_dR_lts = synapse_recovery(R = syn_R_aux_lts, tau_d = t_d_I_F, u_next = u_I_F[i][t], AP = AP_aux_lts, dt = dt)
-        R_I_F[i][t] = syn_R_aux_lts + syn_dR_lts
-        
-        syn_dI_lts = synapse_current(I = syn_I_aux_lts, tau_s = t_s_I, A = A_I_F, R = syn_R_aux_lts, u_next = u_I_F[i][t], AP = AP_aux_lts, dt = dt)
-        I_I_F[i][t] = syn_I_aux_lts + syn_dI_lts
-        
-        PSC_lts[i][t] = I_I_F[i][t]
-
-print_signal(v_rs[0], "Izhikevich model - Regular Spiking")
-print_signal(v_lts[0], "Izhikevich model - Low Threshold Spiking")
-
-print_signal(PSC_rs_F[0], "synapse - Regular Spiking - Facilitation")
-print_signal(PSC_lts[0], "synapse - Low Threshold Spiking - Facilitation")
