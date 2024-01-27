@@ -29,14 +29,14 @@ time = np.arange(1, sim_steps)
 # Izhikevich neuron model
 vp = 30     # voltage peak
 vr = -65    # voltage threshold
-rs_params = {'a': 0.02, 'b': 0.2, 'c': -65, 'd': 8}  # Regular Spiking
+fs_params = {'a': 0.1, 'b': 0.2, 'c': -65, 'd': 2}   # Fast Spiking
 
-a_rs = rs_params['a']
-b_rs = rs_params['b']
-c_rs = rs_params['c'] + 15*random_factor**2
-d_rs = rs_params['d'] - 6*random_factor**2
+a_fs = fs_params['a']
+b_fs = fs_params['b']
+c_fs = fs_params['c'] + 15*random_factor**2
+d_fs = fs_params['d'] - 6*random_factor**2
 
-I_rs = 3.5*7
+I = 3.2*2
 
 # Tsodkys and Markram synapse model
 t_s_E = 3         # decay time constante of I (PSC current)
@@ -91,15 +91,15 @@ u_I_F = np.zeros((1, sim_steps)) # u for Inhibitory Facilitation
 I_I_F = np.zeros((1, sim_steps)) # I for Inhibitory Facilitation
 R_I_F[0][0] = 1
 
-n_rs = 1  # number of RS neurons
+n = 1  # number of FS neurons
 
-v_rs = np.zeros((n_rs, sim_steps)); v_rs[0][0] = vr
-u_rs = np.zeros((n_rs, sim_steps)); u_rs[0][0] = vr*rs_params['b']
+v = np.zeros((n, sim_steps)); v[0][0] = vr
+u = np.zeros((n, sim_steps)); u[0][0] = vr*fs_params['b']
 
-PSC_E_D = np.zeros((n_rs, sim_steps))
-PSC_E_F = np.zeros((n_rs, sim_steps))
-PSC_I_D = np.zeros((n_rs, sim_steps))
-PSC_I_F = np.zeros((n_rs, sim_steps))
+PSC_E_D = np.zeros((n, sim_steps))
+PSC_E_F = np.zeros((n, sim_steps))
+PSC_I_D = np.zeros((n, sim_steps))
+PSC_I_F = np.zeros((n, sim_steps))
 
 # =============================================================================
 # EQUATIONS IN FORM OF FUNCTIONS
@@ -129,8 +129,8 @@ def print_comparison(voltage, PSC, title):
     ax1.plot(voltage)
     ax2.plot(PSC)
     
-def izhikevich_dvdt(v, u, I):
-    return 0.04*v**2 + 5*v + 140 - u + I
+def izhikevich_dvdt(v, u, I_dc):
+    return 0.04*v**2 + 5*v + 140 - u + I_dc
 
 def izhikevich_dudt(v, u, a, b):
     return a*(b*v - u)
@@ -150,9 +150,9 @@ def synapse_current(I, tau_s, A, R, u_next, AP, dt):
 for t in time:
     # RS NEURON - Excitatory
     AP_aux = 0
-    for i in range(n_rs):
-        v_aux_rs = 1*v_rs[i][t - 1]
-        u_aux_rs = 1*u_rs[i][t - 1]
+    for i in range(n):
+        v_aux = 1*v[i][t - 1]
+        u_aux = 1*u[i][t - 1]
         # Synapse var - Excitatory - Depression
         syn_u_aux_E_D = 1*u_E_D[i][t - 1]
         syn_R_aux_E_D = 1*R_E_D[i][t - 1]
@@ -171,18 +171,18 @@ for t in time:
         syn_I_aux_I_F = 1*I_I_F[i][t - 1]        
                 
         # Neuron - FS - Excitatory
-        if (v_aux_rs >= vp):
+        if (v_aux >= vp):
             AP_aux = 1
-            v_aux_rs = v_rs[i][t]
-            v_rs[i][t] = c_rs
-            u_rs[i][t] = u_aux_rs + d_rs
+            v_aux = v[i][t]
+            v[i][t] = c_fs
+            u[i][t] = u_aux + d_fs
         else:
             AP_aux = 0
-            dv_rs = izhikevich_dvdt(v = v_aux_rs, u = u_aux_rs, I = I_rs)
-            du_rs = izhikevich_dudt(v = v_aux_rs, u = u_aux_rs, a = a_rs, b = b_rs)
+            dv = izhikevich_dvdt(v = v_aux, u = u_aux, I_dc = I)
+            du = izhikevich_dudt(v = v_aux, u = u_aux, a = a_fs, b = b_fs)
         
-            v_rs[i][t] = v_aux_rs + dt*dv_rs
-            u_rs[i][t] = u_aux_rs + dt*du_rs
+            v[i][t] = v_aux + dt*dv
+            u[i][t] = u_aux + dt*du
             
         # Synapse - Excitatory - Depression
         syn_du_E_D = synapse_utilization(u = syn_u_aux_E_D, 
@@ -285,7 +285,7 @@ for t in time:
         PSC_I_F[i][t] = I_I_F[i][t]
 
 
-print_comparison(voltage = v_rs[0], PSC = PSC_E_D[0], title = 'Regular Spiking - Excitatory - Depression')
-print_comparison(voltage = v_rs[0], PSC = PSC_E_F[0], title = 'Regular Spiking - Excitatory - Facilitation')
-print_comparison(voltage = v_rs[0], PSC = PSC_I_D[0], title = 'Regular Spiking - Inhibitory - Depression')
-print_comparison(voltage = v_rs[0], PSC = PSC_I_F[0], title = 'Regular Spiking - Inhibitory - Facilitation')
+print_comparison(voltage = v[0], PSC = PSC_E_D[0], title = 'Regular Spiking - Excitatory - Depression')
+print_comparison(voltage = v[0], PSC = PSC_E_F[0], title = 'Regular Spiking - Excitatory - Facilitation')
+print_comparison(voltage = v[0], PSC = PSC_I_D[0], title = 'Regular Spiking - Inhibitory - Depression')
+print_comparison(voltage = v[0], PSC = PSC_I_F[0], title = 'Regular Spiking - Inhibitory - Facilitation')
