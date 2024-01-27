@@ -1,4 +1,6 @@
 """
+TM SYNAPSE MODEL - FAST SPIKING NEURON
+
 STF - Short Term Facilitation
 STD - Short Term Depression
 
@@ -285,7 +287,7 @@ for t in time:
         PSC_I_F[i][t] = I_I_F[i][t]
 
 
-print_comparison(voltage = v[0], PSC = PSC_E_D[0], title = 'Regular Spiking - Excitatory - Depression')
-print_comparison(voltage = v[0], PSC = PSC_E_F[0], title = 'Regular Spiking - Excitatory - Facilitation')
-print_comparison(voltage = v[0], PSC = PSC_I_D[0], title = 'Regular Spiking - Inhibitory - Depression')
-print_comparison(voltage = v[0], PSC = PSC_I_F[0], title = 'Regular Spiking - Inhibitory - Facilitation')
+print_comparison(voltage = v[0], PSC = PSC_E_D[0], title = 'Fast Spiking - Excitatory - Depression')
+print_comparison(voltage = v[0], PSC = PSC_E_F[0], title = 'Fast Spiking - Excitatory - Facilitation')
+print_comparison(voltage = v[0], PSC = PSC_I_D[0], title = 'Fast Spiking - Inhibitory - Depression')
+print_comparison(voltage = v[0], PSC = PSC_I_F[0], title = 'Fast Spiking - Inhibitory - Facilitation')
