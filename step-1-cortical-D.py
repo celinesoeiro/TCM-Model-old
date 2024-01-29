@@ -139,9 +139,11 @@ W_PD = coupling_matrix_PD(
     n_tr = n_TR)['weights']
 
 # CI
+W_CI_self = W_N['W_II_ci']
 W_CI_D = W_N['W_IE_ci_d']
 
 # D
+W_D_self = W_N['W_EE_d']
 W_D_CI = W_N['W_EI_d_ci']
 
 
@@ -213,10 +215,16 @@ for t in time:
             u_D[d][t] = u_D_aux + d_D[0][d]
         else:
             AP_D[d][t] = 0
+            
+            # Self feedback - Inhibitory
+            coupling_D_D = W_D_self[d][0]*PSC_D[0][t - td_wl - td_syn - 1]
+            # Coupling D to CI - Excitatory 
+            coupling_D_CI = W_D_CI[d][0]*PSC_CI[0][t - td_bl - td_syn - 1]
+            
             dv_D = izhikevich_dvdt(v = v_D_aux, u = u_D_aux, I = I_D[d])
             du_D = izhikevich_dudt(v = v_D_aux, u = u_D_aux, a = a_D[0][d], b = b_D[0][d])
         
-            v_D[d][t] = v_D_aux + dt*dv_D
+            v_D[d][t] = v_D_aux + dt*(dv_D + coupling_D_D + coupling_D_CI)
             u_D[d][t] = u_D_aux + dt*du_D
             
         # Synapse        
@@ -248,10 +256,16 @@ for t in time:
             u_CI[ci][t] = u_CI_aux + d_CI[0][ci]
         else:
             AP_CI[ci][t] = 0
+            
+            # Self feeback - Inhibitory
+            coupling_CI_CI = W_CI_self[ci][0]*PSC_CI[0][t - td_wl - td_syn - 1]
+            # Coupling CI to D - Inhibitory
+            coupling_CI_D = W_CI_D[ci][0]*PSC_D[0][t - td_wl - td_syn - 1]
+            
             dv_CI = izhikevich_dvdt(v = v_CI_aux, u = u_CI_aux, I = I_CI[ci])
             du_CI = izhikevich_dudt(v = v_CI_aux, u = u_CI_aux, a = a_CI[0][ci], b = b_CI[0][ci])
         
-            v_CI[ci][t] = v_CI_aux + dt*dv_CI
+            v_CI[ci][t] = v_CI_aux + dt*(dv_CI + coupling_CI_CI + coupling_CI_D)
             u_CI[ci][t] = u_CI_aux + dt*du_CI
             
         # Synapse        
@@ -274,10 +288,12 @@ for t in time:
     
     
 print("-- Plotting results")
-plot_voltages(n_neurons = n_D, voltage = v_D, title = "Layer D")
+plot_voltages(n_neurons = n_D, voltage = v_D, title = "v - Layer D")
+plot_voltages(n_neurons = n_D, voltage = PSC_D, title = "PSC - Layer D")
 layer_raster_plot(n = n_D, AP = AP_D, sim_steps = sim_steps, layer_name = 'D')
 
 plot_voltages(n_neurons = n_CI, voltage = v_CI, title = "Layer CI")
+plot_voltages(n_neurons = n_CI, voltage = PSC_CI, title = "PSC - Layer CI")
 layer_raster_plot(n = n_CI, AP = AP_CI, sim_steps = sim_steps, layer_name = 'CI')
 
 
