@@ -151,6 +151,35 @@ def poissonSpikeGen(firing_rate, sim_steps, n_trials, dt):
     
     return spike_mat, time_vector
 
+def poisson_spike_generator(num_steps, dt, num_neurons, thalamic_firing_rate, current_value=None):
+    # Initialize an array to store spike times for each neuron
+    spike_times = [[] for _ in range(num_neurons)]
+
+    # Calculate firing probability
+    firing_prob = thalamic_firing_rate * dt  # Calculate firing probability
+
+    # Generate spikes for each neuron using the Poisson distribution
+    for t in range(num_steps):
+        for neuron_id in range(num_neurons):
+            # Generate a random number between 0 and 1
+            rand_num = np.random.rand()
+            
+            # If the random number is less than the firing probability, spike
+            if rand_num < firing_prob:
+                spike_times[neuron_id].append(t)
+            else: 
+                spike_times[neuron_id].append(0)
+    
+    # Creating a vector to be used as current input
+    input_current = np.zeros((1, num_steps))
+    for sub_spike in spike_times:
+        for spike in sub_spike:
+            spike_indice = np.array(spike)
+            value = np.random.normal(loc=0.25, scale=0.05)
+            input_current[0][spike_indice.astype(int)] = value
+                
+    return spike_times, input_current
+
 # =============================================================================
 # RASTER
 # =============================================================================

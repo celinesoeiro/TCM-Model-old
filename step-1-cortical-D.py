@@ -15,7 +15,7 @@ sns.set()
 random.seed(0)
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
-from model_functions import izhikevich_dudt, izhikevich_dvdt, tm_synapse_eq
+from model_functions import izhikevich_dudt, izhikevich_dvdt, tm_synapse_eq, poisson_spike_generator
 from model_plots import plot_heat_map, layer_raster_plot, plot_voltages
 
 # =============================================================================
@@ -141,10 +141,14 @@ W_PD = coupling_matrix_PD(
 # CI
 W_CI_self = W_N['W_II_ci']
 W_CI_D = W_N['W_IE_ci_d']
+W_CI_TR = W_N['W_II_ci_tr']
+W_CI_TC = W_N['W_IE_ci_tc']
 
 # D
 W_D_self = W_N['W_EE_d']
 W_D_CI = W_N['W_EI_d_ci']
+W_D_TR = W_N['W_EI_d_tr']
+W_D_TC = W_N['W_EE_d_tc']
 
 
 t_f_I = tm_synapse_params_inhibitory['t_f']
@@ -199,6 +203,8 @@ I_CI_syn = np.zeros((1, p))
 
 PSC_CI = np.zeros((n_CI, sim_steps))
 
+[spike_T, I_T] = poisson_spike_generator(num_steps = sim_steps, dt = dt, num_neurons = 1, thalamic_firing_rate = 20, current_value=None)
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -220,14 +226,16 @@ for t in time:
             coupling_D_D = W_D_self[d][0]*PSC_D[0][t - td_wl - td_syn - 1]
             # Coupling D to CI - Excitatory 
             coupling_D_CI = W_D_CI[d][0]*PSC_CI[0][t - td_bl - td_syn - 1]
+            # Coupling D to T - Excitatory
+            coupling_D_T = W_D_TC[d][0]*I_T[0][t - td_tc - td_syn - 1]
             
             dv_D = izhikevich_dvdt(v = v_D_aux, u = u_D_aux, I = I_D[d])
             du_D = izhikevich_dudt(v = v_D_aux, u = u_D_aux, a = a_D[0][d], b = b_D[0][d])
         
-            v_D[d][t] = v_D_aux + dt*(dv_D + coupling_D_D + coupling_D_CI)
+            v_D[d][t] = v_D_aux + dt*(dv_D + coupling_D_D + coupling_D_CI + coupling_D_T)
             u_D[d][t] = u_D_aux + dt*du_D
             
-        # Synapse        
+        # Synapse - Within cortex  
         syn_D = tm_synapse_eq(u = u_D_syn, 
                               R = R_D_syn, 
                               I = I_D_syn, 
@@ -261,11 +269,13 @@ for t in time:
             coupling_CI_CI = W_CI_self[ci][0]*PSC_CI[0][t - td_wl - td_syn - 1]
             # Coupling CI to D - Inhibitory
             coupling_CI_D = W_CI_D[ci][0]*PSC_D[0][t - td_wl - td_syn - 1]
+            # Coupling CI to T - Inhibitory
+            coupling_CI_T = W_CI_TC[ci][0]*I_T[0][t - td_tc - td_syn - 1]
             
             dv_CI = izhikevich_dvdt(v = v_CI_aux, u = u_CI_aux, I = I_CI[ci])
             du_CI = izhikevich_dudt(v = v_CI_aux, u = u_CI_aux, a = a_CI[0][ci], b = b_CI[0][ci])
         
-            v_CI[ci][t] = v_CI_aux + dt*(dv_CI + coupling_CI_CI + coupling_CI_D)
+            v_CI[ci][t] = v_CI_aux + dt*(dv_CI + coupling_CI_CI + coupling_CI_D + coupling_CI_T)
             u_CI[ci][t] = u_CI_aux + dt*du_CI
             
         # Synapse        
