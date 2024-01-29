@@ -45,13 +45,14 @@ def plot_heat_map(matrix_normal, matrix_PD):
     
     plt.show()
     
-def plot_voltages(n_neurons, voltage, chop_till, sim_steps, title):
-    new_time= np.transpose(np.arange(len(voltage)))
-
-    if (n_neurons == 40):
-        fig, axs = plt.subplots(20,2,sharex=True, figsize=(20,20))
-    else:
-        fig, axs = plt.subplots(50,2,sharex=True, figsize=(40,30))
+def plot_voltages(n_neurons, voltage, title):
+    # if (n_neurons == 40):
+    #     fig, axs = plt.subplots(20,2,sharex=True, figsize=(20,20))
+    # else:
+    #     fig, axs = plt.subplots(50,2,sharex=True, figsize=(40,30))
+    n_rows = int(n_neurons/2)
+    
+    fig, axs = plt.subplots(n_rows, 2, sharex=True, figsize=(n_neurons + 10,n_neurons + 10))
         
     fig.suptitle(title)    
     
@@ -65,7 +66,7 @@ def plot_voltages(n_neurons, voltage, chop_till, sim_steps, title):
             column = 1
         
         axs[row,column].set_title(f'NEURONIO {i + 1}')
-        axs[row,column].plot(new_time, voltage[:, i])
+        axs[row,column].plot(voltage[i])
             
     plt.show()
     
@@ -111,6 +112,37 @@ def plot_LFPs(LFP_S, LFP_M, LFP_D, LFP_CI, LFP_TC, LFP_TR, chop_till, sim_steps,
 # =============================================================================
 # RASTER
 # =============================================================================
+def layer_raster_plot(n, AP, sim_steps, layer_name):
+    fig, ax1 = plt.subplots()
+    
+    fig.canvas.manager.set_window_title(f'Raster plot layer {layer_name}')
+
+    for i in range(n):  
+        y_values = np.full_like(AP[i], i + 1)
+        ax1.scatter(x=AP[i], y=y_values, color='black', s=0.5)
+        
+    ax1.yaxis.grid(True, linestyle='-', which='major', color='lightgrey',
+                    alpha=0.5)
+    
+    ax1.set(
+        axisbelow=True,  # Hide the grid behind plot objects
+        title=f'Raster plot layer {layer_name}',
+        xlabel='Time (s)',
+        ylabel='Neurons',
+    )
+    
+    x_vec = np.arange(0, sim_steps + 1, 1000)
+    x_labels_vec = np.arange(0, n, 1, dtype=int)
+     
+    ax1.set_ylim(1, n + 1)
+    ax1.set_yticks(x_labels_vec)
+    ax1.set_yticklabels(x_labels_vec)
+    ax1.set_xlim(0, sim_steps)
+    ax1.set_xticks(x_vec)
+    ax1.set_xticklabels(x_vec)
+    plt.show()
+    
+
 def plot_raster(
     dbs,
     sim_steps,

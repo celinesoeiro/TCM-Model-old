@@ -18,20 +18,40 @@ def izhikevich_dudt(v, u, a, b):
 # =============================================================================
 # TM synapse
 # =============================================================================
-def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):        
-    for p in range(3):
-        # Solve EDOs using Euler method
-        r[p][0] = r[p][0] + dt*(-r[p][0]/tau_f[p - 1] + U[p - 1]*(1 - r[p][0])*AP)
-        x[p][0] = x[p][0] + dt*((1 - x[p][0])/tau_d[p - 1] - (r[p][0] + U[p - 1]*(1 - r[p][0]))*x[p][0]*AP)
-        Is[p][0] = Is[p][0] + dt*(-Is[p][0]/tau_s + A[p - 1]*x[p][0]*(r[p][0] + U[p - 1]*(1 - r[p][0]))*AP)
+# def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):        
+#     for p in range(3):
+#         # Solve EDOs using Euler method
+#         r[p][0] = r[p][0] + dt*(-r[p][0]/tau_f[p - 1] + U[p - 1]*(1 - r[p][0])*AP)
+#         x[p][0] = x[p][0] + dt*((1 - x[p][0])/tau_d[p - 1] - (r[p][0] + U[p - 1]*(1 - r[p][0]))*x[p][0]*AP)
+#         Is[p][0] = Is[p][0] + dt*(-Is[p][0]/tau_s + A[p - 1]*x[p][0]*(r[p][0] + U[p - 1]*(1 - r[p][0]))*AP)
         
-    Ipost = np.sum(Is)
+#     Ipost = np.sum(Is)
+    
+#     tm_syn_inst = dict()
+#     tm_syn_inst['r'] = r
+#     tm_syn_inst['x'] = x
+#     tm_syn_inst['Is'] = Is
+#     tm_syn_inst['Ipost'] = Ipost
+        
+#     return tm_syn_inst
+
+def tm_synapse_eq(u, R, I, AP, t_f, t_d, t_s, U, A, dt, p):
+    # Solve EDOs using Euler method
+    for j in range(p):
+        # u -> utilization factor -> resources ready for use
+        u[0][j] = u[0][j - 1] + -dt*u[0][j - 1]/t_f[j] + U[j]*(1 - u[0][j - 1])*AP
+        # x -> availabe resources -> Fraction of resources that remain available after neurotransmitter depletion
+        R[0][j] = R[0][j - 1] + dt*(1 - R[0][j - 1])/t_d[j - 1] - u[0][j]*R[0][j - 1]*AP
+        # PSC
+        I[0][j] = I[0][j - 1] + -dt*I[0][j - 1]/t_s + A[j - 1]*R[0][j - 1]*u[0][j - 1]*AP
+        
+    Ipost = np.sum(I)
     
     tm_syn_inst = dict()
-    tm_syn_inst['r'] = r
-    tm_syn_inst['x'] = x
-    tm_syn_inst['Is'] = Is
-    tm_syn_inst['Ipost'] = Ipost
+    tm_syn_inst['u'] = u
+    tm_syn_inst['R'] = R
+    tm_syn_inst['I'] = I
+    tm_syn_inst['Ipost'] = np.around(Ipost, decimals=6)
         
     return tm_syn_inst
 

@@ -1,5 +1,5 @@
 """
-TM SYNAPSE MODEL - LOW THRESHOLDING SPIKING NEURON
+TM SYNAPSE MODEL - LOW THRESHOLDING SPIKING NEURON - INHIBITORY
 
 STF - Short Term Facilitation
 STD - Short Term Depression
@@ -33,10 +33,10 @@ vp = 30     # voltage peak
 vr = -65    # voltage threshold
 lts_params = {'a': 0.02, 'b': 0.25, 'c': -65, 'd': 2}   # LTS 
 
-a_lts = lts_params['a']
-b_lts = lts_params['b']
-c_lts = lts_params['c'] + 15*random_factor**2
-d_lts = lts_params['d'] - 6*random_factor**2
+a_lts = lts_params['a'] + 0.08*random_factor
+b_lts = lts_params['b'] - 0.05*random_factor
+c_lts = lts_params['c'] 
+d_lts = lts_params['d'] 
 
 I = 3
 

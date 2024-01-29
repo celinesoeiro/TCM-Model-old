@@ -67,15 +67,12 @@ def TCM_model_parameters():
     random.seed(0)
     random_factor = np.round(random.random(),2)
     
-    ms = 1000                               # 1 second = 1000 miliseconds
-    number_trials = 1                       # number of trials
-    dt = 10/ms                              # time step of 10 ms
+    ms = 100                               # 1 second = 1000 miliseconds
+    dt = 1/ms                              # time step of 10 ms
     samp_freq = int(1/dt)                  # sampling frequency in Hz
-    dbs_on = int(5*67)                      # value of synaptic fidelity when DBS on
-    dbs_off = 0                             # value of synaptic fidelity when DBS off
-    simulation_time = 3                     # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
+    simulation_time = 100                     # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
     T = int((simulation_time + 0.5)*ms)          # Simulation time in ms with 1 extra second to reach the steady state and trash later
-    sim_steps = int(np.round(T/dt))         # number of simulation steps
+    sim_steps = int(simulation_time/dt)         # number of simulation steps
     chop_till = 1*samp_freq;                # Cut the first 1 seconds of the simulation
 
     td_synapse = 1                          # Synaptic transmission delay (fixed for all synapses in the TCM)
@@ -84,20 +81,23 @@ def TCM_model_parameters():
     td_layers = 8                           # time delay between the layers in cortex and nuclei in thalamus (ms) (PSC delay)
     td_within_layers = 1                    # time delay within a structure (ms)
     
-    hyperdirect_neurons = 0.1               # percentage of PNs that are hyperdirect
-    
-    connectivity_factor_normal = 2.5        # For 100 neurons
-    connectivity_factor_PD = 5              # For 100 neurons
-    
-    Idc_tune = 0.1                          # 
-    vr = -65                                # membrane potential resting value 
-    vp = 30                                 # membrane peak voltage value
-    
     # Time vector
     if (td_thalamus_cortex >= td_cortex_thalamus): 
         t_vec = np.arange(td_thalamus_cortex + td_synapse + 1, sim_steps)
     else:
         t_vec = np.arange(td_cortex_thalamus + td_synapse + 1, sim_steps)
+
+    Idc_tune = 0.1                          # 
+    vr = -65                                # membrane potential resting value 
+    vp = 30                                 # membrane peak voltage value
+        
+    hyperdirect_neurons = 0.1               # percentage of PNs that are hyperdirect
+    
+    connectivity_factor_normal = 2.5        # For 100 neurons
+    connectivity_factor_PD = 5              # For 100 neurons
+        
+    dbs_on = int(5*67)                      # value of synaptic fidelity when DBS on
+    dbs_off = 0                             # value of synaptic fidelity when DBS off
         
     # Neuron quantities
     qnt_neurons_s = 10         # Excitatory
@@ -186,8 +186,8 @@ def TCM_model_parameters():
     c_D = np.c_[c[0]*np.ones((1, neurons_d_1)), c[1]*np.ones((1, neurons_d_2))] + 15*random_factor**2
     d_D = np.c_[d[0]*np.ones((1, neurons_d_1)), d[1]*np.ones((1, neurons_d_2))] - 0.6*random_factor**2
         
-    a_CI = np.c_[a[2]*np.ones((1, neurons_ci_1)), a[3]*np.ones((1, neurons_ci_2))] + 0.008*random_factor
-    b_CI = np.c_[b[2]*np.ones((1, neurons_ci_1)), b[3]*np.ones((1, neurons_ci_2))] - 0.005*random_factor
+    a_CI = np.c_[a[2]*np.ones((1, neurons_ci_1)), a[3]*np.ones((1, neurons_ci_2))] + 0.08*random_factor
+    b_CI = np.c_[b[2]*np.ones((1, neurons_ci_1)), b[3]*np.ones((1, neurons_ci_2))] - 0.05*random_factor
     c_CI = np.c_[c[2]*np.ones((1, neurons_ci_1)), c[3]*np.ones((1, neurons_ci_2))]
     d_CI = np.c_[d[2]*np.ones((1, neurons_ci_1)), d[3]*np.ones((1, neurons_ci_2))]
     
@@ -196,8 +196,8 @@ def TCM_model_parameters():
     c_TC = np.c_[c[4]*np.ones((1, neurons_tc_1)), c[4]*np.ones((1, neurons_tc_2))] + 15*random_factor**2
     d_TC = np.c_[d[4]*np.ones((1, neurons_tc_1)), d[4]*np.ones((1, neurons_tc_2))] - 0.6*random_factor**2
     
-    a_TR = np.c_[a[5]*np.ones((1, neurons_tr_1)), a[5]*np.ones((1, neurons_tr_2))] + 0.008*random_factor
-    b_TR = np.c_[b[5]*np.ones((1, neurons_tr_1)), b[5]*np.ones((1, neurons_tr_2))] - 0.005*random_factor
+    a_TR = np.c_[a[5]*np.ones((1, neurons_tr_1)), a[5]*np.ones((1, neurons_tr_2))] + 0.08*random_factor
+    b_TR = np.c_[b[5]*np.ones((1, neurons_tr_1)), b[5]*np.ones((1, neurons_tr_2))] - 0.05*random_factor
     c_TR = np.c_[c[5]*np.ones((1, neurons_tr_1)), c[5]*np.ones((1, neurons_tr_2))]
     d_TR = np.c_[d[5]*np.ones((1, neurons_tr_1)), d[5]*np.ones((1, neurons_tr_2))]
         
@@ -229,7 +229,6 @@ def TCM_model_parameters():
         }
 
     model_global_parameters = {
-        'number_trials': number_trials,
         'hyperdirect_neurons': hyperdirect_neurons, # Percentage of PNs affected in D by DBS
         'simulation_time': simulation_time, # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
         'simulation_time_ms': T,

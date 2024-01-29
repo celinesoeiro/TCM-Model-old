@@ -11,7 +11,7 @@ import pandas as pd
 random.seed(0)
 random_factor = np.round(random.random(),2)
 
-from cortex_functions import izhikevich_dvdt, izhikevich_dudt, plot_voltage, tm_synapse_eq
+from cortex_functions import izhikevich_dvdt, izhikevich_dudt, tm_synapse_eq
 from cortex_functions import plot_heat_map, plot_raster_cortex
 
 # =============================================================================
@@ -464,6 +464,7 @@ for t_float in t_vec:
             
         # Synaptic connection - within cortex
         syn_S = tm_synapse_eq(r=r_S, x=x_S, Is=Is_S, AP=AP_S, tau_f=t_f_E, tau_d=t_f_E, tau_s=t_s_E, U=U_E, A=A_E, dt=dt)
+        
         r_S = syn_S['r']
         x_S = syn_S['x']
         Is_S = syn_S['Is']
@@ -570,7 +571,6 @@ for t_float in t_vec:
         Is_D = syn_D['Is']
         Ipost_D = syn_D['Ipost']
         
-        print(rt != r_D, xt != x_D, ist != Is_D)
         # Synaptic connection - Cortex and Thalamus
         syn_D_T = tm_synapse_eq(r=rt, x=xt, Is=ist, AP=AP_D, tau_f=t_f_E, tau_d=t_f_E, tau_s=t_s_E, U=U_E, A=A_D_T_E, dt=dt)
         r_D_T = syn_D_T['r']

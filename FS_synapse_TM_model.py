@@ -1,5 +1,5 @@
 """
-TM SYNAPSE MODEL - FAST SPIKING NEURON
+TM SYNAPSE MODEL - FAST SPIKING NEURON - INHIBITORY
 
 STF - Short Term Facilitation
 STD - Short Term Depression
@@ -33,10 +33,10 @@ vp = 30     # voltage peak
 vr = -65    # voltage threshold
 fs_params = {'a': 0.1, 'b': 0.2, 'c': -65, 'd': 2}   # Fast Spiking
 
-a_fs = fs_params['a']
-b_fs = fs_params['b']
-c_fs = fs_params['c'] + 15*random_factor**2
-d_fs = fs_params['d'] - 6*random_factor**2
+a_fs = fs_params['a'] + 0.08*random_factor
+b_fs = fs_params['b'] - 0.05*random_factor
+c_fs = fs_params['c'] 
+d_fs = fs_params['d'] 
 
 I = 3.2*2
 

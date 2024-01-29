@@ -124,7 +124,7 @@ I_syn_TC = synapse_initial_values['I_syn_TC']
 x_CI = synapse_initial_values['x_CI']
 r_CI = synapse_initial_values['r_CI']
 I_syn_CI = synapse_initial_values['I_syn_CI']
-## CI
+## S
 x_S = synapse_initial_values['x_S']
 r_S = synapse_initial_values['r_S']
 I_syn_S = synapse_initial_values['I_syn_S']
