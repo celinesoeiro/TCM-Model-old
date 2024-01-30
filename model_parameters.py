@@ -67,10 +67,10 @@ def TCM_model_parameters():
     random.seed(0)
     random_factor = np.round(random.random(),2)
     
-    ms = 100                               # 1 second = 1000 miliseconds
-    dt = 1/ms                              # time step of 10 ms
-    samp_freq = int(1/dt)                  # sampling frequency in Hz
+    ms = 1000                               # 1 second = 1000 miliseconds
+    dt = 10/ms                              # time step of 10 ms
     simulation_time = 100                     # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
+    samp_freq = int(1/dt)                  # sampling frequency in Hz
     T = int((simulation_time + 0.5)*ms)          # Simulation time in ms with 1 extra second to reach the steady state and trash later
     sim_steps = int(simulation_time/dt)         # number of simulation steps
     chop_till = 1*samp_freq;                # Cut the first 1 seconds of the simulation
@@ -142,6 +142,10 @@ def TCM_model_parameters():
     neurons_tc_1 = int(0.7*qnt_neurons_tc)      # TC neurons
     neurons_tc_2 = int(0.3*qnt_neurons_tc)      # TC neurons
     
+    neuron_types_S = ['RS']*neurons_s_1 + ['IB']*neurons_s_2
+    neuron_types_D = ['RS']*neurons_d_1 + ['IB']*neurons_d_2
+    neuron_types_CI = ['FS']*neurons_ci_1 + ['LTS']*neurons_ci_2
+    
     neuron_per_structure = {
         'neurons_s_1': neurons_s_1,             # Regular Spiking
         'neurons_s_2': neurons_s_2,             # Intrinsically Bursting
@@ -155,6 +159,12 @@ def TCM_model_parameters():
         'neurons_tc_2': neurons_tc_2,           # Relay
         'neurons_tr_1': neurons_tr_1,           # Reticular
         'neurons_tr_2': neurons_tr_2,           # Reticular
+        }
+    
+    neuron_types_per_structure = {
+        'S': neuron_types_S,
+        'D': neuron_types_D,
+        'CI': neuron_types_CI,
         }
     
     # Neuron parameters to model Izhikevich Neurons
@@ -247,6 +257,7 @@ def TCM_model_parameters():
         'vr': vr,
         'vp': vp,
         'Idc_tune': Idc_tune,
+        'neuron_types_per_structure': neuron_types_per_structure
         }
     
     # =============================================================================
