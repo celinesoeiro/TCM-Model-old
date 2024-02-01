@@ -4,21 +4,16 @@ Created on Wed Jan 31 20:31:27 2024
 @author: celinesoeiro
 """
 
-import random
 import numpy as np
 import pandas as pd
 import gc # Garbage Collector
 from random import seed, random
 
-from matplotlib import pyplot as plt
-import seaborn as sns
-sns.set()
-
 seed(1)
 random_factor = random()
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
-from model_functions import izhikevich_dudt, izhikevich_dvdt, tm_synapse_eq, poisson_spike_generator
+from model_functions import izhikevich_dudt, izhikevich_dvdt, tm_synapse_eq
 from model_plots import plot_heat_map, layer_raster_plot, plot_voltages, plot_raster
 
 # =============================================================================
@@ -116,11 +111,6 @@ plot_heat_map(matrix_normal = CM_Normal, matrix_PD = CM_PD)
 # =============================================================================
 # NEURON PARAMS
 # =============================================================================
-a = [0.02, 0.02, 0.1, 0.02, 0.02, 0.02]
-b = [0.2,  0.2,  0.2, 0.25, 0.25, 0.25]
-c = [-65,  -55,  -65, -65,   -65,  -65]
-d = [8,    4,      2,   2,  0.05, 2.05]
-
 a_S = neuron_params['a_S']
 b_S = neuron_params['b_S']
 c_S = neuron_params['c_S']
