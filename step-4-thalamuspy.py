@@ -358,6 +358,67 @@ PSC_TR = np.zeros((1, sim_steps))
 print("-- Running model")
 for t in time:
 # =============================================================================
+#     TR
+# =============================================================================
+    for tr in range(n_TR):
+        v_TR_aux = 1*v_TR[tr][t - 1]
+        u_TR_aux = 1*u_TR[tr][t - 1]
+        AP_TR_aux = 0
+                
+        if (v_TR_aux >= vp):
+            AP_TR_aux = 1
+            AP_TR[tr][t] = t
+            v_TR_aux = v_TR[tr][t]
+            v_TR[tr][t] = c_TR[0][tr]
+            u_TR[tr][t] = u_TR_aux + d_TR[0][tr]
+        else:
+            AP_TR[tr][t] = 0
+            AP_TR_aux = 0
+            
+            # Self feedback - Inhibitory
+            coupling_TR_TR = W_TR_self[tr][0]*1*PSC_TR[0][t - td_wl - td_syn - 1]
+            # Coupling TR to S - Excitatory 
+            coupling_TR_S = W_TR_S[tr][0]*1*PSC_S[0][t - td_ct - td_syn - 1]
+            # Coupling TR to M - Excitatory 
+            coupling_TR_M = W_TR_M[tr][0]*1*PSC_M[0][t - td_ct - td_syn - 1]
+            # Coupling TR to D - Excitatory 
+            coupling_TR_D = W_TR_D[tr][0]*1*PSC_D[0][t - td_ct - td_syn - 1]
+            # Coupling TR to CI - Inhibitory 
+            coupling_TR_CI = W_TR_CI[tr][0]*1*PSC_CI[0][t - td_ct - td_syn - 1]
+            # Coupling TR to TC - Inhibitory 
+            coupling_TR_TC = W_TR_TC[tr][0]*1*PSC_TC[0][t - td_bl - td_syn - 1]
+            
+            dv_TR = izhikevich_dvdt(v = v_TR_aux, u = u_TR_aux, I = I_TR[tr])
+            du_TR = izhikevich_dudt(v = v_TR_aux, u = u_TR_aux, a = a_TR[0][tr], b = b_TR[0][tr])
+        
+            v_TR[tr][t] = v_TR_aux + dt*(dv_TR + 
+                                         coupling_TR_S + 
+                                         coupling_TR_M + 
+                                         coupling_TR_D + 
+                                         coupling_TR_CI + 
+                                         coupling_TR_TC + 
+                                         coupling_TR_TR)
+            u_TR[tr][t] = u_TR_aux + dt*du_TR
+            
+        # Synapse - Within layer  
+        syn_TR = tm_synapse_eq(u = u_TR_syn, 
+                              R = R_TR_syn, 
+                              I = I_TR_syn, 
+                              AP = AP_TR_aux, 
+                              t_f = t_f_I, 
+                              t_d = t_d_I, 
+                              t_s = t_s_I, 
+                              U = U_I, 
+                              A = A_I, 
+                              dt = dt, 
+                              p = p)
+        
+        R_TR_syn = 1*syn_TR['R']
+        u_TR_syn = 1*syn_TR['u']
+        I_TR_syn = 1*syn_TR['I']
+        PSC_TR[0][t] = 1*syn_TR['Ipost']    
+
+# =============================================================================
 #     TC
 # =============================================================================
     for tc in range(n_TC):
@@ -385,11 +446,19 @@ for t in time:
             coupling_TC_D = W_TC_D[tc][0]*1*PSC_D[0][t - td_ct - td_syn - 1]
             # Coupling TC to CI - Inhibitory 
             coupling_TC_CI = W_TC_CI[tc][0]*1*PSC_CI[0][t - td_ct - td_syn - 1]
+            # Coupling TC to TR - Excitatory 
+            coupling_TC_TR = W_TC_TR[tc][0]*1*PSC_TR[0][t - td_bl - td_syn - 1]
             
             dv_TC = izhikevich_dvdt(v = v_TC_aux, u = u_TC_aux, I = I_TC[tc])
             du_TC = izhikevich_dudt(v = v_TC_aux, u = u_TC_aux, a = a_TC[0][tc], b = b_TC[0][tc])
         
-            v_TC[tc][t] = v_TC_aux + dt*(dv_TC + coupling_TC_S + coupling_TC_M + coupling_TC_D + coupling_TC_CI + coupling_TC_TC)
+            v_TC[tc][t] = v_TC_aux + dt*(dv_TC + 
+                                         coupling_TC_S + 
+                                         coupling_TC_M + 
+                                         coupling_TC_D + 
+                                         coupling_TC_CI + 
+                                         coupling_TC_TC + 
+                                         coupling_TC_TR)
             u_TC[tc][t] = u_TC_aux + dt*du_TC
             
         # Synapse - Within layer  
@@ -436,13 +505,15 @@ for t in time:
             coupling_S_D = W_S_D[s][0]*1*PSC_D[0][t - td_bl - td_syn - 1]
             # Coupling S to CI - Inhibitory 
             coupling_S_CI = W_S_CI[s][0]*1*PSC_CI[0][t - td_wl - td_syn - 1]
-            # Coupling S to T - Excitatory
+            # Coupling S to TC - Excitatory
             coupling_S_TC = W_S_TC[s][0]*1*PSC_TC[0][t - td_tc - td_syn - 1]
+            # Coupling S to TR - Excitatory
+            coupling_S_TR = W_S_TR[s][0]*1*PSC_TR[0][t - td_tc - td_syn - 1]
             
             dv_S = izhikevich_dvdt(v = v_S_aux, u = u_S_aux, I = I_S[s])
             du_S = izhikevich_dudt(v = v_S_aux, u = u_S_aux, a = a_S[0][s], b = b_S[0][s])
         
-            v_S[s][t] = v_S_aux + dt*(dv_S + coupling_S_S + coupling_S_M + coupling_S_D + coupling_S_CI + coupling_S_TC)
+            v_S[s][t] = v_S_aux + dt*(dv_S + coupling_S_S + coupling_S_M + coupling_S_D + coupling_S_CI + coupling_S_TC + coupling_S_TR)
             u_S[s][t] = u_S_aux + dt*du_S
             
         # Synapse - Within cortex  
@@ -489,13 +560,15 @@ for t in time:
             coupling_M_D = W_M_D[m][0]*1*PSC_D[0][t - td_bl - td_syn - 1]
             # Coupling M to CI - Inhibitory 
             coupling_M_CI = W_M_CI[m][0]*1*PSC_CI[0][t - td_wl - td_syn - 1]
-            # Coupling M to T - Excitatory
+            # Coupling M to TC - Excitatory
             coupling_M_TC = W_M_TC[m][0]*1*PSC_TC[0][t - td_tc - td_syn - 1]
+            # Coupling M to TR - Excitatory
+            coupling_M_TR = W_M_TR[m][0]*1*PSC_TR[0][t - td_tc - td_syn - 1]
             
             dv_M = izhikevich_dvdt(v = v_M_aux, u = u_M_aux, I = I_M[m])
             du_M = izhikevich_dudt(v = v_M_aux, u = u_M_aux, a = a_M[0][m], b = b_M[0][m])
         
-            v_M[m][t] = v_M_aux + dt*(dv_M + coupling_M_M + coupling_M_S + coupling_M_D + coupling_M_CI + coupling_M_TC)
+            v_M[m][t] = v_M_aux + dt*(dv_M + coupling_M_M + coupling_M_S + coupling_M_D + coupling_M_CI + coupling_M_TC + coupling_M_TR)
             u_M[m][t] = u_M_aux + dt*du_M
             
         # Synapse - Within cortex  
@@ -542,13 +615,15 @@ for t in time:
             coupling_D_M = W_D_M[d][0]*1*PSC_M[0][t - td_bl - td_syn - 1]
             # Coupling D to CI - Inhibitory 
             coupling_D_CI = W_D_CI[d][0]*1*PSC_CI[0][t - td_wl - td_syn - 1]
-            # Coupling D to T - Excitatory
+            # Coupling D to TC - Excitatory
             coupling_D_TC = W_D_TC[d][0]*1*PSC_TC[0][t - td_tc - td_syn - 1]
+            # Coupling D to TR - Excitatory
+            coupling_D_TR = W_D_TR[d][0]*1*PSC_TR[0][t - td_tc - td_syn - 1]
             
             dv_D = izhikevich_dvdt(v = v_D_aux, u = u_D_aux, I = I_D[d])
             du_D = izhikevich_dudt(v = v_D_aux, u = u_D_aux, a = a_D[0][d], b = b_D[0][d])
         
-            v_D[d][t] = v_D_aux + dt*(dv_D + coupling_D_S + coupling_D_M + coupling_D_D + coupling_D_CI + coupling_D_TC)
+            v_D[d][t] = v_D_aux + dt*(dv_D + coupling_D_S + coupling_D_M + coupling_D_D + coupling_D_CI + coupling_D_TC + coupling_D_TR)
             u_D[d][t] = u_D_aux + dt*du_D
             
         # Synapse - Within cortex  
@@ -595,13 +670,15 @@ for t in time:
             coupling_CI_M = W_CI_M[ci][0]*PSC_M[0][t - td_wl - td_syn - 1]
             # Coupling CI to D - Inhibitory
             coupling_CI_D = W_CI_D[ci][0]*PSC_D[0][t - td_wl - td_syn - 1]
-            # Coupling CI to T - Inhibitory
+            # Coupling CI to TC - Inhibitory
             coupling_CI_TC = W_CI_TC[ci][0]*PSC_TC[0][t - td_tc - td_syn - 1]
+            # Coupling CI to TR - Inhibitory
+            coupling_CI_TR = W_CI_TR[ci][0]*PSC_TR[0][t - td_tc - td_syn - 1]
             
             dv_CI = izhikevich_dvdt(v = v_CI_aux, u = u_CI_aux, I = I_CI[ci])
             du_CI = izhikevich_dudt(v = v_CI_aux, u = u_CI_aux, a = a_CI[0][ci], b = b_CI[0][ci])
         
-            v_CI[ci][t] = v_CI_aux + dt*(dv_CI + coupling_CI_M + coupling_CI_S + coupling_CI_CI + coupling_CI_D + coupling_CI_TC)
+            v_CI[ci][t] = v_CI_aux + dt*(dv_CI + coupling_CI_M + coupling_CI_S + coupling_CI_CI + coupling_CI_D + coupling_CI_TC + coupling_CI_TR)
             u_CI[ci][t] = u_CI_aux + dt*du_CI
             
         # Synapse        
@@ -646,6 +723,10 @@ print('APS in CI layer = ',np.count_nonzero(AP_CI))
 plot_voltages(n_neurons = n_TC, voltage = v_TC, title = "TC", neuron_types=neuron_types_per_structure['TC'])
 layer_raster_plot(n = n_TC, AP = AP_TC, sim_steps = sim_steps, layer_name = 'TC', dt = dt)
 print('APS in TC layer = ',np.count_nonzero(AP_TC))
+
+plot_voltages(n_neurons = n_TR, voltage = v_TR, title = "TR", neuron_types=neuron_types_per_structure['TR'])
+layer_raster_plot(n = n_TR, AP = AP_TR, sim_steps = sim_steps, layer_name = 'TR', dt = dt)
+print('APS in TR layer = ',np.count_nonzero(AP_TR))
 
 plot_raster(dbs=0,
 sim_steps=sim_steps,
