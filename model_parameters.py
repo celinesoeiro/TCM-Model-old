@@ -143,8 +143,11 @@ def TCM_model_parameters():
     neurons_tc_2 = int(0.3*qnt_neurons_tc)      # TC neurons
     
     neuron_types_S = ['RS']*neurons_s_1 + ['IB']*neurons_s_2
+    neuron_types_M = ['RS']*neurons_m_1 + ['IB']*neurons_m_2
     neuron_types_D = ['RS']*neurons_d_1 + ['IB']*neurons_d_2
     neuron_types_CI = ['FS']*neurons_ci_1 + ['LTS']*neurons_ci_2
+    neuron_types_TC = ['TC']*neurons_ci_1 + ['TC']*neurons_ci_2
+    neuron_types_TR = ['TR']*neurons_ci_1 + ['TR']*neurons_ci_2
     
     neuron_per_structure = {
         'neurons_s_1': neurons_s_1,             # Regular Spiking
@@ -163,8 +166,11 @@ def TCM_model_parameters():
     
     neuron_types_per_structure = {
         'S': neuron_types_S,
+        'M': neuron_types_M,
         'D': neuron_types_D,
         'CI': neuron_types_CI,
+        'TC': neuron_types_TC,
+        'TR': neuron_types_TR
         }
     
     # Neuron parameters to model Izhikevich Neurons
@@ -201,10 +207,15 @@ def TCM_model_parameters():
     c_CI = np.c_[c[2]*np.ones((1, neurons_ci_1)), c[3]*np.ones((1, neurons_ci_2))]
     d_CI = np.c_[d[2]*np.ones((1, neurons_ci_1)), d[3]*np.ones((1, neurons_ci_2))]
     
-    a_TC = np.c_[a[4]*np.ones((1, neurons_tc_1)), a[4]*np.ones((1, neurons_tc_2))]
-    b_TC = np.c_[b[4]*np.ones((1, neurons_tc_1)), b[4]*np.ones((1, neurons_tc_2))]
-    c_TC = np.c_[c[4]*np.ones((1, neurons_tc_1)), c[4]*np.ones((1, neurons_tc_2))] + 15*random_factor**2
-    d_TC = np.c_[d[4]*np.ones((1, neurons_tc_1)), d[4]*np.ones((1, neurons_tc_2))] - 0.6*random_factor**2
+    # a_TC = np.c_[a[4]*np.ones((1, neurons_tc_1)), a[4]*np.ones((1, neurons_tc_2))]
+    # b_TC = np.c_[b[4]*np.ones((1, neurons_tc_1)), b[4]*np.ones((1, neurons_tc_2))]
+    # c_TC = np.c_[c[4]*np.ones((1, neurons_tc_1)), c[4]*np.ones((1, neurons_tc_2))] + 15*random_factor**2
+    # d_TC = np.c_[d[4]*np.ones((1, neurons_tc_1)), d[4]*np.ones((1, neurons_tc_2))] - 0.6*random_factor**2
+    
+    a_TC = np.c_[a[4]*np.ones((1, neurons_tc_1)), a[4]*np.ones((1, neurons_tc_2))] + 0.08*random_factor
+    b_TC = np.c_[b[4]*np.ones((1, neurons_tc_1)), b[4]*np.ones((1, neurons_tc_2))] - 0.05*random_factor
+    c_TC = np.c_[c[4]*np.ones((1, neurons_tc_1)), c[4]*np.ones((1, neurons_tc_2))] 
+    d_TC = np.c_[d[4]*np.ones((1, neurons_tc_1)), d[4]*np.ones((1, neurons_tc_2))] 
     
     a_TR = np.c_[a[5]*np.ones((1, neurons_tr_1)), a[5]*np.ones((1, neurons_tr_2))] + 0.08*random_factor
     b_TR = np.c_[b[5]*np.ones((1, neurons_tr_1)), b[5]*np.ones((1, neurons_tr_2))] - 0.05*random_factor
