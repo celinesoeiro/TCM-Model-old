@@ -249,6 +249,17 @@ p = 3
 # =============================================================================
 # NEURON VARIABELS
 # =============================================================================
+## Post-Synaptic Currents
+PSC_S = np.zeros((1, sim_steps))
+PSC_M = np.zeros((1, sim_steps))
+PSC_D = np.zeros((1, sim_steps))
+PSC_CI = np.zeros((1, sim_steps))
+PSC_TC = np.zeros((1, sim_steps))
+PSC_TR = np.zeros((1, sim_steps))
+## Thalamus-Cortex coupling params
+PSC_T_D = np.zeros((1, sim_steps)) # from Thalamus to D
+PSC_D_T = np.zeros((1, sim_steps)) # from D to Thalamus
+
 ## S
 AP_S = np.zeros((n_S, sim_steps))
 
@@ -261,8 +272,6 @@ for i in range(n_S):
 u_S_syn = np.zeros((1, p))
 R_S_syn = np.ones((1, p))
 I_S_syn = np.zeros((1, p))
-
-PSC_S = np.zeros((1, sim_steps))
 
 del i
 
@@ -278,8 +287,6 @@ for i in range(n_M):
 u_M_syn = np.zeros((1, p))
 R_M_syn = np.ones((1, p))
 I_M_syn = np.zeros((1, p))
-
-PSC_M = np.zeros((1, sim_steps))
 
 del i
 
@@ -297,8 +304,6 @@ u_D_syn = np.zeros((1, p))
 R_D_syn = np.ones((1, p))
 I_D_syn = np.zeros((1, p))
 
-PSC_D = np.zeros((1, sim_steps))
-
 del i
 
 ## CI
@@ -313,8 +318,6 @@ for i in range(n_CI):
 u_CI_syn = np.zeros((1, p))
 R_CI_syn = np.ones((1, p))
 I_CI_syn = np.zeros((1, p))
-
-PSC_CI = np.zeros((1, sim_steps))
 
 del i
 
@@ -331,8 +334,6 @@ u_TC_syn = np.zeros((1, p))
 R_TC_syn = np.ones((1, p))
 I_TC_syn = np.zeros((1, p))
 
-PSC_TC = np.zeros((1, sim_steps))
-
 del i
 
 ## TR
@@ -347,10 +348,6 @@ for i in range(n_TR):
 u_TR_syn = np.zeros((1, p))
 R_TR_syn = np.ones((1, p))
 I_TR_syn = np.zeros((1, p))
-
-PSC_TR = np.zeros((1, sim_steps))
-
-[spike_T, I_T] = poisson_spike_generator(num_steps = sim_steps, dt = dt, num_neurons = 1, thalamic_firing_rate = 20, current_value=None)
 
 # =============================================================================
 # MAIN
@@ -382,7 +379,7 @@ for t in time:
             # Coupling TR to M - Excitatory 
             coupling_TR_M = W_TR_M[tr][0]*1*PSC_M[0][t - td_ct - td_syn - 1]
             # Coupling TR to D - Excitatory 
-            coupling_TR_D = W_TR_D[tr][0]*1*PSC_D[0][t - td_ct - td_syn - 1]
+            coupling_TR_D = W_TR_D[tr][0]*1*PSC_D_T[0][t - td_ct - td_syn - 1]
             # Coupling TR to CI - Inhibitory 
             coupling_TR_CI = W_TR_CI[tr][0]*1*PSC_CI[0][t - td_ct - td_syn - 1]
             # Coupling TR to TC - Inhibitory 
@@ -443,7 +440,7 @@ for t in time:
             # Coupling TC to M - Excitatory 
             coupling_TC_M = W_TC_M[tc][0]*1*PSC_M[0][t - td_ct - td_syn - 1]
             # Coupling TC to D - Excitatory 
-            coupling_TC_D = W_TC_D[tc][0]*1*PSC_D[0][t - td_ct - td_syn - 1]
+            coupling_TC_D = W_TC_D[tc][0]*1*PSC_D_T[0][t - td_ct - td_syn - 1]
             # Coupling TC to CI - Inhibitory 
             coupling_TC_CI = W_TC_CI[tc][0]*1*PSC_CI[0][t - td_ct - td_syn - 1]
             # Coupling TC to TR - Excitatory 
@@ -474,10 +471,28 @@ for t in time:
                               dt = dt, 
                               p = p)
         
+        # Synapse - With cortex
+        syn_TC_D = tm_synapse_eq(u = u_TC_syn, 
+                              R = R_TC_syn, 
+                              I = I_TC_syn, 
+                              AP = AP_TC_aux, 
+                              t_f = t_f_E, 
+                              t_d = t_d_E, 
+                              t_s = t_s_E, 
+                              U = U_E, 
+                              A = A_E_T_D, 
+                              dt = dt, 
+                              p = p)
+        
         R_TC_syn = 1*syn_TC['R']
         u_TC_syn = 1*syn_TC['u']
         I_TC_syn = 1*syn_TC['I']
         PSC_TC[0][t] = 1*syn_TC['Ipost']
+        
+        R_TC_syn_D = 1*syn_TC_D['R']
+        u_TC_syn_D = 1*syn_TC_D['u']
+        I_TC_syn_D = 1*syn_TC_D['I']
+        PSC_T_D[0][t] = 1*syn_TC_D['Ipost']
         
 # =============================================================================
 #     S
@@ -616,7 +631,7 @@ for t in time:
             # Coupling D to CI - Inhibitory 
             coupling_D_CI = W_D_CI[d][0]*1*PSC_CI[0][t - td_wl - td_syn - 1]
             # Coupling D to TC - Excitatory
-            coupling_D_TC = W_D_TC[d][0]*1*PSC_TC[0][t - td_tc - td_syn - 1]
+            coupling_D_TC = W_D_TC[d][0]*1*PSC_T_D[0][t - td_tc - td_syn - 1]
             # Coupling D to TR - Excitatory
             coupling_D_TR = W_D_TR[d][0]*1*PSC_TR[0][t - td_tc - td_syn - 1]
             
@@ -639,10 +654,28 @@ for t in time:
                               dt = dt, 
                               p = p)
         
+        # Synapse - With Thalamus  
+        syn_D_T = tm_synapse_eq(u = u_D_syn, 
+                              R = R_D_syn, 
+                              I = I_D_syn, 
+                              AP = AP_D_aux, 
+                              t_f = t_f_E, 
+                              t_d = t_d_E, 
+                              t_s = t_s_E, 
+                              U = U_E, 
+                              A = A_E_D_T, 
+                              dt = dt, 
+                              p = p)
+        
         R_D_syn = 1*syn_D['R']
         u_D_syn = 1*syn_D['u']
         I_D_syn = 1*syn_D['I']
         PSC_D[0][t] = 1*syn_D['Ipost']
+        
+        R_D_syn_T = 1*syn_D_T['R']
+        u_D_syn_T = 1*syn_D_T['u']
+        I_D_syn_T = 1*syn_D_T['I']
+        PSC_D_T[0][t] = 1*syn_D_T['Ipost']
         
 # =============================================================================
 #     CI
