@@ -343,8 +343,8 @@ for t in time:
 #     M
 # =============================================================================
     for m in range(n_M):
-        v_M_aux = 1*v_S[m][t - 1]
-        u_M_aux = 1*u_S[m][t - 1]
+        v_M_aux = 1*v_M[m][t - 1]
+        u_M_aux = 1*u_M[m][t - 1]
         AP_M_aux = 0
                 
         if (v_M_aux >= vp):

@@ -45,6 +45,11 @@ def tm_synapse_eq(u, R, I, AP, t_f, t_d, t_s, U, A, dt, p):
         # PSC
         I[0][j] = I[0][j - 1] + -dt*I[0][j - 1]/t_s + A[j - 1]*R[0][j - 1]*u[0][j - 1]*AP
         
+        # print('tm_synapse_eq')
+        # print('u = ', u)
+        # print('R = ', R)
+        # print('I = ', I)
+        
     Ipost = np.sum(I)
     
     tm_syn_inst = dict()
@@ -55,21 +60,24 @@ def tm_synapse_eq(u, R, I, AP, t_f, t_d, t_s, U, A, dt, p):
         
     return tm_syn_inst
 
-def tm_synapse_poisson_eq(AP_position, sim_steps, t_delay, dt, tau_f, tau_d, tau_s, U, A):
-    r = np.zeros((3, sim_steps))
-    x = np.zeros((3, sim_steps))
-    Is = np.zeros((3, sim_steps))
-    spd = np.zeros((1, sim_steps))
-    
-    spd[0][AP_position] = 1/dt
+def tm_synapse_poisson_eq(spikes, sim_steps, t_delay, dt, t_f, t_d, t_s, U, A, time):
+    R = np.zeros((3, sim_steps))
+    u = np.zeros((3, sim_steps))
+    I = np.zeros((3, sim_steps))
     
     for p in range(3):    
-        for i in range(1 + t_delay, sim_steps - 1):
-            r[p][i + 1] = r[p][i] + dt*(-r[p][i]/tau_f[p] + U[p]*(1 - r[p][i])*spd[0][i - t_delay])
-            x[p][i + 1] = x[p][i] + dt*((1 - x[p][i])/tau_d[p] - r[p][i]*x[p][i]*spd[0][i - t_delay])
-            Is[p][i + 1] = Is[p][i] + dt*(-Is[p][i]/tau_s + A[p]*r[p][i]*x[p][i]*spd[0][i - t_delay])
+        for i in time:
+            ap = 0
+            if (spikes[0][i - 1] != 0):
+                ap = 1
+            # u -> utilization factor -> resources ready for use
+            u[p][i] = u[p - 1][i - 1] + -dt*u[p - 1][i - 1]/t_f[p - 1] + U[p - 1]*(1 - u[p - 1][i - 1])*ap
+            # x -> availabe resources -> Fraction of resources that remain available after neurotransmitter depletion
+            R[p][i] = R[p - 1][i - 1] + dt*(1 - R[p - 1][i - 1])/t_d[p - 1] - u[p - 1][i - 1]*R[p - 1][i - 1]*ap
+            # PSC
+            I[p][i] = I[p - 1][i - 1] + -dt*I[p - 1][i - 1]/t_s + A[p - 1]*R[p - 1][i - 1]*u[p - 1][i - 1]*ap
         
-    Ipost = np.sum(Is, axis=0)
+    Ipost = np.sum(I, 0)
         
     return Ipost
 

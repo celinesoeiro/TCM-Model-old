@@ -456,7 +456,9 @@ I_dbs_off = I_DBS(
     )
 
 for t in time:
+    print('time = ', t)
     # TR
+    print('TR')
     tr_neurons = tr_cells(
         t = t,
         dt = dt,
@@ -501,8 +503,9 @@ for t in time:
     r_TR = tr_neurons['r'];             x_TR = tr_neurons['x'];
     I_syn_TR = tr_neurons['I_syn'];     PSC_TR_off[0][t] = tr_neurons['PSC_TR'];
     v_TR_off = tr_neurons['v'];         u_TR_off = tr_neurons['u']; 
-        
+    
     # TC    
+    print('TC')
     tc_neurons = tc_cells(
         t = t,
         dt = dt,
@@ -556,6 +559,7 @@ for t in time:
     I_syn_T_D = tc_neurons['I_syn_D'];  PSC_D_TC_off[0][t] = tc_neurons['PSC_D'];
     
     # S
+    print('S')
     s_neurons = s_cells(
         t = t,
         dt = dt,
@@ -603,6 +607,7 @@ for t in time:
     v_S_off = s_neurons['v'];       u_S_off = s_neurons['u'];
     
     # M
+    print('M')
     m_neurons = m_cells(
         t = t,
         dt = dt,
@@ -650,6 +655,7 @@ for t in time:
     v_M_off = m_neurons['v'];       u_M_off = m_neurons['u'];
     
     # D
+    print('D')
     d_neurons = d_cells(
         t = t,
         dt = dt,
@@ -705,6 +711,7 @@ for t in time:
     PSC_T_D_off[0][t] = d_neurons['PSC_T_D'];
     
     # CI
+    print('CI')
     ci_neurons = ci_cells(
         t = t,
         dt = dt,

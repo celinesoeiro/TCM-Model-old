@@ -192,10 +192,10 @@ def TCM_model_parameters():
     c_S = np.c_[c[0]*np.ones((1, neurons_s_1)), c[1]*np.ones((1, neurons_s_2))] + 15*random_factor**2
     d_S = np.c_[d[0]*np.ones((1, neurons_s_1)), d[1]*np.ones((1, neurons_s_2))] - 0.6*random_factor**2
     
-    a_M = np.c_[a[0]*np.ones((1, neurons_m_1)), a[1]*np.ones((1, neurons_m_2))]
-    b_M = np.c_[b[0]*np.ones((1, neurons_m_1)), b[1]*np.ones((1, neurons_m_2))]
-    c_M = np.c_[c[0]*np.ones((1, neurons_m_1)), c[1]*np.ones((1, neurons_m_2))] + 15*random_factor**2
-    d_M = np.c_[d[0]*np.ones((1, neurons_m_1)), d[1]*np.ones((1, neurons_m_2))] - 0.6*random_factor**2
+    a_M = np.c_[a[0]*np.ones((1, neurons_m_1)), a[0]*np.ones((1, neurons_m_2))]
+    b_M = np.c_[b[0]*np.ones((1, neurons_m_1)), b[0]*np.ones((1, neurons_m_2))]
+    c_M = np.c_[c[0]*np.ones((1, neurons_m_1)), c[0]*np.ones((1, neurons_m_2))] + 15*random_factor**2
+    d_M = np.c_[d[0]*np.ones((1, neurons_m_1)), d[0]*np.ones((1, neurons_m_2))] - 0.6*random_factor**2
     
     a_D = np.c_[a[0]*np.ones((1, neurons_d_1)), a[1]*np.ones((1, neurons_d_2))]
     b_D = np.c_[b[0]*np.ones((1, neurons_d_1)), b[1]*np.ones((1, neurons_d_2))]

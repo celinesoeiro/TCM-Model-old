@@ -13,7 +13,7 @@ seed(1)
 random_factor = random()
 
 from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
-from model_functions import izhikevich_dudt, izhikevich_dvdt, tm_synapse_eq
+from model_functions import izhikevich_dudt, izhikevich_dvdt, tm_synapse_eq, poisson_spike_generator, tm_synapse_poisson_eq
 from model_plots import plot_heat_map, layer_raster_plot, plot_voltages, plot_raster
 
 # =============================================================================
@@ -29,6 +29,8 @@ tm_synapse_params_inhibitory = TCM_model_parameters()['tm_synapse_params_inhibit
 tm_synapse_params_excitatory = TCM_model_parameters()['tm_synapse_params_excitatory']
 
 neuron_types_per_structure = global_parameters['neuron_types_per_structure']
+
+noise = TCM_model_parameters()['noise']
 
 # Neuron quantities
 n_S = neuron_quantities['S']
@@ -62,6 +64,7 @@ synapse_initial_values = TCM_model_parameters()['synapse_initial_values']
 
 dt = global_parameters['dt']
 sim_time = global_parameters['simulation_time']
+T = global_parameters['simulation_time_ms']
 # sim_steps = global_parameters['simulation_steps']
 # time = global_parameters['time_vector']
 # Idc_tune = global_parameters['Idc_tune']
@@ -340,6 +343,87 @@ R_TR_syn = np.ones((1, p))
 I_TR_syn = np.zeros((1, p))
 
 # =============================================================================
+# NOISES
+# =============================================================================
+# additive white Gaussian noise 
+kisi_S = noise['kisi_S_E']
+kisi_M = noise['kisi_M_E']
+kisi_D = noise['kisi_D_E']
+kisi_CI = noise['kisi_CI_I']
+kisi_TC = noise['kisi_TC_E']
+kisi_TR = noise['kisi_TR_I']
+# threshold white Gaussian noise
+zeta_S = noise['zeta_S_E']
+zeta_M = noise['zeta_M_E']
+zeta_D = noise['zeta_D_E']
+zeta_CI = noise['zeta_CI_I']
+zeta_TC = noise['zeta_TC_E']
+zeta_TR = noise['zeta_TR_I']
+
+# =============================================================================
+# POISSONIAN BACKGROUND ACTIVITY 
+# - Poissonian postsynaptic input to the E and I neurons for all layers
+# =============================================================================
+w_ps = 1
+I_ps_S = np.zeros((2, sim_steps))
+I_ps_M = np.zeros((2, sim_steps))
+I_ps_D = np.zeros((2, sim_steps))
+I_ps_CI = np.zeros((2, sim_steps))
+I_ps_TR = np.zeros((2, sim_steps))
+I_ps_TC = np.zeros((2, sim_steps))
+ps_firing_rates = np.zeros((1,6))
+
+for i in range(6):
+    ps_firing_rates[0][i] = poisson_firing = 20 + 2 * np.random.randn()
+
+
+W_ps = [[w_ps * np.random.randn() for _ in range(2)] for _ in range(6)]
+
+[spike_PS, I_PS] = poisson_spike_generator(num_steps = sim_steps, 
+                                          dt = dt, 
+                                          num_neurons = 1, 
+                                          thalamic_firing_rate = poisson_firing, 
+                                          current_value=None)
+
+# Mudar I_E e I_I para gerar um array e colocar o I_PS_x para receber esse array * o peso
+I_E = tm_synapse_poisson_eq(spikes = spike_PS, 
+                            sim_steps = sim_steps, 
+                            t_delay = td_syn, 
+                            dt = dt, 
+                            t_f = t_f_E, 
+                            t_d = t_d_E, 
+                            t_s = t_s_E, 
+                            U = U_E, 
+                            A = A_E, 
+                            time = time)
+
+I_I = tm_synapse_poisson_eq(spikes = spike_PS, 
+                            sim_steps = sim_steps, 
+                            t_delay = td_syn, 
+                            dt = dt, 
+                            t_f = t_f_I, 
+                            t_d = t_d_I, 
+                            t_s = t_s_I, 
+                            U = U_I, 
+                            A = A_I,
+                            time = time)
+# Excitatory
+I_ps_S[0] = W_ps[0][0]*I_E
+I_ps_M[0] = W_ps[1][0]*I_E
+I_ps_D[0] = W_ps[2][0]*I_E
+I_ps_CI[0] = W_ps[3][0]*I_E
+I_ps_TR[0] = W_ps[4][0]*I_E
+I_ps_TC[0] = W_ps[5][0]*I_E
+
+# Inhibitory
+I_ps_S[1] = W_ps[0][1]*I_I
+I_ps_M[1] = W_ps[1][1]*I_I
+I_ps_D[1] = W_ps[2][1]*I_I
+I_ps_CI[1] = W_ps[3][1]*I_I
+I_ps_TR[1] = W_ps[4][1]*I_I
+I_ps_TC[1] = W_ps[5][1]*I_I
+
+# =============================================================================
 # MAIN
 # =============================================================================
 print("-- Running model")
@@ -352,7 +436,7 @@ for t in time:
         u_TR_aux = 1*u_TR[tr][t - 1]
         AP_TR_aux = 0
                 
-        if (v_TR_aux >= vp):
+        if (v_TR_aux >= vp + zeta_TR[tr][t]):
             AP_TR_aux = 1
             AP_TR[tr][t] = t
             v_TR_aux = v_TR[tr][t]
@@ -379,12 +463,11 @@ for t in time:
             du_TR = izhikevich_dudt(v = v_TR_aux, u = u_TR_aux, a = a_TR[0][tr], b = b_TR[0][tr])
         
             v_TR[tr][t] = v_TR_aux + dt*(dv_TR + 
-                                         coupling_TR_S + 
-                                         coupling_TR_M + 
-                                         coupling_TR_D + 
-                                         coupling_TR_CI + 
-                                         coupling_TR_TC + 
-                                         coupling_TR_TR)
+                                         coupling_TR_S/n_TR + coupling_TR_M/n_TR + 
+                                         coupling_TR_D/n_TR + coupling_TR_CI/n_TR + 
+                                         coupling_TR_TC/n_TR + coupling_TR_TR/n_TR + 
+                                         kisi_TR[tr][t - td_wl - td_syn - 1] + I_ps_TR[0][t - td_wl - td_syn - 1] - 
+                                         I_ps_TR[1][t - 1])
             u_TR[tr][t] = u_TR_aux + dt*du_TR
             
         # Synapse - Within layer  
@@ -413,7 +496,7 @@ for t in time:
         u_TC_aux = 1*u_TC[tc][t - 1]
         AP_TC_aux = 0
                 
-        if (v_TC_aux >= vp):
+        if (v_TC_aux >= vp + zeta_TC[tc][t]):
             AP_TC_aux = 1
             AP_TC[tc][t] = t
             v_TC_aux = v_TC[tc][t]
@@ -440,12 +523,11 @@ for t in time:
             du_TC = izhikevich_dudt(v = v_TC_aux, u = u_TC_aux, a = a_TC[0][tc], b = b_TC[0][tc])
         
             v_TC[tc][t] = v_TC_aux + dt*(dv_TC + 
-                                         coupling_TC_S + 
-                                         coupling_TC_M + 
-                                         coupling_TC_D + 
-                                         coupling_TC_CI + 
-                                         coupling_TC_TC + 
-                                         coupling_TC_TR)
+                                         coupling_TC_S/n_TC + coupling_TC_M/n_TC + 
+                                         coupling_TC_D/n_TC + coupling_TC_CI/n_TC + 
+                                         coupling_TC_TC/n_TC + coupling_TC_TR/n_TC + 
+                                         I_ps_TC[0][t - td_wl - td_syn - 1] - I_ps_TC[1][t - td_wl - td_syn - 1] + 
+                                         kisi_TC[tc][t - 1])
             u_TC[tc][t] = u_TC_aux + dt*du_TC
             
         # Synapse - Within layer  
@@ -492,7 +574,7 @@ for t in time:
         u_S_aux = 1*u_S[s][t - 1]
         AP_S_aux = 0
                 
-        if (v_S_aux >= vp):
+        if (v_S_aux >= vp + zeta_S[s][t]):
             AP_S_aux = 1
             AP_S[s][t] = t
             v_S_aux = v_S[s][t]
@@ -518,7 +600,12 @@ for t in time:
             dv_S = izhikevich_dvdt(v = v_S_aux, u = u_S_aux, I = I_S[s])
             du_S = izhikevich_dudt(v = v_S_aux, u = u_S_aux, a = a_S[0][s], b = b_S[0][s])
         
-            v_S[s][t] = v_S_aux + dt*(dv_S + coupling_S_S + coupling_S_M + coupling_S_D + coupling_S_CI + coupling_S_TC + coupling_S_TR)
+            v_S[s][t] = v_S_aux + dt*(dv_S + 
+                                      coupling_S_S/n_S + coupling_S_M/n_S + 
+                                      coupling_S_D/n_S + coupling_S_CI/n_S + 
+                                      coupling_S_TC/n_S + coupling_S_TR/n_S + 
+                                      I_ps_S[0][t - td_wl - td_syn - 1] - I_ps_S[1][t - td_wl - td_syn - 1] + 
+                                      kisi_S[s][t - 1])
             u_S[s][t] = u_S_aux + dt*du_S
             
         # Synapse - Within cortex  
@@ -543,11 +630,11 @@ for t in time:
 #     M
 # =============================================================================
     for m in range(n_M):
-        v_M_aux = 1*v_S[m][t - 1]
-        u_M_aux = 1*u_S[m][t - 1]
+        v_M_aux = 1*v_M[m][t - 1]
+        u_M_aux = 1*u_M[m][t - 1]
         AP_M_aux = 0
                 
-        if (v_M_aux >= vp):
+        if (v_M_aux >= vp + zeta_M[m][t]):
             AP_M_aux = 1
             AP_M[m][t] = t
             v_M_aux = v_M[m][t]
@@ -573,7 +660,12 @@ for t in time:
             dv_M = izhikevich_dvdt(v = v_M_aux, u = u_M_aux, I = I_M[m])
             du_M = izhikevich_dudt(v = v_M_aux, u = u_M_aux, a = a_M[0][m], b = b_M[0][m])
         
-            v_M[m][t] = v_M_aux + dt*(dv_M + coupling_M_M + coupling_M_S + coupling_M_D + coupling_M_CI + coupling_M_TC + coupling_M_TR)
+            v_M[m][t] = v_M_aux + dt*(dv_M + 
+                                      coupling_M_M/n_M + coupling_M_S/n_M + 
+                                      coupling_M_D/n_M + coupling_M_CI/n_M + 
+                                      coupling_M_TC/n_M + coupling_M_TR/n_M + 
+                                      I_ps_M[0][t - td_wl - td_syn - 1] - I_ps_M[1][t - td_wl - td_syn - 1] + 
+                                      kisi_M[m][t - 1])
             u_M[m][t] = u_M_aux + dt*du_M
             
         # Synapse - Within cortex  
@@ -602,7 +694,7 @@ for t in time:
         u_D_aux = 1*u_D[d][t - 1]
         AP_D_aux = 0
                 
-        if (v_D_aux >= vp):
+        if (v_D_aux >= vp + zeta_D[d][t]):
             AP_D_aux = 1
             AP_D[d][t] = t
             v_D_aux = v_D[d][t]
@@ -628,7 +720,12 @@ for t in time:
             dv_D = izhikevich_dvdt(v = v_D_aux, u = u_D_aux, I = I_D[d])
             du_D = izhikevich_dudt(v = v_D_aux, u = u_D_aux, a = a_D[0][d], b = b_D[0][d])
         
-            v_D[d][t] = v_D_aux + dt*(dv_D + coupling_D_S + coupling_D_M + coupling_D_D + coupling_D_CI + coupling_D_TC + coupling_D_TR)
+            v_D[d][t] = v_D_aux + dt*(dv_D + 
+                                      coupling_D_S/n_D + coupling_D_M/n_D + 
+                                      coupling_D_D/n_D + coupling_D_CI/n_D + 
+                                      coupling_D_TC/n_D + coupling_D_TR/n_D + 
+                                      I_ps_D[0][t - td_wl - td_syn - 1] - I_ps_D[1][t - td_wl - td_syn - 1] + 
+                                      kisi_D[d][t - 1])
             u_D[d][t] = u_D_aux + dt*du_D
             
         # Synapse - Within cortex  
@@ -675,7 +772,7 @@ for t in time:
         u_CI_aux = 1*u_CI[ci][t - 1]
         AP_C_aux = 0
                 
-        if (v_CI_aux >= vp):
+        if (v_CI_aux >= vp + zeta_CI[ci][t]):
             AP_CI[ci][t] = t
             AP_C_aux = 1
             v_CI_aux = v_CI[ci][t]
@@ -701,7 +798,12 @@ for t in time:
             dv_CI = izhikevich_dvdt(v = v_CI_aux, u = u_CI_aux, I = I_CI[ci])
             du_CI = izhikevich_dudt(v = v_CI_aux, u = u_CI_aux, a = a_CI[0][ci], b = b_CI[0][ci])
         
-            v_CI[ci][t] = v_CI_aux + dt*(dv_CI + coupling_CI_M + coupling_CI_S + coupling_CI_CI + coupling_CI_D + coupling_CI_TC + coupling_CI_TR)
+            v_CI[ci][t] = v_CI_aux + dt*(dv_CI + 
+                                         coupling_CI_M/n_CI + coupling_CI_S/n_CI + 
+                                         coupling_CI_CI/n_CI + coupling_CI_D/n_CI + 
+                                         coupling_CI_TC/n_CI + coupling_CI_TR/n_CI + 
+                                         I_ps_CI[0][t - td_wl - td_syn - 1] - I_ps_CI[1][t - td_wl - td_syn - 1] + 
+                                         kisi_CI[ci][t - 1])
             u_CI[ci][t] = u_CI_aux + dt*du_CI
             
         # Synapse        
@@ -752,28 +854,29 @@ layer_raster_plot(n = n_TR, AP = AP_TR, sim_steps = sim_steps, layer_name = 'TR'
 print('APS in TR layer = ',np.count_nonzero(AP_TR))
 
 plot_raster(dbs=0,
-sim_steps=sim_steps,
-sim_time=sim_time,
-dt = dt,
-chop_till = 0, 
-n_TR = n_TR, 
-n_TC = n_TC, 
-n_CI = n_CI, 
-n_D = n_D, 
-n_M = n_M, 
-n_S = n_S, 
-n_total = n_total,
-n_CI_FS = n_CI_FS,
-n_CI_LTS = n_CI_LTS,
-n_D_RS = n_D_RS,
-n_D_IB = n_D_IB,
-n_S_RS = n_S_RS,
-n_S_IB = n_S_IB,
-spike_times_TR = AP_TR, 
-spike_times_TC = AP_TC, 
-spike_times_CI = AP_CI, 
-spike_times_D = AP_D, 
-spike_times_M = AP_M,
-spike_times_S = AP_S)
+            sim_steps=sim_steps,
+            sim_time=sim_time,
+            dt = dt,
+            chop_till = 0, 
+            n_TR = n_TR, 
+            n_TC = n_TC, 
+            n_CI = n_CI, 
+            n_D = n_D, 
+            n_M = n_M, 
+            n_S = n_S, 
+            n_total = n_total,
+            n_CI_FS = n_CI_FS,
+            n_CI_LTS = n_CI_LTS,
+            n_D_RS = n_D_RS,
+            n_D_IB = n_D_IB,
+            n_S_RS = n_S_RS,
+            n_S_IB = n_S_IB,
+            spike_times_TR = AP_TR, 
+            spike_times_TC = AP_TC, 
+            spike_times_CI = AP_CI, 
+            spike_times_D = AP_D, 
+            spike_times_M = AP_M,
+            spike_times_S = AP_S
+            )
 
 print("-- Done!")
