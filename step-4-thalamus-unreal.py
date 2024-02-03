@@ -12,8 +12,7 @@ from random import seed, random
 seed(1)
 random_factor = random()
 
-from model_parameters import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
-# from model_functions import izhikevich_dudt, izhikevich_dvdt, tm_synapse_eq, poisson_spike_generator, tm_synapse_poisson_eq
+from tcm_params import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 from model_plots import plot_heat_map, layer_raster_plot, plot_voltages, plot_raster
 
 from TR_nucleus import TR_nucleus
@@ -27,15 +26,13 @@ from CI_nucleus import CI_nucleus
 # INITIAL VALUES
 # =============================================================================
 print("-- Initializing the global values")
-global_parameters = TCM_model_parameters()['model_global_parameters']
 neuron_quantities = TCM_model_parameters()['neuron_quantities']
 neuron_per_structure = TCM_model_parameters()['neuron_per_structure']
 neuron_params = TCM_model_parameters()['neuron_paramaters']
-currents = TCM_model_parameters()['currents_per_structure']
-tm_synapse_params_inhibitory = TCM_model_parameters()['tm_synapse_params_inhibitory']
-tm_synapse_params_excitatory = TCM_model_parameters()['tm_synapse_params_excitatory']
+neuron_types_per_structure = TCM_model_parameters()['neuron_types_per_structure']
 
-neuron_types_per_structure = global_parameters['neuron_types_per_structure']
+currents = TCM_model_parameters()['currents_per_structure']
+p = TCM_model_parameters()['synapse_total_params']
 
 noise = TCM_model_parameters()['noise']
 
@@ -56,22 +53,12 @@ n_D_IB = neuron_per_structure['neurons_d_2']
 n_S_RS = neuron_per_structure['neurons_s_1']
 n_S_IB = neuron_per_structure['neurons_s_2']
 
-vr = global_parameters['vr']
-vp = global_parameters['vp']
+vr = TCM_model_parameters()['vr']
 
-facilitating_factor_N = global_parameters['connectivity_factor_normal_condition']
-facilitating_factor_PD = global_parameters['connectivity_factor_PD_condition']
-td_wl = global_parameters['time_delay_within_layers']
-td_bl = global_parameters['time_delay_between_layers']
-td_tc = global_parameters['time_delay_thalamus_cortex']
-td_ct = global_parameters['time_delay_cortex_thalamus']
-td_syn = global_parameters['transmission_delay_synapse']
+dt = TCM_model_parameters()['dt']
+sim_time = TCM_model_parameters()['simulation_time']
+T = TCM_model_parameters()['simulation_time_ms']
 
-synapse_initial_values = TCM_model_parameters()['synapse_initial_values']
-
-dt = global_parameters['dt']
-sim_time = global_parameters['simulation_time']
-T = global_parameters['simulation_time_ms']
 # sim_steps = global_parameters['simulation_steps']
 # time = global_parameters['time_vector']
 # Idc_tune = global_parameters['Idc_tune']
@@ -83,24 +70,10 @@ time = np.arange(1, sim_steps)
 # COUPLING MATRIXES
 # =============================================================================
 # Weight Matrix Normal Condition
-Z_N = coupling_matrix_normal(    
-    facilitating_factor = facilitating_factor_N, 
-    n_s = n_S, 
-    n_m = n_M, 
-    n_d = n_D, 
-    n_ci = n_CI, 
-    n_tc = n_TC, 
-    n_tr = n_TR)['matrix']
+Z_N = coupling_matrix_normal()['matrix']
 
 # Weight Matrix Parkinsonian Desease Condition
-Z_PD = coupling_matrix_PD(
-    facilitating_factor = facilitating_factor_PD, 
-    n_s = n_S, 
-    n_m = n_M, 
-    n_d = n_D, 
-    n_ci = n_CI, 
-    n_tc = n_TC, 
-    n_tr = n_TR)['matrix']
+Z_PD = coupling_matrix_PD()['matrix']
 
 # normalizing Normal coupling matrix
 Z_N_norm = Z_N/np.linalg.norm(Z_N)
@@ -108,74 +81,12 @@ Z_N_norm = Z_N/np.linalg.norm(Z_N)
 # normalizing PD coupling matrix
 Z_PD_norm = Z_PD/np.linalg.norm(Z_PD)
 
-# =============================================================================
-# Graphs - Coupling Matrixes - Normal vs Parkinsonian
-# =============================================================================
 print("-- Printing the coupling matrixes")
 
 CM_Normal = pd.DataFrame(Z_N_norm, columns=['S', 'M', 'D', 'CI', 'TC', 'TR'])
 CM_PD = pd.DataFrame(Z_PD_norm, columns=['S', 'M', 'D', 'CI', 'TC', 'TR'])
 
 plot_heat_map(matrix_normal = CM_Normal, matrix_PD = CM_PD)
-
-# =============================================================================
-# NEURON PARAMS
-# =============================================================================
-a_S = neuron_params['a_S']
-b_S = neuron_params['b_S']
-c_S = neuron_params['c_S']
-d_S = neuron_params['d_S']
-
-a_M = neuron_params['a_M']
-b_M = neuron_params['b_M']
-c_M = neuron_params['c_M']
-d_M = neuron_params['d_M']
-
-a_D = neuron_params['a_D']
-b_D = neuron_params['b_D']
-c_D = neuron_params['c_D']
-d_D = neuron_params['d_D']
-
-a_CI = neuron_params['a_CI']
-b_CI = neuron_params['b_CI']
-c_CI = neuron_params['c_CI']
-d_CI = neuron_params['d_CI']
-
-a_TR = neuron_params['a_TR']
-b_TR = neuron_params['b_TR']
-c_TR = neuron_params['c_TR']
-d_TR = neuron_params['d_TR']
-
-a_TC = neuron_params['a_TC']
-b_TC = neuron_params['b_TC']
-c_TC = neuron_params['c_TC']
-d_TC = neuron_params['d_TC']
-
-# =============================================================================
-# SYNAPTIC WEIGHTS AND PARAMETERS
-# =============================================================================
-# Weight Matrix Normal Condition
-W_N = coupling_matrix_normal(    
-    facilitating_factor = facilitating_factor_N, 
-    n_s = n_S, 
-    n_m = n_M, 
-    n_d = n_D, 
-    n_ci = n_CI, 
-    n_tc = n_TC, 
-    n_tr = n_TR)['weights']
-
-# Weight Matrix Parkinsonian Desease Condition
-W_PD = coupling_matrix_PD(
-    facilitating_factor = facilitating_factor_PD, 
-    n_s = n_S, 
-    n_m = n_M, 
-    n_d = n_D, 
-    n_ci = n_CI, 
-    n_tc = n_TC, 
-    n_tr = n_TR)['weights']
-
-# TM Synapse Initial Values
-p = 3
 
 # =============================================================================
 # NEURON VARIABELS
@@ -198,7 +109,7 @@ v_S = np.zeros((n_S, sim_steps))
 u_S = np.zeros((n_S, sim_steps)) 
 for i in range(n_S):    
     v_S[i][0] = vr
-    u_S[i][0] = b_S[0][0]*vr
+    u_S[i][0] = neuron_params['b_S'][0][0]*vr
 
 u_S_syn = np.zeros((1, p))
 R_S_syn = np.ones((1, p))
@@ -213,7 +124,7 @@ v_M = np.zeros((n_M, sim_steps))
 u_M = np.zeros((n_M, sim_steps)) 
 for i in range(n_M):    
     v_M[i][0] = vr
-    u_M[i][0] = b_M[0][0]*vr
+    u_M[i][0] = neuron_params['b_M'][0][0]*vr
 
 u_M_syn = np.zeros((1, p))
 R_M_syn = np.ones((1, p))
@@ -228,7 +139,7 @@ v_D = np.zeros((n_D, sim_steps))
 u_D = np.zeros((n_D, sim_steps)) 
 for i in range(n_D):    
     v_D[i][0] = vr
-    u_D[i][0] = b_D[0][0]*vr
+    u_D[i][0] = neuron_params['b_D'][0][0]*vr
 
 ## D - Self
 u_D_syn = np.zeros((1, p))
@@ -244,7 +155,7 @@ v_CI = np.zeros((n_CI, sim_steps))
 u_CI = np.zeros((n_CI, sim_steps)) 
 for i in range(n_CI):    
     v_CI[i][0] = vr
-    u_CI[i][0] = b_CI[0][0]*vr
+    u_CI[i][0] = neuron_params['b_CI'][0][0]*vr
     
 u_CI_syn = np.zeros((1, p))
 R_CI_syn = np.ones((1, p))
@@ -259,7 +170,7 @@ v_TC = np.zeros((n_TC, sim_steps))
 u_TC = np.zeros((n_TC, sim_steps)) 
 for i in range(n_TC):    
     v_TC[i][0] = vr
-    u_TC[i][0] = b_TC[0][0]*vr
+    u_TC[i][0] = neuron_params['b_TC'][0][0]*vr
     
 u_TC_syn = np.zeros((1, p))
 R_TC_syn = np.ones((1, p))
@@ -274,7 +185,7 @@ v_TR = np.zeros((n_TR, sim_steps))
 u_TR = np.zeros((n_TR, sim_steps)) 
 for i in range(n_TR):    
     v_TR[i][0] = vr
-    u_TR[i][0] = b_TR[0][0]*vr
+    u_TR[i][0] = neuron_params['b_TR'][0][0]*vr
     
 u_TR_syn = np.zeros((1, p))
 R_TR_syn = np.ones((1, p))
