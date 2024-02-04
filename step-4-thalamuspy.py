@@ -89,7 +89,6 @@ CM_PD = pd.DataFrame(Z_PD_norm, columns=['S', 'M', 'D', 'CI', 'TC', 'TR'])
 
 plot_heat_map(matrix_normal = CM_Normal, matrix_PD = CM_PD)
 
-
 # =============================================================================
 # NEURON VARIABELS
 # =============================================================================

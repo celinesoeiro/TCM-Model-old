@@ -104,12 +104,12 @@ def plot_LFPs(LFP_S, LFP_M, LFP_D, LFP_CI, LFP_TC, LFP_TR, chop_till, sim_steps,
     ax5.plot(new_time, LFP_TC)
     ax6.plot(new_time, LFP_TR)
     
-    ax1.set_title('Layer S')
-    ax2.set_title('Layer M')
-    ax3.set_title('Layer D')
+    ax1.set_title('S')
+    ax2.set_title('M')
+    ax3.set_title('D')
     ax4.set_title('CI')
-    ax5.set_title('TC Nucleus')
-    ax6.set_title('TR Nucleus')
+    ax5.set_title('TC')
+    ax6.set_title('TR')
     
     fig.suptitle(title)
         
@@ -121,7 +121,7 @@ def plot_LFPs(LFP_S, LFP_M, LFP_D, LFP_CI, LFP_TC, LFP_TR, chop_till, sim_steps,
 def layer_raster_plot(n, AP, sim_steps, layer_name, dt):
     fig, ax1 = plt.subplots()
     
-    fig.canvas.manager.set_window_title(f'Raster plot layer {layer_name}')
+    fig.canvas.manager.set_window_title(f'Raster plot - {layer_name}')
 
     for i in range(n):
         y_values = np.full_like(AP[i], i + 1)
@@ -132,9 +132,9 @@ def layer_raster_plot(n, AP, sim_steps, layer_name, dt):
     
     ax1.set(
         axisbelow=True,  # Hide the grid behind plot objects
-        title=f'Raster plot layer {layer_name}',
-        xlabel='Time (s)',
-        ylabel='Neurons',
+        title=f'Raster plot - {layer_name}',
+        xlabel='t (s)',
+        ylabel='neuronios',
     )
     
     x_vec = np.arange(0, sim_steps + 1, int(fs/2))
@@ -353,8 +353,8 @@ def plot_raster_2(
     ax1.set(
         axisbelow=True,  # Hide the grid behind plot objects
         title=f'Raster plot',
-        xlabel='Time (s)',
-        ylabel='Neurons',
+        xlabel='t (s)',
+        ylabel='neuronios',
     )
         
     for i in range(n_total):  
