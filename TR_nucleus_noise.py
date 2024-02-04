@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Feb  3 12:03:15 2024
+Created on Sat Feb  3 19:26:47 2024
 
 @author: celinesoeiro
 """
@@ -50,6 +50,14 @@ A_I = syn_params['distribution']
 
 I_TR = currents['TR']
 
+noise = TCM_model_parameters()['noise']
+
+kisi_TR = noise['kisi_TR']
+zeta_TR = noise['zeta_TR']
+
+I_ps = TCM_model_parameters()['poisson_bg_activity']
+I_ps_TR = I_ps['TR']
+
 def TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC_S, u_TR_syn, R_TR_syn, I_TR_syn):
     
     I_syn = np.zeros((1, n_TR))
@@ -59,7 +67,7 @@ def TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC
         u_TR_aux = 1*u_TR[tr][t - 1]
         AP_TR_aux = 0
                 
-        if (v_TR_aux >= vp):
+        if (v_TR_aux >= vp + zeta_TR[tr][t - 1]):
             AP_TR_aux = 1
             AP_TR[tr][t] = t
             v_TR_aux = v_TR[tr][t]
@@ -87,22 +95,13 @@ def TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC
             
             coupling_cortex = (coupling_TR_S + coupling_TR_M + coupling_TR_D + coupling_TR_CI)/n_TR
             coupling_thalamus = (coupling_TR_TC + coupling_TR_TR)/n_TR
+            bg_activity = kisi_TR[tr][t - 1] + I_ps_TR[0][t - td_wl - td_syn - 1] - I_ps_TR[1][t - td_wl - td_syn - 1]
         
-            v_TR[tr][t] = v_TR_aux + dt*(dv_TR + coupling_cortex + coupling_thalamus)
+            v_TR[tr][t] = v_TR_aux + dt*(dv_TR + coupling_cortex + coupling_thalamus + bg_activity)
             u_TR[tr][t] = u_TR_aux + dt*du_TR
             
         # Synapse - Within layer  
-        syn_TR = tm_synapse_eq(u = u_TR_syn, 
-                              R = R_TR_syn, 
-                              I = I_TR_syn, 
-                              AP = AP_TR_aux, 
-                              t_f = t_f_I, 
-                              t_d = t_d_I, 
-                              t_s = t_s_I, 
-                              U = U_I, 
-                              A = A_I, 
-                              dt = dt, 
-                              p = p)
+        syn_TR = tm_synapse_eq(u = u_TR_syn, R = R_TR_syn, I = I_TR_syn, AP = AP_TR_aux, t_f = t_f_I, t_d = t_d_I, t_s = t_s_I, U = U_I, A = A_I, dt = dt, p = p)
         
         R_TR_syn = 1*syn_TR['R']
         u_TR_syn = 1*syn_TR['u']

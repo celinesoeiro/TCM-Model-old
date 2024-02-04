@@ -38,7 +38,7 @@ b_fs = fs_params['b'] - 0.05*random_factor
 c_fs = fs_params['c'] 
 d_fs = fs_params['d'] 
 
-I = 3.2*2
+I = 4.1
 
 # Tsodkys and Markram synapse model
 t_s_E = 3         # decay time constante of I (PSC current)

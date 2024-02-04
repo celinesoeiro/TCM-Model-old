@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Feb  3 16:16:52 2024
+Created on Sat Feb  3 19:08:12 2024
 
 @author: celinesoeiro
 """
+
 import numpy as np
 
 from tcm_params import TCM_model_parameters, coupling_matrix_normal
@@ -51,6 +52,14 @@ A_E_D_T = syn_params['distribution_D_T']
 
 I_D = currents['D']
 
+noise = TCM_model_parameters()['noise']
+
+kisi_D = noise['kisi_D']
+zeta_D = noise['zeta_D']
+
+I_ps = TCM_model_parameters()['poisson_bg_activity']
+I_ps_D = I_ps['D']
+
 def D_nucleus(t, v_D, u_D, AP_D, PSC_D, PSC_S, PSC_M, PSC_T_D, PSC_CI, PSC_TR, PSC_D_T, u_D_syn, R_D_syn, I_D_syn):
     
     I_syn = np.zeros((1, n_D))
@@ -61,7 +70,7 @@ def D_nucleus(t, v_D, u_D, AP_D, PSC_D, PSC_S, PSC_M, PSC_T_D, PSC_CI, PSC_TR, P
         u_D_aux = 1*u_D[d][t - 1]
         AP_D_aux = 0
                 
-        if (v_D_aux >= vp):
+        if (v_D_aux >= vp + zeta_D[d][t - 1]):
             AP_D_aux = 1
             AP_D[d][t] = t
             v_D_aux = v_D[d][t]
@@ -89,8 +98,9 @@ def D_nucleus(t, v_D, u_D, AP_D, PSC_D, PSC_S, PSC_M, PSC_T_D, PSC_CI, PSC_TR, P
             
             coupling_cortex = (coupling_D_S + coupling_D_M + coupling_D_D + coupling_D_CI)/n_D
             coupling_thalamus = (coupling_D_TC + coupling_D_TR)/n_D
+            bg_activity = kisi_D[d][t - 1] + I_ps_D[0][t - td_wl - td_syn - 1] - I_ps_D[1][t - td_wl - td_syn - 1]
         
-            v_D[d][t] = v_D_aux + dt*(dv_D + coupling_cortex + coupling_thalamus)
+            v_D[d][t] = v_D_aux + dt*(dv_D + coupling_cortex + coupling_thalamus + bg_activity)
             u_D[d][t] = u_D_aux + dt*du_D
             
         # Synapse - Within cortex  

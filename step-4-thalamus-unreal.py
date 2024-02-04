@@ -13,7 +13,7 @@ seed(1)
 random_factor = random()
 
 from tcm_params import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
-from model_plots import plot_heat_map, layer_raster_plot, plot_voltages, plot_raster
+from model_plots import plot_heat_map, layer_raster_plot, plot_voltages, plot_raster_2
 
 from TR_nucleus import TR_nucleus
 from TC_nucleus import TC_nucleus
@@ -22,6 +22,7 @@ from M_nucleus import M_nucleus
 from D_nucleus import D_nucleus
 from CI_nucleus import CI_nucleus
 
+print("-- UNREAL")
 # =============================================================================
 # INITIAL VALUES
 # =============================================================================
@@ -59,11 +60,8 @@ dt = TCM_model_parameters()['dt']
 sim_time = TCM_model_parameters()['simulation_time']
 T = TCM_model_parameters()['simulation_time_ms']
 
-# sim_steps = global_parameters['simulation_steps']
-# time = global_parameters['time_vector']
-# Idc_tune = global_parameters['Idc_tune']
-
-sim_steps = int(sim_time/dt)    # 1 second in miliseconds
+sim_steps = TCM_model_parameters()['simulation_steps']
+time_v = TCM_model_parameters()['time_vector']
 time = np.arange(1, sim_steps)
 
 # =============================================================================
@@ -91,6 +89,7 @@ plot_heat_map(matrix_normal = CM_Normal, matrix_PD = CM_PD)
 # =============================================================================
 # NEURON VARIABELS
 # =============================================================================
+print("-- Initializing the neuron variables")
 ## Post-Synaptic Currents
 PSC_S = np.zeros((1, sim_steps))
 PSC_M = np.zeros((1, sim_steps))
@@ -194,48 +193,41 @@ I_TR_syn = np.zeros((1, p))
 # =============================================================================
 # MAIN
 # =============================================================================
-print("-- Running model")
+print("-- Running the model")
 for t in time:
-    print('time = ', t)
 # =============================================================================
 #     TR
 # =============================================================================
-    print('----------------------------------- TR')
     v_TR, u_TR, PSC_TR, u_TR_syn, I_TR_syn, R_TR_syn = TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC_S, u_TR_syn, R_TR_syn, I_TR_syn)
 # =============================================================================
 #     TC
 # =============================================================================
-    print('----------------------------------- TC')
     v_TC, u_TC, PSC_TC, u_TC_syn, I_TC_syn, R_TC_syn, PSC_T_D = TC_nucleus(t, v_TC, u_TC, AP_TC, PSC_TC, PSC_S, PSC_M, PSC_D_T, PSC_TR, PSC_CI, PSC_T_D, R_TC_syn, u_TC_syn, I_TC_syn)
         
 # =============================================================================
 #     S
 # =============================================================================
-    print('----------------------------------- S')
     v_S, u_S, PSC_S, u_S_syn, I_S_syn, R_S_syn = S_nucleus(t, v_S, u_S, AP_S, PSC_S, PSC_M, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_S_syn, R_S_syn, I_S_syn)
         
 # =============================================================================
 #     M
 # =============================================================================
-    print('----------------------------------- M')
     v_M, u_M, PSC_M, u_M_syn, I_M_syn, R_M_syn = M_nucleus(t, v_M, u_M, AP_M, PSC_M, PSC_S, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_M_syn, R_M_syn, I_M_syn)
             
 # =============================================================================
 #     D
 # =============================================================================
-    print('----------------------------------- D')
     v_D, u_D, PSC_D, u_D_syn, I_D_syn, R_D_syn, PSC_D_T = D_nucleus(t, v_D, u_D, AP_D, PSC_D, PSC_S, PSC_M, PSC_T_D, PSC_CI, PSC_TR, PSC_D_T, u_D_syn, R_D_syn, I_D_syn)
         
 # =============================================================================
 #     CI
 # =============================================================================
-    print('----------------------------------- CI')
     v_CI, u_CI, PSC_CI, u_CI_syn, I_CI_syn, R_CI_syn = CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR, u_CI_syn, R_CI_syn, I_CI_syn)
     
 # =============================================================================
 # PLOTS
 # =============================================================================
-print("-- Plotting results")
+print("-- Plotting the results")
 
 plot_voltages(n_neurons = n_S, voltage = v_S, title = "v - Layer S", neuron_types = neuron_types_per_structure['S'])
 layer_raster_plot(n = n_S, AP = AP_S, sim_steps = sim_steps, layer_name = 'S', dt = dt)
@@ -261,7 +253,7 @@ plot_voltages(n_neurons = n_TR, voltage = v_TR, title = "TR", neuron_types=neuro
 layer_raster_plot(n = n_TR, AP = AP_TR, sim_steps = sim_steps, layer_name = 'TR', dt = dt)
 print('APS in TR layer = ',np.count_nonzero(AP_TR))
 
-plot_raster(dbs=0,
+plot_raster_2(
             sim_steps=sim_steps,
             sim_time=sim_time,
             dt = dt,

@@ -63,16 +63,18 @@ TRN:
 import random
 import numpy as np
 
+from model_functions import poisson_spike_generator, tm_synapse_poisson_eq
+
 def TCM_model_parameters():
     random.seed(0)
     random_factor = np.round(random.random(),2)
     
     ms = 1000                               # 1 second = 1000 miliseconds
-    dt = 10/ms                              # time step of 10 ms
-    simulation_time = 100                     # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
-    samp_freq = int(1/dt)                  # sampling frequency in Hz
-    T = int((simulation_time + 0.5)*ms)          # Simulation time in ms with 1 extra second to reach the steady state and trash later
-    sim_steps = int(simulation_time/dt)         # number of simulation steps
+    dt = 100/ms                             # time step of 10 ms
+    simulation_time = 3                    # simulation time in seconds (must be a multiplacative of 3 under PD+DBS condition)
+    samp_freq = int(ms/dt)                  # sampling frequency in Hz
+    T = int((simulation_time + 1)*ms)       # Simulation time in ms with 1 extra second to reach the steady state and trash later
+    sim_steps = int(T/dt)                   # number of simulation steps
     chop_till = 1*samp_freq;                # Cut the first 1 seconds of the simulation
 
     td_synapse = 1                          # Synaptic transmission delay (fixed for all synapses in the TCM)
@@ -83,9 +85,9 @@ def TCM_model_parameters():
     
     # Time vector
     if (td_thalamus_cortex >= td_cortex_thalamus): 
-        t_vec = np.arange(td_thalamus_cortex + td_synapse + 1, sim_steps)
+        t_vec = np.arange(td_thalamus_cortex + td_synapse, sim_steps)
     else:
-        t_vec = np.arange(td_cortex_thalamus + td_synapse + 1, sim_steps)
+        t_vec = np.arange(td_cortex_thalamus + td_synapse, sim_steps)
 
     Idc_tune = 0.1                          # 
     vr = -65                                # membrane potential resting value 
@@ -284,18 +286,18 @@ def TCM_model_parameters():
     kisi_TR_I = white_gaussian_add*np.c_[ random_TR, cn*random_TR_diff ]
     
     noise = {
-        'kisi_S_E': kisi_S_E,
-        'kisi_M_E': kisi_M_E,
-        'kisi_D_E': kisi_D_E,
-        'kisi_CI_I': kisi_CI_I,
-        'kisi_TC_E': kisi_TC_E,
-        'kisi_TR_I': kisi_TR_I,
-        'zeta_S_E': zeta_S_E,
-        'zeta_M_E': zeta_M_E,
-        'zeta_D_E': zeta_D_E,
-        'zeta_CI_I': zeta_CI_I,
-        'zeta_TC_E': zeta_TC_E,
-        'zeta_TR_I': zeta_TR_I,
+        'kisi_S': kisi_S_E,
+        'kisi_M': kisi_M_E,
+        'kisi_D': kisi_D_E,
+        'kisi_CI': kisi_CI_I,
+        'kisi_TC': kisi_TC_E,
+        'kisi_TR': kisi_TR_I,
+        'zeta_S': zeta_S_E,
+        'zeta_M': zeta_M_E,
+        'zeta_D': zeta_D_E,
+        'zeta_CI': zeta_CI_I,
+        'zeta_TC': zeta_TC_E,
+        'zeta_TR': zeta_TR_I,
         }
     
     # Bias currents (Subthreshold CTX and Suprethreshold THM) - Will be used in the neurons
@@ -351,6 +353,77 @@ def TCM_model_parameters():
         'distribution': [0.08, 0.75, 0.17],
         't_s': 11,
         }
+    # =============================================================================
+    # POISSONIAN BACKGROUND ACTIVITY 
+    # - Poissonian postsynaptic input to the E and I neurons for all layers
+    # =============================================================================
+    w_ps = 1
+    I_ps_S = np.zeros((2, sim_steps))
+    I_ps_M = np.zeros((2, sim_steps))
+    I_ps_D = np.zeros((2, sim_steps))
+    I_ps_CI = np.zeros((2, sim_steps))
+    I_ps_TR = np.zeros((2, sim_steps))
+    I_ps_TC = np.zeros((2, sim_steps))
+    ps_firing_rates = np.zeros((1,6))
+    
+    for i in range(6):
+        ps_firing_rates[0][i] = poisson_firing = 20 + 2 * np.random.randn()
+
+
+    W_ps = [[w_ps * np.random.randn() for _ in range(2)] for _ in range(6)]
+
+    [spike_PS, I_PS] = poisson_spike_generator(num_steps = sim_steps, 
+                                              dt = dt, 
+                                              num_neurons = 1, 
+                                              thalamic_firing_rate = poisson_firing, 
+                                              current_value=None)
+
+    # Mudar I_E e I_I para gerar um array e colocar o I_PS_x para receber esse array * o peso
+    I_E = tm_synapse_poisson_eq(spikes = spike_PS, 
+                                sim_steps = sim_steps, 
+                                t_delay = td_synapse, 
+                                dt = dt, 
+                                t_f = synapse_params_excitatory['t_f'], 
+                                t_d = synapse_params_excitatory['t_d'], 
+                                t_s = synapse_params_excitatory['t_s'], 
+                                U = synapse_params_excitatory['U'], 
+                                A = synapse_params_excitatory['distribution'], 
+                                time = t_vec)
+
+    I_I = tm_synapse_poisson_eq(spikes = spike_PS, 
+                                sim_steps = sim_steps, 
+                                t_delay = td_synapse, 
+                                dt = dt, 
+                                t_f = synapse_params_inhibitory['t_f'], 
+                                t_d = synapse_params_inhibitory['t_d'], 
+                                t_s = synapse_params_inhibitory['t_s'], 
+                                U = synapse_params_inhibitory['U'], 
+                                A = synapse_params_inhibitory['distribution'],
+                                time = t_vec)
+    # Excitatory
+    I_ps_S[0] = W_ps[0][0]*I_E
+    I_ps_M[0] = W_ps[1][0]*I_E
+    I_ps_D[0] = W_ps[2][0]*I_E
+    I_ps_CI[0] = W_ps[3][0]*I_E
+    I_ps_TR[0] = W_ps[4][0]*I_E
+    I_ps_TC[0] = W_ps[5][0]*I_E
+
+    # Inhibitory
+    I_ps_S[1] = W_ps[0][1]*I_I
+    I_ps_M[1] = W_ps[1][1]*I_I
+    I_ps_D[1] = W_ps[2][1]*I_I
+    I_ps_CI[1] = W_ps[3][1]*I_I
+    I_ps_TR[1] = W_ps[4][1]*I_I
+    I_ps_TC[1] = W_ps[5][1]*I_I
+    
+    I_ps = {
+        'S': I_ps_S,
+        'M': I_ps_M,
+        'D': I_ps_D,
+        'CI': I_ps_CI,
+        'TC': I_ps_TC,
+        'TR': I_ps_TR,
+        }
     
     # Export all dictionaries
     data = {
@@ -384,7 +457,8 @@ def TCM_model_parameters():
         'synapse_params_excitatory': synapse_params_excitatory,
         'synapse_params_inhibitory': synapse_params_inhibitory,
         'synapse_total_params': p,
-        'dbs': [dbs_off, dbs_on]
+        'dbs': [dbs_off, dbs_on],
+        'poisson_bg_activity': I_ps
         }
     
     return data

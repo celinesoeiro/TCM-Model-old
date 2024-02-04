@@ -38,7 +38,7 @@ b_lts = lts_params['b'] - 0.05*random_factor
 c_lts = lts_params['c'] 
 d_lts = lts_params['d'] 
 
-I = 3
+I = 0.5
 
 # Tsodkys and Markram synapse model
 t_s_E = 3         # decay time constante of I (PSC current)

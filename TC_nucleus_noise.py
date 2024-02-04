@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Created on Sat Feb  3 15:45:40 2024
+Created on Sat Feb  3 19:21:12 2024
 
 @author: celinesoeiro
 """
+
 import numpy as np
 
 from tcm_params import TCM_model_parameters, coupling_matrix_normal
@@ -49,6 +52,14 @@ A_E_T_D = syn_params['distribution_T_D']
 
 I_TC = currents['TC']
 
+noise = TCM_model_parameters()['noise']
+
+kisi_TC = noise['kisi_TC']
+zeta_TC = noise['zeta_TC']
+
+I_ps = TCM_model_parameters()['poisson_bg_activity']
+I_ps_TC = I_ps['TC']
+
 def TC_nucleus(t, v_TC, u_TC, AP_TC, PSC_TC, PSC_S, PSC_M, PSC_D_T, PSC_TR, PSC_CI, PSC_T_D, R_TC_syn, u_TC_syn, I_TC_syn):
     
     I_syn = np.zeros((1, n_TC))
@@ -59,7 +70,7 @@ def TC_nucleus(t, v_TC, u_TC, AP_TC, PSC_TC, PSC_S, PSC_M, PSC_D_T, PSC_TR, PSC_
         u_TC_aux = 1*u_TC[tc][t - 1]
         AP_TC_aux = 0
                 
-        if (v_TC_aux >= vp):
+        if (v_TC_aux >= vp + zeta_TC[tc][t - 1]):
             AP_TC_aux = 1
             AP_TC[tc][t] = t
             v_TC_aux = v_TC[tc][t]
@@ -84,11 +95,12 @@ def TC_nucleus(t, v_TC, u_TC, AP_TC, PSC_TC, PSC_S, PSC_M, PSC_D_T, PSC_TR, PSC_
             
             dv_TC = izhikevich_dvdt(v = v_TC_aux, u = u_TC_aux, I = I_TC[tc])
             du_TC = izhikevich_dudt(v = v_TC_aux, u = u_TC_aux, a = a_TC[0][tc], b = b_TC[0][tc])
-        
+            
             coupling_cortex = (coupling_TC_S + coupling_TC_M + coupling_TC_D + coupling_TC_CI)/n_TC
             coupling_thalamus = (coupling_TC_TC + coupling_TC_TR)/n_TC
+            bg_activity = kisi_TC[tc][t - 1] + I_ps_TC[0][t - td_wl - td_syn - 1] - I_ps_TC[1][t - td_wl - td_syn - 1]
         
-            v_TC[tc][t] = v_TC_aux + dt*(dv_TC + coupling_cortex + coupling_thalamus)
+            v_TC[tc][t] = v_TC_aux + dt*(dv_TC + coupling_cortex + coupling_thalamus + bg_activity)
             u_TC[tc][t] = u_TC_aux + dt*du_TC
             
         u = 1*u_TC_syn

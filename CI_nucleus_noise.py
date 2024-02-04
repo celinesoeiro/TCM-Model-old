@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Created on Sat Feb  3 16:36:30 2024
+Created on Sat Feb  3 19:17:04 2024
 
 @author: celinesoeiro
 """
+
 import numpy as np
 
 from tcm_params import TCM_model_parameters, coupling_matrix_normal
@@ -48,6 +51,14 @@ t_s_I = syn_params['t_s']
 U_I = syn_params['U']
 A_I = syn_params['distribution']
 
+noise = TCM_model_parameters()['noise']
+
+kisi_CI = noise['kisi_CI']
+zeta_CI = noise['zeta_CI']
+
+I_ps = TCM_model_parameters()['poisson_bg_activity']
+I_ps_CI = I_ps['CI']
+
 def CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR, u_CI_syn, R_CI_syn, I_CI_syn):
     
     I_syn = np.zeros((1, n_CI))
@@ -57,7 +68,7 @@ def CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR
         u_CI_aux = 1*u_CI[ci][t - 1]
         AP_CI_aux = 0
                 
-        if (v_CI_aux >= vp):
+        if (v_CI_aux >= vp + zeta_CI[ci][t - 1]):
             AP_CI[ci][t] = t
             AP_CI_aux = 1
             v_CI_aux = v_CI[ci][t]
@@ -85,12 +96,13 @@ def CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR
             
             coupling_cortex = (coupling_CI_M + coupling_CI_S + coupling_CI_CI + coupling_CI_D)/n_CI
             coupling_thalamus = (coupling_CI_TC + coupling_CI_TR)/n_CI
+            bg_activity = kisi_CI[ci][t - 1] +  I_ps_CI[0][t - td_wl - td_syn - 1] - I_ps_CI[0][t - td_wl - td_syn - 1]
         
-            v_CI[ci][t] = v_CI_aux + dt*(dv_CI + coupling_cortex + coupling_thalamus)
+            v_CI[ci][t] = v_CI_aux + dt*(dv_CI + coupling_cortex + coupling_thalamus+ bg_activity)
             u_CI[ci][t] = u_CI_aux + dt*du_CI
             
         # Synapse        
-        syn_CI = tm_synapse_eq(u = u_CI_syn, R = R_CI_syn, I = I_CI_syn, AP = AP_CI_aux, t_f = t_f_I, t_d = t_d_I, t_s = t_s_I, U = U_I, A = A_I, dt = dt, p = p)
+        syn_CI = tm_synapse_eq(u = u_CI_syn, R = R_CI_syn, I = I_CI_syn, AP = AP_CI_aux, t_f = t_f_I, t_d = t_d_I, t_s = t_s_I, U = U_I, A = A_I,dt = dt, p = p)
         
         R_CI_syn = 1*syn_CI['R']
         u_CI_syn = 1*syn_CI['u']

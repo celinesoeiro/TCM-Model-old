@@ -11,6 +11,10 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 sns.set()
 
+from tcm_params import TCM_model_parameters
+dt = TCM_model_parameters()['dt']
+fs = TCM_model_parameters()['sampling_frequency']
+
 def plot_heat_map(matrix_normal, matrix_PD): 
     fig, (ax1, ax2) = plt.subplots(1,2, figsize=(17,7))
     
@@ -69,7 +73,7 @@ def plot_voltages(n_neurons, voltage, title, neuron_types):
         
         axs[row,column].set_title(f'NEURONIO {i + 1} - {neuron_type}')
         axs[row,column].plot(voltage[i])
-            
+    
     plt.show()
     
 def plot_LFP(lfp, chop_till, sim_steps, title):
@@ -133,7 +137,7 @@ def layer_raster_plot(n, AP, sim_steps, layer_name, dt):
         ylabel='Neurons',
     )
     
-    x_vec = np.arange(0, sim_steps + 1, int(10/dt))
+    x_vec = np.arange(0, sim_steps + 1, int(fs/2))
     x_labels_vec = np.arange(0, n + 1, 1, dtype=int)
      
     ax1.set_ylim(1, n + 1)
@@ -214,6 +218,141 @@ def plot_raster(
     ax1.set(
         axisbelow=True,  # Hide the grid behind plot objects
         title=f'Raster plot dbs={dbs}',
+        xlabel='Time (s)',
+        ylabel='Neurons',
+    )
+        
+    for i in range(n_total):  
+        y_values = np.full_like(spikes[i], i + 1)
+        ax1.scatter(x=spikes[i], y=y_values, color='black', s=0.5)
+        
+    ax1.set_ylim(1, n_total + 1)
+    ax1.set_yticks([0, 
+                   TR_lim, 
+                   TC_lim, 
+                   CI_lim, 
+                   CI_FS_lim, 
+                   CI_FS_lim, 
+                   D_RS_lim, 
+                   D_RS_lim, 
+                   D_lim, 
+                   M_lim, 
+                   S_RS_lim, 
+                   S_RS_lim, 
+                   S_lim])
+    ax1.set_yticklabels(['',
+                        'TR',
+                        'TC',
+                        'CI - FS',
+                        'CI - LTS',
+                        'CI',
+                        'D - RS',
+                        'D - IB',
+                        'D', 
+                        'M - RS', 
+                        'S - RS', 
+                        'S - IB', 
+                        'S',
+                        ])
+    
+    # For dt = 0.1
+    multiplier = 1000
+    lim_down = chop_till
+    lim_up = sim_steps + multiplier*dt
+    new_arr = np.arange(lim_down, lim_up, multiplier)
+    
+    # Transforming flot array to int array
+    x_ticks = list(map(int,new_arr/multiplier))
+    
+    ax1.set_xlim(lim_down, lim_up)
+    ax1.set_xticks(new_arr)
+    ax1.set_xticklabels(x_ticks)
+    
+    # TR neurons
+    ax1.hlines(y = TR_lim, xmin=0, xmax=sim_steps, color = 'b', linestyle='solid' )
+    # TC neurons
+    ax1.hlines(y = TC_lim, xmin=0, xmax=sim_steps, color = 'g', linestyle='solid' )
+    # CI neurons
+    ax1.hlines(y = CI_lim, xmin=0, xmax=sim_steps, color = 'r', linestyle='solid' )
+    ax1.hlines(y = CI_FS_lim, xmin=0, xmax=sim_steps, color = 'lightcoral', linestyle='solid')
+    # D neurons
+    ax1.hlines(y = D_lim, xmin=0, xmax=sim_steps, color = 'c', linestyle='solid' )
+    ax1.hlines(y = D_RS_lim, xmin=0, xmax=sim_steps, color = 'paleturquoise', linestyle='solid' )
+    # M neurons
+    ax1.hlines(y = M_lim, xmin=0, xmax=sim_steps, color = 'm', linestyle='solid' )
+    # S neurons
+    ax1.hlines(y = S_lim, xmin=0, xmax=sim_steps, color = 'gold', linestyle='solid' )
+    ax1.hlines(y = S_RS_lim, xmin=0, xmax=sim_steps, color = 'khaki', linestyle='solid' )
+    plt.show()
+    
+def plot_raster_2(
+    sim_steps,
+    sim_time,
+    dt,
+    chop_till, 
+    n_TR, 
+    n_TC, 
+    n_CI, 
+    n_D, 
+    n_M, 
+    n_S, 
+    n_total,
+    n_CI_FS,
+    n_CI_LTS,
+    n_D_RS,
+    n_D_IB,
+    n_S_RS,
+    n_S_IB,
+    spike_times_TR, 
+    spike_times_TC, 
+    spike_times_CI, 
+    spike_times_D, 
+    spike_times_M,
+    spike_times_S):
+    
+    TR_lim = n_TR
+    TC_lim = TR_lim + n_TC
+    CI_lim = TC_lim + n_CI
+    CI_FS_lim = CI_lim - n_CI_LTS
+    D_lim = CI_lim + n_D
+    D_RS_lim = D_lim - n_D_IB
+    M_lim = D_lim + n_M
+    S_lim = M_lim + n_S
+    S_RS_lim = S_lim - n_S_IB
+    
+    spike_TR_clean = np.zeros((n_TR, sim_steps - chop_till))
+    spike_TC_clean = np.zeros((n_TC, sim_steps - chop_till))
+    spike_CI_clean = np.zeros((n_CI, sim_steps - chop_till))
+    spike_D_clean = np.zeros((n_D, sim_steps - chop_till))
+    spike_M_clean = np.zeros((n_M, sim_steps - chop_till))
+    spike_S_clean = np.zeros((n_S, sim_steps - chop_till))
+    
+    for i in range(n_TR):
+        spike_TR_clean[i] = spike_times_TR[i][chop_till:]
+        
+    for i in range(n_TC):
+        spike_TC_clean[i] = spike_times_TC[i][chop_till:]
+        spike_CI_clean[i] = spike_times_CI[i][chop_till:]
+        spike_D_clean[i] = spike_times_D[i][chop_till:]
+        spike_M_clean[i] = spike_times_M[i][chop_till:]
+        spike_S_clean[i] = spike_times_S[i][chop_till:]
+    
+    spikes = np.concatenate([spike_TR_clean, spike_TC_clean, spike_CI_clean, spike_D_clean, spike_M_clean, spike_S_clean])
+    
+    fig, ax1 = plt.subplots(figsize=(10, 10))
+    fig.canvas.manager.set_window_title(f'Raster plot')
+    fig.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
+        
+    plt.title(f'Raster plot')
+    
+    # Add a horizontal grid to the plot, but make it very light in color
+    # so we can use it for reading data values but not be distracting
+    ax1.yaxis.grid(True, linestyle='-', which='major', color='lightgrey',
+                   alpha=0.5)
+    
+    ax1.set(
+        axisbelow=True,  # Hide the grid behind plot objects
+        title=f'Raster plot',
         xlabel='Time (s)',
         ylabel='Neurons',
     )
