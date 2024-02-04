@@ -4,6 +4,9 @@ Created on Wed Jan 31 20:31:27 2024
 @author: celinesoeiro
 """
 
+print("- REAL")
+
+print("-- Importing packages and functions")
 import numpy as np
 import pandas as pd
 import gc # Garbage Collector
@@ -22,7 +25,6 @@ from M_nucleus_noise import M_nucleus
 from D_nucleus_noise import D_nucleus
 from CI_nucleus_noise import CI_nucleus
 
-print("- REAL")
 # =============================================================================
 # INITIAL VALUES
 # =============================================================================

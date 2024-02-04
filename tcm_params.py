@@ -102,12 +102,12 @@ def TCM_model_parameters():
     dbs_off = 0                             # value of synaptic fidelity when DBS off
         
     # Neuron quantities
-    qnt_neurons_s = 10         # Excitatory
-    qnt_neurons_m = 10         # Excitatory
-    qnt_neurons_d = 10         # Excitatory
-    qnt_neurons_ci = 10        # Inhibitory
-    qnt_neurons_tc = 10        # Excitatory
-    qnt_neurons_tr = 4         # Inhibitory
+    qnt_neurons_s = 20         # Excitatory
+    qnt_neurons_m = 20         # Excitatory
+    qnt_neurons_d = 20         # Excitatory
+    qnt_neurons_ci = 20        # Inhibitory
+    qnt_neurons_tc = 20        # Excitatory
+    qnt_neurons_tr = 8         # Inhibitory
     
     neuron_quantities = {
         'S': qnt_neurons_s,                      # Number of neurons in Superficial layer

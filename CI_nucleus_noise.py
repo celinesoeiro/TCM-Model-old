@@ -111,3 +111,5 @@ def CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR
         
     PSC_CI[0][t] = np.sum(I_syn)
     return v_CI, u_CI, PSC_CI, u_CI_syn, I_CI_syn, R_CI_syn
+
+
