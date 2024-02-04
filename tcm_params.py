@@ -102,12 +102,12 @@ def TCM_model_parameters():
     dbs_off = 0                             # value of synaptic fidelity when DBS off
         
     # Neuron quantities
-    qnt_neurons_s = 20         # Excitatory
-    qnt_neurons_m = 20         # Excitatory
-    qnt_neurons_d = 20         # Excitatory
-    qnt_neurons_ci = 20        # Inhibitory
-    qnt_neurons_tc = 20        # Excitatory
-    qnt_neurons_tr = 8         # Inhibitory
+    qnt_neurons_s = 10         # Excitatory
+    qnt_neurons_m = 10         # Excitatory
+    qnt_neurons_d = 10         # Excitatory
+    qnt_neurons_ci = 10        # Inhibitory
+    qnt_neurons_tc = 10        # Excitatory
+    qnt_neurons_tr = 4         # Inhibitory
     
     neuron_quantities = {
         'S': qnt_neurons_s,                      # Number of neurons in Superficial layer
@@ -182,6 +182,10 @@ def TCM_model_parameters():
     # 3 - LTS - Low Threshold Spiking
     # 4 - TC (rel) - Thalamo-Cortical Relay
     # 5 - TR - Thalamic Reticular
+    
+    # =============================================================================
+    #     Making neuron variations (all neurons must be different from one another)
+    # =============================================================================
 
     #    0-RS  1-IB  2-FS 3-LTS 4-TC  5-TR 
     a = [0.02, 0.02, 0.1, 0.02, 0.02, 0.02]
@@ -189,38 +193,45 @@ def TCM_model_parameters():
     c = [-65,  -55,  -65, -65,   -65,  -65]
     d = [8,    4,      2,   2,  0.05, 2.05]
     
+    r_s_1 = np.random.rand(1,neurons_s_1); r_s_2 = np.random.rand(1,neurons_s_2);
+    
     a_S = np.c_[a[0]*np.ones((1, neurons_s_1)), a[1]*np.ones((1, neurons_s_2))]
     b_S = np.c_[b[0]*np.ones((1, neurons_s_1)), b[1]*np.ones((1, neurons_s_2))]
-    c_S = np.c_[c[0]*np.ones((1, neurons_s_1)), c[1]*np.ones((1, neurons_s_2))] + 15*random_factor**2
-    d_S = np.c_[d[0]*np.ones((1, neurons_s_1)), d[1]*np.ones((1, neurons_s_2))] - 0.6*random_factor**2
+    c_S = np.c_[c[0] + 15*r_s_1**2, c[1] + 15*r_s_2**2]
+    d_S = np.c_[d[0] - 0.6*r_s_1**2, d[1] -0.6*r_s_2**2]
+    
+    r_m_1 = np.random.rand(1,neurons_m_1); r_m_2 = np.random.rand(1,neurons_m_2);
     
     a_M = np.c_[a[0]*np.ones((1, neurons_m_1)), a[0]*np.ones((1, neurons_m_2))]
     b_M = np.c_[b[0]*np.ones((1, neurons_m_1)), b[0]*np.ones((1, neurons_m_2))]
-    c_M = np.c_[c[0]*np.ones((1, neurons_m_1)), c[0]*np.ones((1, neurons_m_2))] + 15*random_factor**2
-    d_M = np.c_[d[0]*np.ones((1, neurons_m_1)), d[0]*np.ones((1, neurons_m_2))] - 0.6*random_factor**2
+    c_M = np.c_[c[0] + 15*r_m_1**2, c[0] + 15*r_m_2**2]
+    d_M = np.c_[d[0] - 0.6*r_m_1**2, d[0] -0.6*r_m_2**1]
+    
+    r_d_1 = np.random.rand(1,neurons_d_1); r_d_2 = np.random.rand(1,neurons_d_2);
     
     a_D = np.c_[a[0]*np.ones((1, neurons_d_1)), a[1]*np.ones((1, neurons_d_2))]
     b_D = np.c_[b[0]*np.ones((1, neurons_d_1)), b[1]*np.ones((1, neurons_d_2))]
-    c_D = np.c_[c[0]*np.ones((1, neurons_d_1)), c[1]*np.ones((1, neurons_d_2))] + 15*random_factor**2
-    d_D = np.c_[d[0]*np.ones((1, neurons_d_1)), d[1]*np.ones((1, neurons_d_2))] - 0.6*random_factor**2
+    c_D = np.c_[c[0] + 15*r_d_1**2, c[1] + 15*r_d_2**2]
+    d_D = np.c_[d[0] - 0.6*r_d_1**2, d[1] - 0.6*r_d_2**2]
         
-    a_CI = np.c_[a[2]*np.ones((1, neurons_ci_1)), a[3]*np.ones((1, neurons_ci_2))] + 0.08*random_factor
-    b_CI = np.c_[b[2]*np.ones((1, neurons_ci_1)), b[3]*np.ones((1, neurons_ci_2))] - 0.05*random_factor
+    r_ci_1 = np.random.rand(1,neurons_ci_1); r_ci_2 = np.random.rand(1,neurons_ci_2);
+    
+    a_CI = np.c_[a[2] + 0.008*r_ci_1, a[3] + 0.008*r_ci_2]
+    b_CI = np.c_[b[2] - 0.005*r_ci_1, b[3] - 0.005*r_ci_2]
     c_CI = np.c_[c[2]*np.ones((1, neurons_ci_1)), c[3]*np.ones((1, neurons_ci_2))]
     d_CI = np.c_[d[2]*np.ones((1, neurons_ci_1)), d[3]*np.ones((1, neurons_ci_2))]
     
-    # a_TC = np.c_[a[4]*np.ones((1, neurons_tc_1)), a[4]*np.ones((1, neurons_tc_2))]
-    # b_TC = np.c_[b[4]*np.ones((1, neurons_tc_1)), b[4]*np.ones((1, neurons_tc_2))]
-    # c_TC = np.c_[c[4]*np.ones((1, neurons_tc_1)), c[4]*np.ones((1, neurons_tc_2))] + 15*random_factor**2
-    # d_TC = np.c_[d[4]*np.ones((1, neurons_tc_1)), d[4]*np.ones((1, neurons_tc_2))] - 0.6*random_factor**2
+    r_tc_1 = np.random.rand(1,neurons_tc_1); r_tc_2 = np.random.rand(1,neurons_tc_2);
     
-    a_TC = np.c_[a[4]*np.ones((1, neurons_tc_1)), a[4]*np.ones((1, neurons_tc_2))] + 0.08*random_factor
-    b_TC = np.c_[b[4]*np.ones((1, neurons_tc_1)), b[4]*np.ones((1, neurons_tc_2))] - 0.05*random_factor
+    a_TC = np.c_[a[4] + 0.008*r_tc_1, a[4] + 0.008*r_tc_2]
+    b_TC = np.c_[b[4] - 0.005*r_tc_1, b[4] - 0.005*r_tc_2]
     c_TC = np.c_[c[4]*np.ones((1, neurons_tc_1)), c[4]*np.ones((1, neurons_tc_2))] 
     d_TC = np.c_[d[4]*np.ones((1, neurons_tc_1)), d[4]*np.ones((1, neurons_tc_2))] 
     
-    a_TR = np.c_[a[5]*np.ones((1, neurons_tr_1)), a[5]*np.ones((1, neurons_tr_2))] + 0.08*random_factor
-    b_TR = np.c_[b[5]*np.ones((1, neurons_tr_1)), b[5]*np.ones((1, neurons_tr_2))] - 0.05*random_factor
+    r_tr_1 = np.random.rand(1,neurons_tr_1); r_tr_2 = np.random.rand(1,neurons_tr_2);
+    
+    a_TR = np.c_[a[5] + 0.008*r_tr_1, a[5] + 0.008*r_tr_2]
+    b_TR = np.c_[b[5] - 0.005*r_tr_1, b[5] - 0.005*r_tr_2]
     c_TR = np.c_[c[5]*np.ones((1, neurons_tr_1)), c[5]*np.ones((1, neurons_tr_2))]
     d_TR = np.c_[d[5]*np.ones((1, neurons_tr_1)), d[5]*np.ones((1, neurons_tr_2))]
         
@@ -254,7 +265,7 @@ def TCM_model_parameters():
     # =============================================================================
     #     Noise terms
     # =============================================================================
-    white_gaussian_add = 1.5; cn = 1 # additive white Gaussian noise strength
+    white_gaussian_add = 1.5; cn = 1; # additive white Gaussian noise strength
     white_gaussian_thr = 0.5 # threshold white Gaussian noise strength
 
     random_S = np.random.randn(qnt_neurons_s, samp_freq)

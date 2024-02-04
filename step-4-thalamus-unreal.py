@@ -280,3 +280,17 @@ plot_raster_2(
             )
 
 print("-- Done!")
+
+
+b = neuron_params['b_CI']
+b + np.random.rand(10,1)
+0.2*np.random.rand(1,10)
+
+-65 + 0.2*np.random.rand(1,10)**2
+
+
+
+
+
+
+
