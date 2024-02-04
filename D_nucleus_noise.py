@@ -8,14 +8,13 @@ Created on Sat Feb  3 19:08:12 2024
 
 import numpy as np
 
-from tcm_params import TCM_model_parameters, coupling_matrix_normal
+from tcm_params import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 from model_functions import izhikevich_dudt, izhikevich_dvdt, tm_synapse_eq
 
 neuron_quantities = TCM_model_parameters()['neuron_quantities']
 neuron_per_structure = TCM_model_parameters()['neuron_per_structure']
 neuron_params = TCM_model_parameters()['neuron_paramaters']
 currents = TCM_model_parameters()['currents_per_structure']
-W_N = coupling_matrix_normal()['weights']
 dt = TCM_model_parameters()['dt']
 syn_params = TCM_model_parameters()['synapse_params_excitatory']
 
@@ -36,12 +35,23 @@ td_tc = TCM_model_parameters()['time_delay_thalamus_cortex']
 td_syn = TCM_model_parameters()['time_delay_synapse']
 p = TCM_model_parameters()['synapse_total_params']
 
-W_D_self = W_N['W_EE_d']
-W_D_S = W_N['W_EE_d_s']
-W_D_M = W_N['W_EE_d_m']
-W_D_CI = W_N['W_EI_d_ci']
-W_D_TR = W_N['W_EI_d_tr']
-W_D_TC = W_N['W_EE_d_tc']
+# W_N = coupling_matrix_normal()['weights']
+
+# W_D_self = W_N['W_EE_d']
+# W_D_S = W_N['W_EE_d_s']
+# W_D_M = W_N['W_EE_d_m']
+# W_D_CI = W_N['W_EI_d_ci']
+# W_D_TR = W_N['W_EI_d_tr']
+# W_D_TC = W_N['W_EE_d_tc']
+
+W_PD = coupling_matrix_PD()['weights']
+
+W_D_self = W_PD['W_EE_d']
+W_D_S = W_PD['W_EE_d_s']
+W_D_M = W_PD['W_EE_d_m']
+W_D_CI = W_PD['W_EI_d_ci']
+W_D_TR = W_PD['W_EI_d_tr']
+W_D_TC = W_PD['W_EE_d_tc']
 
 t_f_E = syn_params['t_f']
 t_d_E = syn_params['t_d']

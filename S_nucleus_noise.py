@@ -8,14 +8,13 @@ Created on Sat Feb  3 18:46:35 2024
 
 import numpy as np
 
-from tcm_params import TCM_model_parameters, coupling_matrix_normal
+from tcm_params import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
 from model_functions import izhikevich_dudt, izhikevich_dvdt, tm_synapse_eq
 
 neuron_quantities = TCM_model_parameters()['neuron_quantities']
 neuron_per_structure = TCM_model_parameters()['neuron_per_structure']
 neuron_params = TCM_model_parameters()['neuron_paramaters']
 currents = TCM_model_parameters()['currents_per_structure']
-W_N = coupling_matrix_normal()['weights']
 dt = TCM_model_parameters()['dt']
 syn_params = TCM_model_parameters()['synapse_params_excitatory']
 
@@ -24,12 +23,23 @@ n_S = neuron_quantities['S']
 vr = TCM_model_parameters()['vr']
 vp = TCM_model_parameters()['vp']
 
-W_S_self = W_N['W_EE_s']
-W_S_M = W_N['W_EE_s_m']
-W_S_D = W_N['W_EE_s_d']
-W_S_CI = W_N['W_EI_s_ci']
-W_S_TR = W_N['W_EI_s_tr']
-W_S_TC = W_N['W_EE_s_tc']
+# W_N = coupling_matrix_normal()['weights']
+
+# W_S_self = W_N['W_EE_s']
+# W_S_M = W_N['W_EE_s_m']
+# W_S_D = W_N['W_EE_s_d']
+# W_S_CI = W_N['W_EI_s_ci']
+# W_S_TR = W_N['W_EI_s_tr']
+# W_S_TC = W_N['W_EE_s_tc']
+
+W_PS = coupling_matrix_PD()['weights']
+
+W_S_self = W_PS['W_EE_s']
+W_S_M = W_PS['W_EE_s_m']
+W_S_D = W_PS['W_EE_s_d']
+W_S_CI = W_PS['W_EI_s_ci']
+W_S_TR = W_PS['W_EI_s_tr']
+W_S_TC = W_PS['W_EE_s_tc']
 
 a_S = neuron_params['a_S']
 b_S = neuron_params['b_S']

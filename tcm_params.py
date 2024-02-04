@@ -102,12 +102,12 @@ def TCM_model_parameters():
     dbs_off = 0                             # value of synaptic fidelity when DBS off
         
     # Neuron quantities
-    qnt_neurons_s = 10         # Excitatory
-    qnt_neurons_m = 10         # Excitatory
-    qnt_neurons_d = 10         # Excitatory
-    qnt_neurons_ci = 10        # Inhibitory
-    qnt_neurons_tc = 10        # Excitatory
-    qnt_neurons_tr = 4         # Inhibitory
+    qnt_neurons_s = 100         # Excitatory
+    qnt_neurons_m = 100         # Excitatory
+    qnt_neurons_d = 100         # Excitatory
+    qnt_neurons_ci = 100        # Inhibitory
+    qnt_neurons_tc = 100        # Excitatory
+    qnt_neurons_tr = 40         # Inhibitory
     
     neuron_quantities = {
         'S': qnt_neurons_s,                      # Number of neurons in Superficial layer
@@ -492,7 +492,7 @@ def coupling_matrix_normal():
     # =============================================================================
     #     These are to restrict the normalized distribution variance or deviation from the mean
     # =============================================================================
-    r_s = initial + interval*np.random.rand(n_s, 1)
+    r_s = initial + interval*np.random.rand(n_s,1)
     r_m = initial + interval*np.random.rand(n_m, 1)
     r_d = initial + interval*np.random.rand(n_d, 1)
     r_ci = initial + interval*np.random.rand(n_ci, 1)
@@ -718,12 +718,12 @@ def coupling_matrix_PD():
     # =============================================================================
     #     These are to restrict the normalized distribution variance or deviation from the mean
     # =============================================================================
-    r_s = initial + interval*np.random.rand(1, n_s)
-    r_m = initial + interval*np.random.rand(1, n_m)
-    r_d = initial + interval*np.random.rand(1, n_d)
-    r_ci = initial + interval*np.random.rand(1, n_ci)
-    r_tr = initial + interval*np.random.rand(1, n_tr)
-    r_tc = initial + interval*np.random.rand(1, n_tc)
+    r_s = initial + interval*np.random.rand(n_s, 1)
+    r_m = initial + interval*np.random.rand(n_m, 1)
+    r_d = initial + interval*np.random.rand(n_d, 1)
+    r_ci = initial + interval*np.random.rand(n_ci, 1)
+    r_tr = initial + interval*np.random.rand(n_tr, 1)
+    r_tc = initial + interval*np.random.rand(n_tc, 1)
     
     # =============================================================================
     #     COUPLING STRENGTHs within each structure (The same in Normal and PD)
@@ -879,31 +879,37 @@ def coupling_matrix_PD():
         'W_II_ci': W_II_ci,
         'W_II_tr': W_II_tr,
         'W_EE_tc': W_EE_tc,
+        
         'W_EE_s_m': W_EE_s_m,
         'W_EE_s_d': W_EE_s_d,
         'W_EI_s_ci': W_EI_s_ci,
         'W_EI_s_tr': W_EI_s_tr,
         'W_EE_s_tc': W_EE_s_tc,
+        
         'W_EE_m_s': W_EE_m_s,
         'W_EE_m_d': W_EE_m_d,
         'W_EI_m_ci': W_EI_m_ci,
         'W_EI_m_tr': W_EI_m_tr,
         'W_EE_m_tc': W_EE_m_tc,
+        
         'W_EE_d_s': W_EE_d_s,
         'W_EE_d_m': W_EE_d_m,
         'W_EI_d_ci': W_EI_d_ci,
         'W_EI_d_tr': W_EI_d_tr,
         'W_EE_d_tc': W_EE_d_tc,
-        'W_IE_ic_s': W_IE_ci_s,
-        'W_IE_ic_m': W_IE_ci_m,
-        'W_IE_ic_d': W_IE_ci_d,
-        'W_II_ic_tr': W_II_ci_tr,
-        'W_IE_ic_tc': W_IE_ci_tc,
+        
+        'W_IE_ci_s': W_IE_ci_s,
+        'W_IE_ci_m': W_IE_ci_m,
+        'W_IE_ci_d': W_IE_ci_d,
+        'W_II_ci_tr': W_II_ci_tr,
+        'W_IE_ci_tc': W_IE_ci_tc,
+        
         'W_IE_tr_s': W_IE_tr_s,
         'W_IE_tr_m': W_IE_tr_m,
         'W_IE_tr_d': W_IE_tr_d,
-        'W_II_tr_ic': W_II_tr_ci,
+        'W_II_tr_ci': W_II_tr_ci,
         'W_IE_tr_tc': W_IE_tr_tc,
+        
         'W_EE_tc_s': W_EE_tc_s,
         'W_EE_tc_m': W_EE_tc_m,
         'W_EE_tc_d': W_EE_tc_d,
