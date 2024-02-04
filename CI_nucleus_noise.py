@@ -69,7 +69,7 @@ def CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR
         AP_CI_aux = 0
                 
         if (v_CI_aux >= vp + zeta_CI[ci][t - 1]):
-            AP_CI[ci][t] = t
+            AP_CI[ci][t] = t - 1
             AP_CI_aux = 1
             v_CI_aux = v_CI[ci][t]
             v_CI[ci][t] = c_CI[0][ci]

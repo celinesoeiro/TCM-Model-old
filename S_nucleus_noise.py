@@ -70,7 +70,7 @@ def S_nucleus(t, v_S, u_S, AP_S, PSC_S, PSC_M, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_
                 
         if (v_S_aux >= vp + zeta_S[s][t - 1]):
             AP_S_aux = 1
-            AP_S[s][t] = t
+            AP_S[s][t] = t - 1
             v_S_aux = v_S[s][t]
             v_S[s][t] = c_S[0][s]
             u_S[s][t] = u_S_aux + d_S[0][s]

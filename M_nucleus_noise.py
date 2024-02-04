@@ -70,7 +70,7 @@ def M_nucleus(t, v_M, u_M, AP_M, PSC_M, PSC_S, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_
                 
         if (v_M_aux >= vp + zeta_M[m][t - 1]):
             AP_M_aux = 1
-            AP_M[m][t] = t
+            AP_M[m][t] = t - 1
             v_M_aux = v_M[m][t]
             v_M[m][t] = c_M[0][m]
             u_M[m][t] = u_M_aux + d_M[0][m]

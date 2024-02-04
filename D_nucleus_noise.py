@@ -72,7 +72,7 @@ def D_nucleus(t, v_D, u_D, AP_D, PSC_D, PSC_S, PSC_M, PSC_T_D, PSC_CI, PSC_TR, P
                 
         if (v_D_aux >= vp + zeta_D[d][t - 1]):
             AP_D_aux = 1
-            AP_D[d][t] = t
+            AP_D[d][t] = t - 1
             v_D_aux = v_D[d][t]
             v_D[d][t] = c_D[0][d]
             u_D[d][t] = u_D_aux + d_D[0][d]

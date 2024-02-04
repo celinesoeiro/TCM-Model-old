@@ -72,7 +72,7 @@ def TC_nucleus(t, v_TC, u_TC, AP_TC, PSC_TC, PSC_S, PSC_M, PSC_D_T, PSC_TR, PSC_
                 
         if (v_TC_aux >= vp + zeta_TC[tc][t - 1]):
             AP_TC_aux = 1
-            AP_TC[tc][t] = t
+            AP_TC[tc][t] = t - 1
             v_TC_aux = v_TC[tc][t]
             v_TC[tc][t] = c_TC[0][tc]
             u_TC[tc][t] = u_TC_aux + d_TC[0][tc]

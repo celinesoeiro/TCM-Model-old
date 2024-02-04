@@ -69,7 +69,7 @@ def TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC
                 
         if (v_TR_aux >= vp + zeta_TR[tr][t - 1]):
             AP_TR_aux = 1
-            AP_TR[tr][t] = t
+            AP_TR[tr][t] = t - 1
             v_TR_aux = v_TR[tr][t]
             v_TR[tr][t] = c_TR[0][tr]
             u_TR[tr][t] = u_TR_aux + d_TR[0][tr]
