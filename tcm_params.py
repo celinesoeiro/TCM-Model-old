@@ -93,7 +93,7 @@ def TCM_model_parameters():
     vr = -65                                # membrane potential resting value 
     vp = 30                                 # membrane peak voltage value
         
-    hyperdirect_neurons = 0.1               # percentage of PNs that are hyperdirect
+    hyperdirect_neurons = 0.1               # percentage of PNs that are hyperdirect -> For DBS
     
     connectivity_factor_normal = 2.5        # For 100 neurons
     connectivity_factor_PD = 5              # For 100 neurons
@@ -118,16 +118,6 @@ def TCM_model_parameters():
         'TR': qnt_neurons_tr,                    # Number of neurons in TR
         'HD': qnt_neurons_d*hyperdirect_neurons, # Number of hyperdirect neurons
         'total': qnt_neurons_s + qnt_neurons_m + qnt_neurons_d + qnt_neurons_ci + qnt_neurons_tc + qnt_neurons_tr,
-        }
-    
-    nS = 1; nM = 0; nCI = 1; nTC = 1; nTR = 1;
-    # Percentage of neurons that have synaptic contact with hyperdirect neurons axon arbors
-    neurons_connected_with_hyperdirect_neurons = {
-        'S': nS*hyperdirect_neurons*qnt_neurons_s,   # percentage of S neurons that have synaptic contact with hyperdirect neurons axon arbors
-        'M': nM*hyperdirect_neurons*qnt_neurons_m,   # percentage of M neurons that have synaptic contact with hyperdirect neurons axon arbors
-        'CI': nCI*hyperdirect_neurons*qnt_neurons_ci,# percentage of CI neurons that have synaptic contact with hyperdirect neurons axon arbors
-        'TR': nTR*hyperdirect_neurons*qnt_neurons_tr, # percentage of R neurons that have synaptic contact with hyperdirect neurons axon arbors
-        'TC': nTC*hyperdirect_neurons*qnt_neurons_tc, # percentage of N neurons that have synaptic contact with hyperdirect neurons axon arbors
         }
     
     # Distribution of neurons in each structure
@@ -436,6 +426,39 @@ def TCM_model_parameters():
         'TR': I_ps_TR,
         }
     
+    # =============================================================================
+    #     DBS
+    # =============================================================================
+    # synaptic_fidelity = 0 # DBS off
+    synaptic_fidelity = 5*67 # DBS on
+    
+    fid_CI = np.abs(1*synaptic_fidelity)
+    fid_S = np.abs(1*synaptic_fidelity)
+    fid_M = np.abs(0*synaptic_fidelity)
+    fid_D = np.abs(1*synaptic_fidelity)
+    fid_TC = np.abs(1*synaptic_fidelity)
+    fid_TR = np.abs(1*synaptic_fidelity)
+    
+    nS = 1; nM = 0; nCI = 1; nTC = 1; nTR = 1;
+    # Percentage of neurons that have synaptic contact with hyperdirect neurons axon arbors
+    neurons_connected_with_hyperdirect_neurons = {
+        'S': nS*hyperdirect_neurons*qnt_neurons_s,   # percentage of S neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'M': nM*hyperdirect_neurons*qnt_neurons_m,   # percentage of M neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'CI': nCI*hyperdirect_neurons*qnt_neurons_ci,# percentage of CI neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'TR': nTR*hyperdirect_neurons*qnt_neurons_tr, # percentage of R neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'TC': nTC*hyperdirect_neurons*qnt_neurons_tc, # percentage of N neurons that have synaptic contact with hyperdirect neurons axon arbors
+        }
+    
+    synaptic_fidelity_layers = {
+        'S': fid_S,
+        'M': fid_M,
+        'D': fid_D,
+        'CI': fid_CI,
+        'TC': fid_TC,
+        'TR': fid_TR,
+        }
+    
+    
     # Export all dictionaries
     data = {
         'hyperdirect_neurons': hyperdirect_neurons, # Percentage of PNs affected in D by DBS
@@ -469,7 +492,8 @@ def TCM_model_parameters():
         'synapse_params_inhibitory': synapse_params_inhibitory,
         'synapse_total_params': p,
         'dbs': [dbs_off, dbs_on],
-        'poisson_bg_activity': I_ps
+        'poisson_bg_activity': I_ps,
+        'synaptic_fidelity_layers': synaptic_fidelity_layers
         }
     
     return data

@@ -23,23 +23,23 @@ n_S = neuron_quantities['S']
 vr = TCM_model_parameters()['vr']
 vp = TCM_model_parameters()['vp']
 
-# W_N = coupling_matrix_normal()['weights']
+W_N = coupling_matrix_normal()['weights']
 
-# W_S_self = W_N['W_EE_s']
-# W_S_M = W_N['W_EE_s_m']
-# W_S_D = W_N['W_EE_s_d']
-# W_S_CI = W_N['W_EI_s_ci']
-# W_S_TR = W_N['W_EI_s_tr']
-# W_S_TC = W_N['W_EE_s_tc']
+W_S_self = W_N['W_EE_s']
+W_S_M = W_N['W_EE_s_m']
+W_S_D = W_N['W_EE_s_d']
+W_S_CI = W_N['W_EI_s_ci']
+W_S_TR = W_N['W_EI_s_tr']
+W_S_TC = W_N['W_EE_s_tc']
 
-W_PS = coupling_matrix_PD()['weights']
+# W_PS = coupling_matrix_PD()['weights']
 
-W_S_self = W_PS['W_EE_s']
-W_S_M = W_PS['W_EE_s_m']
-W_S_D = W_PS['W_EE_s_d']
-W_S_CI = W_PS['W_EI_s_ci']
-W_S_TR = W_PS['W_EI_s_tr']
-W_S_TC = W_PS['W_EE_s_tc']
+# W_S_self = W_PS['W_EE_s']
+# W_S_M = W_PS['W_EE_s_m']
+# W_S_D = W_PS['W_EE_s_d']
+# W_S_CI = W_PS['W_EI_s_ci']
+# W_S_TR = W_PS['W_EI_s_tr']
+# W_S_TC = W_PS['W_EE_s_tc']
 
 a_S = neuron_params['a_S']
 b_S = neuron_params['b_S']
@@ -120,4 +120,6 @@ def S_nucleus(t, v_S, u_S, AP_S, PSC_S, PSC_M, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_
         I_syn[0][s] = 1*syn_S['Ipost']
         
     PSC_S[0][t] = np.sum(I_syn)
+    
     return v_S, u_S, PSC_S, u_S_syn, I_S_syn, R_S_syn
+

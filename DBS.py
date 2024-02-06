@@ -1,5 +1,5 @@
 """
-Created on Wed Jan 31 20:31:27 2024
+Created on Mon Feb  5 22:03:25 2024
 
 @author: celinesoeiro
 """
@@ -292,61 +292,4 @@ plot_raster_2(
             )
 
 print("-- Done!")
-
-# =============================================================================
-# Signal analysis
-# =============================================================================
-## Getting the Local Field Potential
-import math
-from sklearn import preprocessing
-from scipy.fft import rfft, rfftfreq
-from matplotlib import pyplot as plt
-
-plt.plot(PSC_D[0])
-
-rho = 0.27
-r = 100e-6
-#### LFP is the sum of the post-synaptic currents
-LFP = (np.subtract(PSC_D, 1*PSC_CI))/(4*math.pi*r)
-plt.plot(LFP[0])
-
-## Normalize the signal
-
-normalized_PSC_D = preprocessing.normalize([LFP[0]])
-
-## FFT
-
-
-plt.plot(PSC_D[0])
-plt.plot(normalized_PSC_D[0])
-
-n_D = neuron_quantities['D']
-fs = TCM_model_parameters()['sampling_frequency']
-
-yf = rfft(LFP[0])
-xf = rfftfreq(sim_steps, 1 / fs)
-
-plt.plot(xf, np.abs(yf))
-# plt.xlim([-10, 50])
-plt.show()
-
-
-# Power Spectral Density
-import scipy.signal
-
-(f, S) = scipy.signal.welch(normalized_PSC_D[0], fs, nperseg=1024)
-
-plt.semilogy(f, S)
-# plt.ylim([1e-3, 1e2])
-# plt.xlim([0, 100])
-# plt.xticks([0,5,10,15,20,25,30,35,40,45,50])
-plt.xlabel('frequency [Hz]')
-plt.ylabel('PSD [V**2/Hz]')
-plt.title('neuron - D')
-plt.show()
-    
-# for d in range(n_D):
-#     showPSD(PSC_D, d)
-
-
 

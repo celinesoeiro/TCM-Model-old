@@ -28,23 +28,23 @@ b_TR = neuron_params['b_TR']
 c_TR = neuron_params['c_TR']
 d_TR = neuron_params['d_TR']
 
-# W_N = coupling_matrix_normal()['weights']
+W_N = coupling_matrix_normal()['weights']
 
-# W_TR_self = W_N['W_II_tr']
-# W_TR_S = W_N['W_IE_tr_s']
-# W_TR_M = W_N['W_IE_tr_m']
-# W_TR_D = W_N['W_IE_tr_d']
-# W_TR_TC = W_N['W_IE_tr_tc']
-# W_TR_CI = W_N['W_II_tr_ci']
+W_TR_self = W_N['W_II_tr']
+W_TR_S = W_N['W_IE_tr_s']
+W_TR_M = W_N['W_IE_tr_m']
+W_TR_D = W_N['W_IE_tr_d']
+W_TR_TC = W_N['W_IE_tr_tc']
+W_TR_CI = W_N['W_II_tr_ci']
 
-W_PD = coupling_matrix_PD()['weights']
+# W_PD = coupling_matrix_PD()['weights']
 
-W_TR_self = W_PD['W_II_tr']
-W_TR_S = W_PD['W_IE_tr_s']
-W_TR_M = W_PD['W_IE_tr_m']
-W_TR_D = W_PD['W_IE_tr_d']
-W_TR_TC = W_PD['W_IE_tr_tc']
-W_TR_CI = W_PD['W_II_tr_ci']
+# W_TR_self = W_PD['W_II_tr']
+# W_TR_S = W_PD['W_IE_tr_s']
+# W_TR_M = W_PD['W_IE_tr_m']
+# W_TR_D = W_PD['W_IE_tr_d']
+# W_TR_TC = W_PD['W_IE_tr_tc']
+# W_TR_CI = W_PD['W_II_tr_ci']
 
 td_wl = TCM_model_parameters()['time_delay_within_layers']
 td_bl = TCM_model_parameters()['time_delay_between_layers']
@@ -68,11 +68,12 @@ zeta_TR = noise['zeta_TR']
 I_ps = TCM_model_parameters()['poisson_bg_activity']
 I_ps_TR = I_ps['TR']
 
-def TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC_S, u_TR_syn, R_TR_syn, I_TR_syn):
+def TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC_S, u_TR_syn, R_TR_syn, I_TR_syn, tr_aux):
     
     I_syn = np.zeros((1, n_TR))
     
     for tr in range(n_TR):
+        tr_aux = tr
         v_TR_aux = 1*v_TR[tr][t - 1]
         u_TR_aux = 1*u_TR[tr][t - 1]
         AP_TR_aux = 0
@@ -119,4 +120,4 @@ def TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC
         I_syn[0][tr] = 1*syn_TR['Ipost']
             
     PSC_TR[0][t] = np.sum(I_syn)
-    return v_TR, u_TR, PSC_TR, u_TR_syn, I_TR_syn, R_TR_syn
+    return v_TR, u_TR, PSC_TR, u_TR_syn, I_TR_syn, R_TR_syn, tr_aux

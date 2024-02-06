@@ -7,6 +7,7 @@ Created on Sat May 13 10:26:45 2023
 
 import math
 import numpy as np
+import scipy.signal
 from matplotlib import pyplot as plt
 import seaborn as sns
 sns.set()
@@ -74,6 +75,18 @@ def plot_voltages(n_neurons, voltage, title, neuron_types):
         axs[row,column].set_title(f'NEURONIO {i + 1} - {neuron_type}')
         axs[row,column].plot(voltage[i])
     
+    plt.show()
+    
+def showPSD(signal, n):
+    (f, S) = scipy.signal.welch(signal[n], fs, nperseg=5*1024)
+    
+    plt.semilogy(f, S)
+    plt.ylim([1e-3, 1e2])
+    plt.xlim([0, 50])
+    plt.xticks([0,5,10,15,20,25,30,35,40,45,50])
+    plt.xlabel('frequency [Hz]')
+    plt.ylabel('PSD [V**2/Hz]')
+    plt.title(f'neuron - {n}')
     plt.show()
     
 def plot_LFP(lfp, chop_till, sim_steps, title):
