@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Feb  3 19:17:04 2024
+Created on Tue Feb  6 23:09:41 2024
 
 @author: celinesoeiro
 """
@@ -29,15 +29,6 @@ td_ct = TCM_model_parameters()['time_delay_cortex_thalamus']
 td_tc = TCM_model_parameters()['time_delay_thalamus_cortex']
 td_syn = TCM_model_parameters()['time_delay_synapse']
 p = TCM_model_parameters()['synapse_total_params']
-
-# W_N = coupling_matrix_normal()['weights']
-
-# W_CI_self = W_N['W_II_ci']
-# W_CI_S = W_N['W_IE_ci_s']
-# W_CI_M = W_N['W_IE_ci_m']
-# W_CI_D = W_N['W_IE_ci_d']
-# W_CI_TR = W_N['W_II_ci_tr']
-# W_CI_TC = W_N['W_IE_ci_tc']
 
 W_PD = coupling_matrix_PD()['weights']
 
@@ -69,11 +60,22 @@ zeta_CI = noise['zeta_CI']
 I_ps = TCM_model_parameters()['poisson_bg_activity']
 I_ps_CI = I_ps['CI']
 
-def CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR, u_CI_syn, R_CI_syn, I_CI_syn):
+syn_fid = TCM_model_parameters()['synaptic_fidelity_layers']
+CI_fid = syn_fid['CI']
+
+affected_neurons = TCM_model_parameters()['neurons_connected_with_hyperdirect_neurons']
+CI_affected = affected_neurons['CI']
+
+def CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR, u_CI_syn, R_CI_syn, I_CI_syn, I_dbs):
     
     I_syn = np.zeros((1, n_CI))
     
     for ci in range(n_CI):
+        if (ci >= 1 and ci <= CI_affected):
+            dbs_I = I_dbs[t - 1]
+        else:
+            dbs_I = 0
+            
         v_CI_aux = 1*v_CI[ci][t - 1]
         u_CI_aux = 1*u_CI[ci][t - 1]
         AP_CI_aux = 0
@@ -108,7 +110,7 @@ def CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR
             coupling_thalamus = (coupling_CI_TC + coupling_CI_TR)/n_CI
             bg_activity = kisi_CI[ci][t - 1] +  I_ps_CI[0][t - td_wl - td_syn - 1] - I_ps_CI[0][t - td_wl - td_syn - 1]
         
-            v_CI[ci][t] = v_CI_aux + dt*(dv_CI + coupling_cortex + coupling_thalamus+ bg_activity)
+            v_CI[ci][t] = v_CI_aux + dt*(dv_CI + coupling_cortex + coupling_thalamus+ bg_activity + CI_fid*dbs_I)
             u_CI[ci][t] = u_CI_aux + dt*du_CI
             
         # Synapse        

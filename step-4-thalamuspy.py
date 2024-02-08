@@ -9,14 +9,10 @@ print("- REAL")
 print("-- Importing packages and functions")
 import numpy as np
 import pandas as pd
-import gc # Garbage Collector
-from random import seed, random
-
-seed(1)
-random_factor = random()
 
 from tcm_params import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
-from model_plots import plot_heat_map, layer_raster_plot, plot_voltages, plot_raster_2, showPSD
+from model_plots import plot_heat_map, plot_raster_2
+from model_functions import LFP, butter_bandpass_filter, PSD
 
 from TR_nucleus_noise import TR_nucleus
 from TC_nucleus_noise import TC_nucleus
@@ -296,57 +292,112 @@ print("-- Done!")
 # =============================================================================
 # Signal analysis
 # =============================================================================
-## Getting the Local Field Potential
-import math
-from sklearn import preprocessing
-from scipy.fft import rfft, rfftfreq
-from matplotlib import pyplot as plt
+print("-- Signal analysis")
 
-plt.plot(PSC_D[0])
-
-rho = 0.27
-r = 100e-6
-#### LFP is the sum of the post-synaptic currents
-LFP = (np.subtract(PSC_D, 1*PSC_CI))/(4*math.pi*r)
-plt.plot(LFP[0])
-
-## Normalize the signal
-
-normalized_PSC_D = preprocessing.normalize([LFP[0]])
-
-## FFT
-
-
-plt.plot(PSC_D[0])
-plt.plot(normalized_PSC_D[0])
-
-n_D = neuron_quantities['D']
 fs = TCM_model_parameters()['sampling_frequency']
 
-yf = rfft(LFP[0])
-xf = rfftfreq(sim_steps, 1 / fs)
+## Getting the Local Field Potential
+LFP_D = LFP(PSC_D[0], PSC_CI[0])
 
-plt.plot(xf, np.abs(yf))
-# plt.xlim([-10, 50])
-plt.show()
-
+## Bandpass filtering the LFP to get the beta waves
+beta_waves = butter_bandpass_filter(LFP_D, lowcut=13, highcut=30, fs=fs)
 
 # Power Spectral Density
-import scipy.signal
+PSD(beta_waves, fs)
 
-(f, S) = scipy.signal.welch(normalized_PSC_D[0], fs, nperseg=1024)
+print("-- Done!")
 
-plt.semilogy(f, S)
-# plt.ylim([1e-3, 1e2])
+# ## Getting the Local Field Potential
+# import math
+# from sklearn import preprocessing
+# from scipy.fft import rfft, rfftfreq
+# from matplotlib import pyplot as plt
+
+# plt.figure()
+# plt.plot(PSC_D[0])
+# plt.show()
+
+# rho = 0.27
+# r = 100e-6
+# #### LFP is the sum of the post-synaptic currents
+# LFP = (np.subtract(PSC_D, 1*PSC_CI))/(4*math.pi*r)
+# plt.figure()
+# plt.plot(LFP[0])
+# plt.title('LFP - PD')
+# plt.show()
+# ## Normalize the signal
+
+# normalized_PSC_D = preprocessing.normalize([LFP[0]])
+
+# ## FFT
+
+# plt.figure()
+# plt.plot(normalized_PSC_D[0])
+# plt.show()
+
+# n_D = neuron_quantities['D']
+# fs = TCM_model_parameters()['sampling_frequency']
+
+# yf = rfft(LFP[0])
+# xf = rfftfreq(sim_steps, 1 / fs)
+
+# plt.figure()
+# plt.plot(xf, np.abs(yf))
+# # plt.xlim([-10, 50])
+# plt.show()
+
+
+# # Power Spectral Density
+# import scipy.signal
+
+# (f, S) = scipy.signal.welch(normalized_PSC_D[0], fs, nperseg=5*1024)
+
+# plt.semilogy(f, S)
+# # plt.ylim([1e-3, 1e2])
 # plt.xlim([0, 100])
-# plt.xticks([0,5,10,15,20,25,30,35,40,45,50])
-plt.xlabel('frequency [Hz]')
-plt.ylabel('PSD [V**2/Hz]')
-plt.title('neuron - D')
-plt.show()
+# # plt.xticks([0,5,10,15,20,25,30,35,40,45,50])
+# plt.xlabel('frequency [Hz]')
+# plt.ylabel('PSD [V**2/Hz]')
+# plt.title('neuron - D')
+# plt.show()
     
-# for d in range(n_D):
-#     showPSD(PSC_D, d)
+# AP = np.zeros((1, sim_steps))
+# for t in time:
+#     ap_aux = 0
+#     for ap_ci in AP_CI:   
+#         print(ap_ci)
+#         if (ap_ci[t] > 0): 
+#             ap_aux += 1
+#     for ap_d in AP_D:        
+#         if (ap_d[t] > 0): 
+#             ap_aux += 1
+#     for ap_m in AP_M:        
+#         if (ap_m[t] > 0): 
+#             ap_aux += 1
+#     for ap_s in AP_S:        
+#         if (ap_s[t] > 0): 
+#             ap_aux += 1
+#     for ap_tc in AP_TC:        
+#         if (ap_tc[t] > 0): 
+#             ap_aux += 1
+#     for ap_tr in AP_TR:        
+#         if (ap_tr[t] > 0): 
+#             ap_aux += 1
+            
+#     AP[0][t] = ap_aux
+    
+            
+# plt.plot(AP[0])
 
 
+# (f, S) = scipy.signal.welch(AP[0], fs, nperseg=5*1024)
 
+# plt.semilogy(f, S)
+# # plt.ylim([1e-3, 1e2])
+# plt.xlim([0, 100])
+# # plt.xticks([0,5,10,15,20,25,30,35,40,45,50])
+# plt.xlabel('frequency [Hz]')
+# plt.ylabel('PSD [V**2/Hz]')
+# plt.title('neuron - D')
+# plt.show()
+            

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Feb  3 19:08:12 2024
+Created on Tue Feb  6 22:16:46 2024
 
 @author: celinesoeiro
 """
@@ -35,23 +35,14 @@ td_tc = TCM_model_parameters()['time_delay_thalamus_cortex']
 td_syn = TCM_model_parameters()['time_delay_synapse']
 p = TCM_model_parameters()['synapse_total_params']
 
-# W_N = coupling_matrix_normal()['weights']
+W_N = coupling_matrix_PD()['weights']
 
-# W_D_self = W_N['W_EE_d']
-# W_D_S = W_N['W_EE_d_s']
-# W_D_M = W_N['W_EE_d_m']
-# W_D_CI = W_N['W_EI_d_ci']
-# W_D_TR = W_N['W_EI_d_tr']
-# W_D_TC = W_N['W_EE_d_tc']
-
-W_PD = coupling_matrix_PD()['weights']
-
-W_D_self = W_PD['W_EE_d']
-W_D_S = W_PD['W_EE_d_s']
-W_D_M = W_PD['W_EE_d_m']
-W_D_CI = W_PD['W_EI_d_ci']
-W_D_TR = W_PD['W_EI_d_tr']
-W_D_TC = W_PD['W_EE_d_tc']
+W_D_self = W_N['W_EE_d']
+W_D_S = W_N['W_EE_d_s']
+W_D_M = W_N['W_EE_d_m']
+W_D_CI = W_N['W_EI_d_ci']
+W_D_TR = W_N['W_EI_d_tr']
+W_D_TC = W_N['W_EE_d_tc']
 
 t_f_E = syn_params['t_f']
 t_d_E = syn_params['t_d']
@@ -70,12 +61,23 @@ zeta_D = noise['zeta_D']
 I_ps = TCM_model_parameters()['poisson_bg_activity']
 I_ps_D = I_ps['D']
 
-def D_nucleus(t, v_D, u_D, AP_D, PSC_D, PSC_S, PSC_M, PSC_T_D, PSC_CI, PSC_TR, PSC_D_T, u_D_syn, R_D_syn, I_D_syn):
+syn_fid = TCM_model_parameters()['synaptic_fidelity_layers']
+D_fid = syn_fid['D']
+
+affected_neurons = TCM_model_parameters()['neurons_connected_with_hyperdirect_neurons']
+D_affected = affected_neurons['D']
+
+def D_nucleus(t, v_D, u_D, AP_D, PSC_D, PSC_S, PSC_M, PSC_T_D, PSC_CI, PSC_TR, PSC_D_T, u_D_syn, R_D_syn, I_D_syn, I_dbs):
     
     I_syn = np.zeros((1, n_D))
     I_syn_t = np.zeros((1, n_D))
     
     for d in range(n_D):
+        if (d >= 1 and d <= D_affected):
+            dbs_I = I_dbs[0][t - 1]
+        else:
+            dbs_I = 1*I_dbs[1][t - 1]
+            
         v_D_aux = 1*v_D[d][t - 1]
         u_D_aux = 1*u_D[d][t - 1]
         AP_D_aux = 0
@@ -110,7 +112,7 @@ def D_nucleus(t, v_D, u_D, AP_D, PSC_D, PSC_S, PSC_M, PSC_T_D, PSC_CI, PSC_TR, P
             coupling_thalamus = (coupling_D_TC + coupling_D_TR)/n_D
             bg_activity = kisi_D[d][t - 1] + I_ps_D[0][t - td_wl - td_syn - 1] - I_ps_D[1][t - td_wl - td_syn - 1]
         
-            v_D[d][t] = v_D_aux + dt*(dv_D + coupling_cortex + coupling_thalamus + bg_activity)
+            v_D[d][t] = v_D_aux + dt*(dv_D + coupling_cortex + coupling_thalamus + bg_activity + D_fid*dbs_I)
             u_D[d][t] = u_D_aux + dt*du_D
             
         # Synapse - Within cortex  

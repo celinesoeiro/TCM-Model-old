@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Sat Feb  3 18:46:35 2024
+Created on Mon Feb  5 22:18:42 2024
 
 @author: celinesoeiro
 """
+
 
 import numpy as np
 
@@ -23,23 +22,14 @@ n_S = neuron_quantities['S']
 vr = TCM_model_parameters()['vr']
 vp = TCM_model_parameters()['vp']
 
-# W_N = coupling_matrix_normal()['weights']
+W_PS = coupling_matrix_PD()['weights']
 
-# W_S_self = W_N['W_EE_s']
-# W_S_M = W_N['W_EE_s_m']
-# W_S_D = W_N['W_EE_s_d']
-# W_S_CI = W_N['W_EI_s_ci']
-# W_S_TR = W_N['W_EI_s_tr']
-# W_S_TC = W_N['W_EE_s_tc']
-
-W_PD = coupling_matrix_PD()['weights']
-
-W_S_self = W_PD['W_EE_s']
-W_S_M = W_PD['W_EE_s_m']
-W_S_D = W_PD['W_EE_s_d']
-W_S_CI = W_PD['W_EI_s_ci']
-W_S_TR = W_PD['W_EI_s_tr']
-W_S_TC = W_PD['W_EE_s_tc']
+W_S_self = W_PS['W_EE_s']
+W_S_M = W_PS['W_EE_s_m']
+W_S_D = W_PS['W_EE_s_d']
+W_S_CI = W_PS['W_EI_s_ci']
+W_S_TR = W_PS['W_EI_s_tr']
+W_S_TC = W_PS['W_EE_s_tc']
 
 a_S = neuron_params['a_S']
 b_S = neuron_params['b_S']
@@ -52,6 +42,12 @@ td_ct = TCM_model_parameters()['time_delay_cortex_thalamus']
 td_tc = TCM_model_parameters()['time_delay_thalamus_cortex']
 td_syn = TCM_model_parameters()['time_delay_synapse']
 p = TCM_model_parameters()['synapse_total_params']
+
+syn_fid = TCM_model_parameters()['synaptic_fidelity_layers']
+S_fid = syn_fid['S']
+
+affected_neurons = TCM_model_parameters()['neurons_connected_with_hyperdirect_neurons']
+S_affected = affected_neurons['S']
 
 t_f_E = syn_params['t_f']
 t_d_E = syn_params['t_d']
@@ -69,11 +65,16 @@ zeta_S = noise['zeta_S']
 I_ps = TCM_model_parameters()['poisson_bg_activity']
 I_ps_S = I_ps['S']
 
-def S_nucleus(t, v_S, u_S, AP_S, PSC_S, PSC_M, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_S_syn, R_S_syn, I_S_syn):
+def S_nucleus(t, v_S, u_S, AP_S, PSC_S, PSC_M, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_S_syn, R_S_syn, I_S_syn, I_dbs):
     
     I_syn = np.zeros((1, n_S))
     
     for s in range(n_S):
+        if (s >= 1 and s <= S_affected):
+            dbs_I = I_dbs[t - 1]
+        else:
+            dbs_I = 0
+            
         v_S_aux = 1*v_S[s][t - 1]
         u_S_aux = 1*u_S[s][t - 1]
         AP_S_aux = 0
@@ -108,7 +109,7 @@ def S_nucleus(t, v_S, u_S, AP_S, PSC_S, PSC_M, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_
             coupling_thalamus = (coupling_S_TC + coupling_S_TR)/n_S
             bg_activity = kisi_S[s][t - 1] + I_ps_S[0][t - td_wl - td_syn - 1] - I_ps_S[1][t - td_wl - td_syn - 1]
         
-            v_S[s][t] = v_S_aux + dt*(dv_S + coupling_cortex + coupling_thalamus + bg_activity)
+            v_S[s][t] = v_S_aux + dt*(dv_S + coupling_cortex + coupling_thalamus + bg_activity + S_fid*dbs_I)
             u_S[s][t] = u_S_aux + dt*du_S
             
         # Synapse - Within cortex  

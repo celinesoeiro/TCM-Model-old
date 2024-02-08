@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Feb  3 19:26:47 2024
+Created on Tue Feb  6 23:07:51 2024
 
 @author: celinesoeiro
 """
@@ -27,15 +27,6 @@ a_TR = neuron_params['a_TR']
 b_TR = neuron_params['b_TR']
 c_TR = neuron_params['c_TR']
 d_TR = neuron_params['d_TR']
-
-# W_N = coupling_matrix_normal()['weights']
-
-# W_TR_self = W_N['W_II_tr']
-# W_TR_S = W_N['W_IE_tr_s']
-# W_TR_M = W_N['W_IE_tr_m']
-# W_TR_D = W_N['W_IE_tr_d']
-# W_TR_TC = W_N['W_IE_tr_tc']
-# W_TR_CI = W_N['W_II_tr_ci']
 
 W_PD = coupling_matrix_PD()['weights']
 
@@ -68,11 +59,22 @@ zeta_TR = noise['zeta_TR']
 I_ps = TCM_model_parameters()['poisson_bg_activity']
 I_ps_TR = I_ps['TR']
 
-def TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC_S, u_TR_syn, R_TR_syn, I_TR_syn, tr_aux):
+syn_fid = TCM_model_parameters()['synaptic_fidelity_layers']
+TR_fid = syn_fid['TR']
+
+affected_neurons = TCM_model_parameters()['neurons_connected_with_hyperdirect_neurons']
+TR_affected = affected_neurons['TR']
+
+def TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC_S, u_TR_syn, R_TR_syn, I_TR_syn, tr_aux, I_dbs):
     
     I_syn = np.zeros((1, n_TR))
     
     for tr in range(n_TR):
+        if (tr >= 1 and tr <= TR_affected):
+            dbs_I = I_dbs[t - 1]
+        else:
+            dbs_I = 0
+            
         tr_aux = tr
         v_TR_aux = 1*v_TR[tr][t - 1]
         u_TR_aux = 1*u_TR[tr][t - 1]
@@ -108,7 +110,7 @@ def TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC
             coupling_thalamus = (coupling_TR_TC + coupling_TR_TR)/n_TR
             bg_activity = kisi_TR[tr][t - 1] + I_ps_TR[0][t - td_wl - td_syn - 1] - I_ps_TR[1][t - td_wl - td_syn - 1]
         
-            v_TR[tr][t] = v_TR_aux + dt*(dv_TR + coupling_cortex + coupling_thalamus + bg_activity)
+            v_TR[tr][t] = v_TR_aux + dt*(dv_TR + coupling_cortex + coupling_thalamus + bg_activity + TR_fid*dbs_I)
             u_TR[tr][t] = u_TR_aux + dt*du_TR
             
         # Synapse - Within layer  

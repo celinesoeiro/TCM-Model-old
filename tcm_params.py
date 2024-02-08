@@ -71,7 +71,7 @@ def TCM_model_parameters():
     
     ms = 1000                               # 1 second = 1000 miliseconds
     dt = 100/ms                             # time step of 10 ms
-    simulation_time = 3                     # simulation time in seconds (must be a multiplicative of 3 under PD+DBS condition)
+    simulation_time = 6                     # simulation time in seconds (must be a multiplicative of 3 under PD+DBS condition)
     samp_freq = int(ms/dt)                  # sampling frequency in Hz
     T = int((simulation_time + 1)*ms)       # Simulation time in ms with 1 extra second to reach the steady state and trash later
     sim_steps = int(T/dt)                   # number of simulation steps
@@ -444,6 +444,7 @@ def TCM_model_parameters():
     neurons_connected_with_hyperdirect_neurons = {
         'S': nS*hyperdirect_neurons*qnt_neurons_s,   # percentage of S neurons that have synaptic contact with hyperdirect neurons axon arbors
         'M': nM*hyperdirect_neurons*qnt_neurons_m,   # percentage of M neurons that have synaptic contact with hyperdirect neurons axon arbors
+        'D': hyperdirect_neurons*qnt_neurons_d,
         'CI': nCI*hyperdirect_neurons*qnt_neurons_ci,# percentage of CI neurons that have synaptic contact with hyperdirect neurons axon arbors
         'TR': nTR*hyperdirect_neurons*qnt_neurons_tr, # percentage of R neurons that have synaptic contact with hyperdirect neurons axon arbors
         'TC': nTC*hyperdirect_neurons*qnt_neurons_tc, # percentage of N neurons that have synaptic contact with hyperdirect neurons axon arbors
@@ -457,7 +458,6 @@ def TCM_model_parameters():
         'TC': fid_TC,
         'TR': fid_TR,
         }
-    
     
     # Export all dictionaries
     data = {

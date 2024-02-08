@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Feb  3 19:01:55 2024
+Created on Tue Feb  6 21:56:03 2024
 
 @author: celinesoeiro
 """
@@ -27,15 +27,6 @@ a_M = neuron_params['a_M']
 b_M = neuron_params['b_M']
 c_M = neuron_params['c_M']
 d_M = neuron_params['d_M']
-
-# W_N = coupling_matrix_normal()['weights']
-
-# W_M_self = W_N['W_EE_m']
-# W_M_S = W_N['W_EE_m_s']
-# W_M_D = W_N['W_EE_m_d']
-# W_M_CI = W_N['W_EI_m_ci']
-# W_M_TR = W_N['W_EI_m_tr']
-# W_M_TC = W_N['W_EE_m_tc']
 
 W_PD = coupling_matrix_PD()['weights']
 
@@ -69,11 +60,22 @@ zeta_M = noise['zeta_M']
 I_ps = TCM_model_parameters()['poisson_bg_activity']
 I_ps_M = I_ps['M']
 
-def M_nucleus(t, v_M, u_M, AP_M, PSC_M, PSC_S, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_M_syn, R_M_syn, I_M_syn):
+syn_fid = TCM_model_parameters()['synaptic_fidelity_layers']
+M_fid = syn_fid['M']
+
+affected_neurons = TCM_model_parameters()['neurons_connected_with_hyperdirect_neurons']
+M_affected = affected_neurons['M']
+
+def M_nucleus(t, v_M, u_M, AP_M, PSC_M, PSC_S, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_M_syn, R_M_syn, I_M_syn, I_dbs):
     
     I_syn = np.zeros((1, n_M))
     
     for m in range(n_M):
+        if (m >= 1 and m <= M_affected):
+            dbs_I = I_dbs[t - 1]
+        else:
+            dbs_I = 0
+            
         v_M_aux = 1*v_M[m][t - 1]
         u_M_aux = 1*u_M[m][t - 1]
         AP_M_aux = 0
@@ -108,7 +110,7 @@ def M_nucleus(t, v_M, u_M, AP_M, PSC_M, PSC_S, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_
             coupling_thalamus = (coupling_M_TC + coupling_M_TR)/n_M
             bg_activity = kisi_M[m][t - 1] + I_ps_M[0][t - td_wl - td_syn - 1] - I_ps_M[1][t - td_wl - td_syn - 1]
         
-            v_M[m][t] = v_M_aux + dt*(dv_M + coupling_cortex + coupling_thalamus + bg_activity)
+            v_M[m][t] = v_M_aux + dt*(dv_M + coupling_cortex + coupling_thalamus + bg_activity + M_fid*dbs_I)
             u_M[m][t] = u_M_aux + dt*du_M
             
         # Synapse - Within cortex  

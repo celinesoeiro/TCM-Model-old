@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Feb  3 19:21:12 2024
+Created on Tue Feb  6 22:45:19 2024
 
 @author: celinesoeiro
 """
@@ -23,14 +23,14 @@ n_TC = neuron_quantities['TC']
 vr = TCM_model_parameters()['vr']
 vp = TCM_model_parameters()['vp']
 
-# W_N = coupling_matrix_normal()['weights']
+W_N = coupling_matrix_normal()['weights']
 
-# W_TC_self = W_N['W_EE_tc']
-# W_TC_S = W_N['W_EE_tc_s']
-# W_TC_M = W_N['W_EE_tc_m']
-# W_TC_D = W_N['W_EE_tc_d']
-# W_TC_TR = W_N['W_EI_tc_tr']
-# W_TC_CI = W_N['W_EI_tc_ci']
+W_TC_self = W_N['W_EE_tc']
+W_TC_S = W_N['W_EE_tc_s']
+W_TC_M = W_N['W_EE_tc_m']
+W_TC_D = W_N['W_EE_tc_d']
+W_TC_TR = W_N['W_EI_tc_tr']
+W_TC_CI = W_N['W_EI_tc_ci']
 
 W_PD = coupling_matrix_PD()['weights']
 
@@ -70,12 +70,23 @@ zeta_TC = noise['zeta_TC']
 I_ps = TCM_model_parameters()['poisson_bg_activity']
 I_ps_TC = I_ps['TC']
 
-def TC_nucleus(t, v_TC, u_TC, AP_TC, PSC_TC, PSC_S, PSC_M, PSC_D_T, PSC_TR, PSC_CI, PSC_T_D, R_TC_syn, u_TC_syn, I_TC_syn):
+syn_fid = TCM_model_parameters()['synaptic_fidelity_layers']
+TC_fid = syn_fid['TC']
+
+affected_neurons = TCM_model_parameters()['neurons_connected_with_hyperdirect_neurons']
+TC_affected = affected_neurons['TC']
+
+def TC_nucleus(t, v_TC, u_TC, AP_TC, PSC_TC, PSC_S, PSC_M, PSC_D_T, PSC_TR, PSC_CI, PSC_T_D, R_TC_syn, u_TC_syn, I_TC_syn, I_dbs):
     
     I_syn = np.zeros((1, n_TC))
     I_syn_t = np.zeros((1, n_TC))
     
     for tc in range(n_TC):
+        if (tc >= 1 and tc <= TC_affected):
+            dbs_I = I_dbs[t - 1]
+        else:
+            dbs_I = 0
+            
         v_TC_aux = 1*v_TC[tc][t - 1]
         u_TC_aux = 1*u_TC[tc][t - 1]
         AP_TC_aux = 0
@@ -110,7 +121,7 @@ def TC_nucleus(t, v_TC, u_TC, AP_TC, PSC_TC, PSC_S, PSC_M, PSC_D_T, PSC_TR, PSC_
             coupling_thalamus = (coupling_TC_TC + coupling_TC_TR)/n_TC
             bg_activity = kisi_TC[tc][t - 1] + I_ps_TC[0][t - td_wl - td_syn - 1] - I_ps_TC[1][t - td_wl - td_syn - 1]
         
-            v_TC[tc][t] = v_TC_aux + dt*(dv_TC + coupling_cortex + coupling_thalamus + bg_activity)
+            v_TC[tc][t] = v_TC_aux + dt*(dv_TC + coupling_cortex + coupling_thalamus + bg_activity + TC_fid*dbs_I)
             u_TC[tc][t] = u_TC_aux + dt*du_TC
             
         u = 1*u_TC_syn

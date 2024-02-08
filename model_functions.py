@@ -240,3 +240,58 @@ def export_spike_dict(n_neuron, sim_steps, chop_till, spikes):
         neuron[neuron_name] = np.array(spike_time)
     
     return neuron
+
+# =============================================================================
+# SIGNAL ANALYSIS
+# =============================================================================
+from scipy.signal  import butter, lfilter, welch
+from math import pi
+from matplotlib import pyplot as plt
+
+def LFP(E_signal, I_signal):
+    rho = 0.27
+    r = 100e-6
+    #### LFP is the sum of the post-synaptic currents
+    LFP = (np.subtract(E_signal, 1*I_signal))/(4*pi*r*rho)
+
+    plt.figure()
+    plt.plot(LFP)
+    # plt.xlim([0, 2000])
+    plt.title('LFP')
+    plt.show()
+
+    return LFP
+
+def butter_bandpass(lowcut, highcut, fs, order=3):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+#funçao butter_bandpass_filter
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=3):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    
+    plt.figure()
+    plt.plot(y)
+    plt.title(f'Bandpass filter - ${lowcut} - ${highcut}')
+    plt.show()
+    
+    return y
+
+def PSD(signal, fs):
+    (f, S) = welch(signal, fs, nperseg=5*1024)
+    
+    plt.figure()
+    plt.semilogy(f, S)
+    plt.ylim([1e-5, 1e5])
+    plt.xlim([0, 200])
+    # plt.xticks([0,5,10,15,20,25,30,35,40,45,50])
+    plt.xlabel('frequency [Hz]')
+    plt.ylabel('PSD [V**2/Hz]')
+    plt.title('PSD')
+    plt.show()
+    
+    return f, S

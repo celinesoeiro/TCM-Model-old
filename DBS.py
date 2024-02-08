@@ -9,21 +9,17 @@ print("- REAL")
 print("-- Importing packages and functions")
 import numpy as np
 import pandas as pd
-import gc # Garbage Collector
-from random import seed, random
-
-seed(1)
-random_factor = random()
 
 from tcm_params import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
-from model_plots import plot_heat_map, layer_raster_plot, plot_voltages, plot_raster_2, showPSD
+from model_plots import plot_heat_map, plot_raster_2
+from model_functions import LFP, butter_bandpass_filter, PSD
 
-from TR_nucleus_noise import TR_nucleus
-from TC_nucleus_noise import TC_nucleus
-from S_nucleus_noise import S_nucleus
-from M_nucleus_noise import M_nucleus
-from D_nucleus_noise import D_nucleus
-from CI_nucleus_noise import CI_nucleus
+from TR_nucleus_DBS import TR_nucleus
+from TC_nucleus_DBS import TC_nucleus
+from S_nucleus_DBS import S_nucleus
+from M_nucleus_DBS import M_nucleus
+from D_nucleus_DBS import D_nucleus
+from CI_nucleus_DBS import CI_nucleus
 
 # =============================================================================
 # INITIAL VALUES
@@ -62,6 +58,9 @@ vr = TCM_model_parameters()['vr']
 dt = TCM_model_parameters()['dt']
 sim_time = TCM_model_parameters()['simulation_time']
 T = TCM_model_parameters()['simulation_time_ms']
+fs = TCM_model_parameters()['sampling_frequency']
+
+dbs = TCM_model_parameters()['dbs'][1]
 
 sim_steps = TCM_model_parameters()['simulation_steps']
 time_v = TCM_model_parameters()['time_vector']
@@ -201,6 +200,71 @@ R_TR_syn = np.ones((1, p))
 I_TR_syn = np.zeros((1, p))
 
 tr_aux = 0
+
+# =============================================================================
+# DBS
+# =============================================================================
+# I_dbs = np.zeros((1, sim_steps))
+
+t_f_E = syn_params['t_f']
+t_d_E = syn_params['t_d']
+t_s_E = syn_params['t_s']
+U_E = syn_params['U']
+A_E = syn_params['distribution']
+td_syn = TCM_model_parameters()['time_delay_synapse']
+
+I_dbs = np.zeros((2, sim_steps))
+dev = 1 # divide the total simulation time in dev 
+f_dbs = 160
+
+# Simulate 1/dev of DBS
+if (dbs != 0):
+    dev = 3
+    
+if (dev == 1):
+    print('dbs off')
+    dbs_duration = sim_steps
+    dbs_amplitude = 0.02
+else:
+    print('dbs on')
+    dbs_duration = int(np.round((sim_steps)/dev))
+    dbs_amplitude = 1
+
+T_dbs = np.round(fs/f_dbs)
+dbs_arr = np.arange(0, dbs_duration, T_dbs)
+I_dbs_full = np.zeros((1, dbs_duration))
+
+for i in dbs_arr:
+    I_dbs_full[0][int(i)] = dbs_amplitude 
+    
+if (dev == 1):
+    I_dbs_pre = 1*I_dbs_full
+else:
+    I_dbs_pre = 1*np.concatenate((
+        np.zeros((1, 1)), 
+        np.zeros((1, dbs_duration)), 
+        I_dbs_full, 
+        np.zeros((1, dbs_duration))
+        ),axis=1)
+
+R_dbs = np.zeros((3, sim_steps))
+u_dbs = np.ones((3, sim_steps))
+Is_dbs = np.zeros((3, sim_steps))
+
+for p in range(3):
+    for i in range(td_syn, sim_steps - 1):
+        # u -> utilization factor -> resources ready for use
+        u_dbs[p][i] = u_dbs[p - 1][i - 1] + -dt*u_dbs[p - 1][i - 1]/t_f_E[p - 1] + U_E[p - 1]*(1 - u_dbs[p - 1][i - 1])*I_dbs_pre[0][i- td_syn]
+        # x -> availabe resources -> Fraction of resources that remain available after neurotransmitter depletion
+        R_dbs[p][i] = R_dbs[p - 1][i - 1] + dt*(1 - R_dbs[p - 1][i - 1])/t_d_E[p - 1] - u_dbs[p - 1][i - 1]*R_dbs[p - 1][i - 1]*I_dbs_pre[0][i- td_syn]
+        # PSC
+        Is_dbs[p][i] = Is_dbs[p - 1][i - 1] + -dt*Is_dbs[p - 1][i - 1]/t_s_E + A_E[p - 1]*R_dbs[p - 1][i - 1]*u_dbs[p - 1][i - 1]*I_dbs_pre[0][i- td_syn]
+        
+I_dbs_post = np.sum(Is_dbs, 0)
+
+I_dbs[0] = I_dbs_pre
+I_dbs[1] = I_dbs_post
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -209,32 +273,32 @@ for t in time:
 # =============================================================================
 #     TR
 # =============================================================================
-    v_TR, u_TR, PSC_TR, u_TR_syn, I_TR_syn, R_TR_syn, tr_aux = TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC_S, u_TR_syn, R_TR_syn, I_TR_syn, tr_aux)
+    v_TR, u_TR, PSC_TR, u_TR_syn, I_TR_syn, R_TR_syn, tr_aux = TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC_S, u_TR_syn, R_TR_syn, I_TR_syn, tr_aux, I_dbs[1])
     LFP_TR_before[tr_aux] = PSC_TR[0]
 # =============================================================================
 #     TC
 # =============================================================================
-    v_TC, u_TC, PSC_TC, u_TC_syn, I_TC_syn, R_TC_syn, PSC_T_D = TC_nucleus(t, v_TC, u_TC, AP_TC, PSC_TC, PSC_S, PSC_M, PSC_D_T, PSC_TR, PSC_CI, PSC_T_D, R_TC_syn, u_TC_syn, I_TC_syn)
+    v_TC, u_TC, PSC_TC, u_TC_syn, I_TC_syn, R_TC_syn, PSC_T_D = TC_nucleus(t, v_TC, u_TC, AP_TC, PSC_TC, PSC_S, PSC_M, PSC_D_T, PSC_TR, PSC_CI, PSC_T_D, R_TC_syn, u_TC_syn, I_TC_syn, I_dbs[1])
         
 # =============================================================================
 #     S
 # =============================================================================
-    v_S, u_S, PSC_S, u_S_syn, I_S_syn, R_S_syn = S_nucleus(t, v_S, u_S, AP_S, PSC_S, PSC_M, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_S_syn, R_S_syn, I_S_syn)
+    v_S, u_S, PSC_S, u_S_syn, I_S_syn, R_S_syn = S_nucleus(t, v_S, u_S, AP_S, PSC_S, PSC_M, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_S_syn, R_S_syn, I_S_syn, I_dbs[1])
         
 # =============================================================================
 #     M
 # =============================================================================
-    v_M, u_M, PSC_M, u_M_syn, I_M_syn, R_M_syn = M_nucleus(t, v_M, u_M, AP_M, PSC_M, PSC_S, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_M_syn, R_M_syn, I_M_syn)
+    v_M, u_M, PSC_M, u_M_syn, I_M_syn, R_M_syn = M_nucleus(t, v_M, u_M, AP_M, PSC_M, PSC_S, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_M_syn, R_M_syn, I_M_syn, I_dbs[1])
             
 # =============================================================================
 #     D
 # =============================================================================
-    v_D, u_D, PSC_D, u_D_syn, I_D_syn, R_D_syn, PSC_D_T = D_nucleus(t, v_D, u_D, AP_D, PSC_D, PSC_S, PSC_M, PSC_T_D, PSC_CI, PSC_TR, PSC_D_T, u_D_syn, R_D_syn, I_D_syn)
+    v_D, u_D, PSC_D, u_D_syn, I_D_syn, R_D_syn, PSC_D_T = D_nucleus(t, v_D, u_D, AP_D, PSC_D, PSC_S, PSC_M, PSC_T_D, PSC_CI, PSC_TR, PSC_D_T, u_D_syn, R_D_syn, I_D_syn, I_dbs)
         
 # =============================================================================
 #     CI
 # =============================================================================
-    v_CI, u_CI, PSC_CI, u_CI_syn, I_CI_syn, R_CI_syn = CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR, u_CI_syn, R_CI_syn, I_CI_syn)
+    v_CI, u_CI, PSC_CI, u_CI_syn, I_CI_syn, R_CI_syn = CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR, u_CI_syn, R_CI_syn, I_CI_syn, I_dbs[1])
     
 # =============================================================================
 # PLOTS
@@ -290,6 +354,20 @@ plot_raster_2(
             spike_times_M = AP_M,
             spike_times_S = AP_S
             )
+
+# =============================================================================
+# Signal analysis
+# =============================================================================
+print("-- Signal analysis")
+
+## Getting the Local Field Potential
+LFP_D = LFP(PSC_D[0], PSC_CI[0])
+
+## Bandpass filtering the LFP to get the beta waves
+beta_waves = butter_bandpass_filter(LFP_D, lowcut=13, highcut=30, fs=fs)
+
+# Power Spectral Density
+PSD(beta_waves, fs)
 
 print("-- Done!")
 
