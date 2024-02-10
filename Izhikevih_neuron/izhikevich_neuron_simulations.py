@@ -37,8 +37,8 @@ regular_spiking_neuron, I_RS = izhikevich_neuron(
     voltage_pick = 30, 
     simulation_time = 100, 
     time_step = 0.01, 
-    current_value = 5, 
-    current_start = 500, 
+    current_value = 3.5, 
+    current_start = 0, 
     current_finish = 10000,
     )
 

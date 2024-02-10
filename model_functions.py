@@ -7,6 +7,15 @@ import math
 import numpy as np
 
 # =============================================================================
+# Poisson Spike Generator
+# =============================================================================
+def homogeneous_poisson(rate, tmax, bin_size): 
+    nbins = np.floor(tmax/bin_size).astype(int) 
+    prob_of_spike = rate * bin_size 
+    spikes = np.random.rand(nbins) < prob_of_spike 
+    return spikes * 1
+
+# =============================================================================
 # Izhikevich neuron equations
 # =============================================================================
 def izhikevich_dvdt(v, u, I):
@@ -18,6 +27,15 @@ def izhikevich_dudt(v, u, a, b):
 # =============================================================================
 # TM synapse
 # =============================================================================
+def synapse_utilization(u, tau_f, U, AP, dt):
+    return -(dt/tau_f)*u + U*(1 - u)*AP
+
+def synapse_recovery(R, tau_d, u_next, AP, dt):
+    return (dt/tau_d)*(1 - R) - u_next*R*AP
+
+def synapse_current(I, tau_s, A, R, u_next, AP, dt):
+    return -(dt/tau_s)*I + A*R*u_next*AP
+
 def tm_synapse_eq(u, R, I, AP, t_f, t_d, t_s, U, A, dt, p):
     # Solve EDOs using Euler method
     for j in range(p):
