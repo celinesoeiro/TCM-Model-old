@@ -71,9 +71,9 @@ def TCM_model_parameters():
     
     ms = 1000                               # 1 second = 1000 miliseconds
     dt = 100/ms                             # time step of 10 ms
-    simulation_time = 6                     # simulation time in seconds (must be a multiplicative of 3 under PD+DBS condition)
+    simulation_time = 30                     # simulation time in seconds
     samp_freq = int(ms/dt)                  # sampling frequency in Hz
-    T = int((simulation_time + 1)*ms)       # Simulation time in ms with 1 extra second to reach the steady state and trash later
+    T = int((simulation_time)*ms)       # Simulation time in ms with 1 extra second to reach the steady state and trash later
     sim_steps = int(T/dt)                   # number of simulation steps
     chop_till = 1*samp_freq;                # Cut the first 1 seconds of the simulation
 
@@ -100,6 +100,8 @@ def TCM_model_parameters():
         
     dbs_on = int(5*67)                      # value of synaptic fidelity when DBS on
     dbs_off = 0                             # value of synaptic fidelity when DBS off
+    dbs_amplitude = 1                       # 1 uA
+    dbs_freq = 80
         
     # Neuron quantities
     qnt_neurons_s = 100         # Excitatory
@@ -493,7 +495,9 @@ def TCM_model_parameters():
         'synapse_total_params': p,
         'dbs': [dbs_off, dbs_on],
         'poisson_bg_activity': I_ps,
-        'synaptic_fidelity_layers': synaptic_fidelity_layers
+        'synaptic_fidelity_layers': synaptic_fidelity_layers,
+        'dbs_amplitude': dbs_amplitude,
+        'dbs_freq': dbs_freq
         }
     
     return data

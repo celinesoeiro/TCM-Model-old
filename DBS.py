@@ -11,8 +11,8 @@ import numpy as np
 import pandas as pd
 
 from tcm_params import TCM_model_parameters, coupling_matrix_normal, coupling_matrix_PD
-from model_plots import plot_heat_map, plot_raster_2
-from model_functions import LFP, butter_bandpass_filter, PSD
+from model_plots import plot_heat_map, plot_raster_2, plot_I_DBS,plot_BP_filter, plot_PSD_DBS
+from model_functions import LFP, butter_bandpass_filter, PSD, I_DBS
 
 from TR_nucleus_DBS import TR_nucleus
 from TC_nucleus_DBS import TC_nucleus
@@ -61,10 +61,18 @@ T = TCM_model_parameters()['simulation_time_ms']
 fs = TCM_model_parameters()['sampling_frequency']
 
 dbs = TCM_model_parameters()['dbs'][1]
+dbs_freq = TCM_model_parameters()['dbs_freq']
 
 sim_steps = TCM_model_parameters()['simulation_steps']
 time_v = TCM_model_parameters()['time_vector']
 time = np.arange(1, sim_steps)
+
+t_f_E = syn_params['t_f']
+t_d_E = syn_params['t_d']
+t_s_E = syn_params['t_s']
+U_E = syn_params['U']
+A_E = syn_params['distribution']
+td_syn = TCM_model_parameters()['time_delay_synapse']
 
 # =============================================================================
 # COUPLING MATRIXES
@@ -205,65 +213,12 @@ tr_aux = 0
 # DBS
 # =============================================================================
 # I_dbs = np.zeros((1, sim_steps))
+print('-- Setting the DBS')
+I_dbs = I_DBS(sim_steps, dt, fs, dbs_freq, td_syn, t_f_E, t_d_E, U_E, t_s_E, A_E)
 
-t_f_E = syn_params['t_f']
-t_d_E = syn_params['t_d']
-t_s_E = syn_params['t_s']
-U_E = syn_params['U']
-A_E = syn_params['distribution']
-td_syn = TCM_model_parameters()['time_delay_synapse']
+plot_I_DBS(I_dbs[0], 'I DBS pre sinaptica')
 
-I_dbs = np.zeros((2, sim_steps))
-dev = 1 # divide the total simulation time in dev 
-f_dbs = 160
-
-# Simulate 1/dev of DBS
-if (dbs != 0):
-    dev = 3
-    
-if (dev == 1):
-    print('dbs off')
-    dbs_duration = sim_steps
-    dbs_amplitude = 0.02
-else:
-    print('dbs on')
-    dbs_duration = int(np.round((sim_steps)/dev))
-    dbs_amplitude = 1
-
-T_dbs = np.round(fs/f_dbs)
-dbs_arr = np.arange(0, dbs_duration, T_dbs)
-I_dbs_full = np.zeros((1, dbs_duration))
-
-for i in dbs_arr:
-    I_dbs_full[0][int(i)] = dbs_amplitude 
-    
-if (dev == 1):
-    I_dbs_pre = 1*I_dbs_full
-else:
-    I_dbs_pre = 1*np.concatenate((
-        np.zeros((1, 1)), 
-        np.zeros((1, dbs_duration)), 
-        I_dbs_full, 
-        np.zeros((1, dbs_duration))
-        ),axis=1)
-
-R_dbs = np.zeros((3, sim_steps))
-u_dbs = np.ones((3, sim_steps))
-Is_dbs = np.zeros((3, sim_steps))
-
-for p in range(3):
-    for i in range(td_syn, sim_steps - 1):
-        # u -> utilization factor -> resources ready for use
-        u_dbs[p][i] = u_dbs[p - 1][i - 1] + -dt*u_dbs[p - 1][i - 1]/t_f_E[p - 1] + U_E[p - 1]*(1 - u_dbs[p - 1][i - 1])*I_dbs_pre[0][i- td_syn]
-        # x -> availabe resources -> Fraction of resources that remain available after neurotransmitter depletion
-        R_dbs[p][i] = R_dbs[p - 1][i - 1] + dt*(1 - R_dbs[p - 1][i - 1])/t_d_E[p - 1] - u_dbs[p - 1][i - 1]*R_dbs[p - 1][i - 1]*I_dbs_pre[0][i- td_syn]
-        # PSC
-        Is_dbs[p][i] = Is_dbs[p - 1][i - 1] + -dt*Is_dbs[p - 1][i - 1]/t_s_E + A_E[p - 1]*R_dbs[p - 1][i - 1]*u_dbs[p - 1][i - 1]*I_dbs_pre[0][i- td_syn]
-        
-I_dbs_post = np.sum(Is_dbs, 0)
-
-I_dbs[0] = I_dbs_pre
-I_dbs[1] = I_dbs_post
+plot_I_DBS(I_dbs[1], 'I DBS pos sinaptica')
 
 # =============================================================================
 # MAIN
@@ -364,10 +319,14 @@ print("-- Signal analysis")
 LFP_D = LFP(PSC_D[0], PSC_CI[0])
 
 ## Bandpass filtering the LFP to get the beta waves
-beta_waves = butter_bandpass_filter(LFP_D, lowcut=13, highcut=30, fs=fs)
+lowcut = 13
+highcut = 30
+beta_waves = butter_bandpass_filter(LFP_D, lowcut, highcut, fs)
+plot_BP_filter(beta_waves, lowcut, highcut)
 
 # Power Spectral Density
-PSD(beta_waves, fs)
+f, S = PSD(beta_waves, fs, dbs_freq)
+plot_PSD_DBS(f, S, dbs_freq)
 
 print("-- Done!")
 

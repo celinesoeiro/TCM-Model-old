@@ -15,6 +15,10 @@ sns.set()
 from tcm_params import TCM_model_parameters
 dt = TCM_model_parameters()['dt']
 fs = TCM_model_parameters()['sampling_frequency']
+sim_steps = TCM_model_parameters()['simulation_steps']
+
+time_arr = np.arange(0, sim_steps + 1, fs)
+xlabels = [f'{x/fs}' for x in time_arr]
 
 def plot_heat_map(matrix_normal, matrix_PD): 
     fig, (ax1, ax2) = plt.subplots(1,2, figsize=(17,7))
@@ -84,9 +88,9 @@ def showPSD(signal, n):
     plt.ylim([1e-3, 1e2])
     plt.xlim([0, 50])
     plt.xticks([0,5,10,15,20,25,30,35,40,45,50])
-    plt.xlabel('frequency [Hz]')
+    plt.xlabel('frequencia [Hz]')
     plt.ylabel('PSD [V**2/Hz]')
-    plt.title(f'neuron - {n}')
+    plt.title(f'neuronio - {n}')
     plt.show()
     
 def plot_LFP(lfp, chop_till, sim_steps, title):
@@ -99,7 +103,7 @@ def plot_LFP(lfp, chop_till, sim_steps, title):
     plt.plot(new_time, lfp)
     
     # Set the x-axis label
-    plt.xlabel('Time')
+    plt.xlabel('Tempo')
     plt.ylabel('LFP')
     
     # Show the plot
@@ -126,6 +130,50 @@ def plot_LFPs(LFP_S, LFP_M, LFP_D, LFP_CI, LFP_TC, LFP_TR, chop_till, sim_steps,
     
     fig.suptitle(title)
         
+    plt.show()
+    
+def plot_I_DBS(I, title):    
+    plt.figure()
+    plt.title(f'{title}')
+    plt.xticks(time_arr, labels=xlabels)
+    plt.ylabel('corrente (mA)')
+    plt.xlabel('tempo (s)')
+    plt.plot(I)
+    plt.show()
+    
+def plot_BP_filter(signal, lowcut, highcut):
+    plt.figure()
+    plt.xticks(time_arr, labels=xlabels)
+    plt.plot(signal)
+    plt.title(f'Sinal filtrado em - ${lowcut} - ${highcut}')
+    plt.ylabel('potencial (uV)')
+    plt.xlabel('tempo (s)')
+    plt.show()
+    
+def plot_PSD_DBS(f, S, dbs_freq):
+    x_arr = np.arange(0, 101, 10)
+    
+    plt.figure()
+    plt.semilogy(f, S)
+    plt.ylim([1e-5, 1e5])
+    plt.xlim([0, 100])
+    plt.xticks(x_arr)
+    plt.xlabel('frequencia (Hz)')
+    plt.ylabel('PSD [V**2/Hz]')
+    plt.title(f'PSD - ${dbs_freq}')
+    plt.show()
+    
+def plot_PSD(f, S):
+    x_arr = np.arange(0, 101, 10)
+    
+    plt.figure()
+    plt.semilogy(f, S)
+    plt.ylim([1e-5, 1e5])
+    plt.xlim([0, 100])
+    plt.xticks(x_arr)
+    plt.xlabel('frequencia (Hz)')
+    plt.ylabel('PSD [V**2/Hz]')
+    plt.title('PSD')
     plt.show()
     
 # =============================================================================

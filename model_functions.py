@@ -18,23 +18,6 @@ def izhikevich_dudt(v, u, a, b):
 # =============================================================================
 # TM synapse
 # =============================================================================
-# def tm_synapse_eq(r, x, Is, AP, tau_f, tau_d, tau_s, U, A, dt):        
-#     for p in range(3):
-#         # Solve EDOs using Euler method
-#         r[p][0] = r[p][0] + dt*(-r[p][0]/tau_f[p - 1] + U[p - 1]*(1 - r[p][0])*AP)
-#         x[p][0] = x[p][0] + dt*((1 - x[p][0])/tau_d[p - 1] - (r[p][0] + U[p - 1]*(1 - r[p][0]))*x[p][0]*AP)
-#         Is[p][0] = Is[p][0] + dt*(-Is[p][0]/tau_s + A[p - 1]*x[p][0]*(r[p][0] + U[p - 1]*(1 - r[p][0]))*AP)
-        
-#     Ipost = np.sum(Is)
-    
-#     tm_syn_inst = dict()
-#     tm_syn_inst['r'] = r
-#     tm_syn_inst['x'] = x
-#     tm_syn_inst['Is'] = Is
-#     tm_syn_inst['Ipost'] = Ipost
-        
-#     return tm_syn_inst
-
 def tm_synapse_eq(u, R, I, AP, t_f, t_d, t_s, U, A, dt, p):
     # Solve EDOs using Euler method
     for j in range(p):
@@ -81,70 +64,48 @@ def tm_synapse_poisson_eq(spikes, sim_steps, t_delay, dt, t_f, t_d, t_s, U, A, t
         
     return Ipost
 
-def tm_synapse_dbs_eq(I_dbs, t_delay, dt, sim_steps, tau_f, tau_d, tau_s, U, A):    
-    r = np.zeros((3, sim_steps))
-    x = np.ones((3, sim_steps))
-    Is = np.zeros((3, sim_steps))
-    
-    for p in range(3):
-        for i in range(1 + t_delay, sim_steps - 1):
-            r[p][i + 1] = r[p][i] + dt*(-r[p][i]/tau_f[p] + U[p]*(1 - r[p][i])*I_dbs[i- t_delay])
-            x[p][i + 1] = x[p][i] + dt*((1-x[p][i])/tau_d[p] - r[p][i]*x[p][i]*I_dbs[i - t_delay])
-            Is[p][i + 1] = Is[p][i] + dt*(-Is[p][i]/tau_s + A[p]*r[p][i]*x[p][i]*I_dbs[i - t_delay])
-            
-    dbs_I = np.sum(Is, axis = 0)
-    
-    return dbs_I.reshape(1,-1)
-
 # =============================================================================
 # DBS
 # =============================================================================
-def I_DBS(sim_steps, chop_till, dt, td_syn, tau_f, tau_d, tau_s, U, A, dbs, samp_freq):    
-    I_dbs = np.zeros((2, sim_steps))
-    dev = 1 # divide the total simulation time in dev 
-    f_dbs = 130
-
-    # Simulate 1/dev of DBS
-    if (dbs != 0):
-        dev = 3
-        
-    if (dev == 1):
-        print('dbs off')
-        dbs_duration = sim_steps
-        dbs_amplitude = 0.02
-    else:
-        print('dbs on')
-        dbs_duration = int(np.round((sim_steps - chop_till)/dev))
-        dbs_amplitude = 1
+def I_DBS(sim_steps, dt, fs, dbs_freq, td_syn, t_f_E, t_d_E, U_E, t_s_E, A_E):    
+    step = int(sim_steps/3) # 1 part is zero, 1 part is dbs and another part is back to zero -> pulse
     
-    T_dbs = np.round(samp_freq/f_dbs)
+    I_dbs = np.zeros((2, sim_steps))
+    f_dbs = dbs_freq
+    
+    dbs_duration = step
+    dbs_amplitude = 1   # 1mA
+    
+    T_dbs = np.round(fs/f_dbs)
     dbs_arr = np.arange(0, dbs_duration, T_dbs)
     I_dbs_full = np.zeros((1, dbs_duration))
     
     for i in dbs_arr:
-        I_dbs_full[0][int(i)] = dbs_amplitude 
-        
-    if (dev == 1):
-        I_dbs_pre = I_dbs_full
-    else:
-        I_dbs_pre = np.concatenate((
-            np.zeros((1, chop_till)), 
-            np.zeros((1, dbs_duration)), 
-            I_dbs_full, 
-            np.zeros((1, dbs_duration))
-            ),axis=1)
-
-    I_dbs_post = tm_synapse_dbs_eq(I_dbs = I_dbs_pre[0], 
-                                   t_delay = td_syn, 
-                                   dt = dt,
-                                   tau_f = tau_f,
-                                   tau_d = tau_d,
-                                   U = U,
-                                   A = A,
-                                   tau_s = tau_s,
-                                   sim_steps = sim_steps)
-    I_dbs[0][:] = I_dbs_pre
-    I_dbs[1][:] = I_dbs_post
+        I_dbs_full[0][int(i)] = dbs_amplitude
+    
+    I_dbs_pre = 1*np.concatenate((
+        np.zeros((1, step)), 
+        I_dbs_full, 
+        np.zeros((1, step))
+        ),axis=1)
+    
+    R_dbs = np.zeros((3, sim_steps))
+    u_dbs = np.ones((3, sim_steps))
+    Is_dbs = np.zeros((3, sim_steps))
+    
+    for p in range(3):
+        for i in range(td_syn, sim_steps - 1):
+            # u -> utilization factor -> resources ready for use
+            u_dbs[p][i] = u_dbs[p - 1][i - 1] + -dt*u_dbs[p - 1][i - 1]/t_f_E[p - 1] + U_E[p - 1]*(1 - u_dbs[p - 1][i - 1])*I_dbs_pre[0][i- td_syn]
+            # x -> availabe resources -> Fraction of resources that remain available after neurotransmitter depletion
+            R_dbs[p][i] = R_dbs[p - 1][i - 1] + dt*(1 - R_dbs[p - 1][i - 1])/t_d_E[p - 1] - u_dbs[p - 1][i - 1]*R_dbs[p - 1][i - 1]*I_dbs_pre[0][i- td_syn]
+            # PSC
+            Is_dbs[p][i] = Is_dbs[p - 1][i - 1] + -dt*Is_dbs[p - 1][i - 1]/t_s_E + A_E[p - 1]*R_dbs[p - 1][i - 1]*u_dbs[p - 1][i - 1]*I_dbs_pre[0][i- td_syn]
+            
+    I_dbs_post = np.sum(Is_dbs, 0)
+    
+    I_dbs[0] = I_dbs_pre[0]
+    I_dbs[1] = I_dbs_post
     
     return I_dbs
 
@@ -256,7 +217,6 @@ def LFP(E_signal, I_signal):
 
     plt.figure()
     plt.plot(LFP)
-    # plt.xlim([0, 2000])
     plt.title('LFP')
     plt.show()
 
@@ -274,24 +234,9 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=3):
     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
     y = lfilter(b, a, data)
     
-    plt.figure()
-    plt.plot(y)
-    plt.title(f'Bandpass filter - ${lowcut} - ${highcut}')
-    plt.show()
-    
     return y
 
 def PSD(signal, fs):
-    (f, S) = welch(signal, fs, nperseg=5*1024)
-    
-    plt.figure()
-    plt.semilogy(f, S)
-    plt.ylim([1e-5, 1e5])
-    plt.xlim([0, 200])
-    # plt.xticks([0,5,10,15,20,25,30,35,40,45,50])
-    plt.xlabel('frequency [Hz]')
-    plt.ylabel('PSD [V**2/Hz]')
-    plt.title('PSD')
-    plt.show()
+    (f, S) = welch(signal, fs, nperseg=10*1024)
     
     return f, S
