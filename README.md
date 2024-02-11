@@ -1,4 +1,5 @@
-﻿# TCM-Model
+[**Under construction**]
+ # TCM-Model
 
 ## Goal
 
@@ -6,55 +7,62 @@ The purpose of this work is to study the Deep Brain Stimulation (DBS) in the Tha
 
 This will accomplished with the creation of a completely new model using Python.
 
-This model is based on [Farokhniaee and Lowery, 2021](https://iopscience.iop.org/article/10.1088/1741-2552/abee50/data) and [Tsodyks and Markram, 1997](https://www.pnas.org/doi/10.1073/pnas.94.2.719)
+This model is based on [Farokhniaee and Lowery, 2021](https://iopscience.iop.org/article/10.1088/1741-2552/abee50/data)
+
+![Captura de tela 11 02 2024 às 14 48 25 PM](https://github.com/celinesoeiro/TCBN-Model/assets/52112166/6a04e2c3-21ad-4792-bf06-98cc693de37f)
 
 ## Steps
 
-### STEP 1 - CREATE A MODEL OF THE CORTEX
+- Step 1 - Create a neuron model using Izhikevich model [Izhikevich, 2003](https://www.izhikevich.org/publications/spikes.htm)
+- Step 2 - Create a synaptic model using Tsodyks and Markram ([Tsodyks and Markram, 1997](https://www.pnas.org/doi/10.1073/pnas.94.2.719))
+- Step 3 - Create the thalamo-cortical model using Farokhniaee and Lowery as reference ([Farokhniaee and Lowery, 2021](https://iopscience.iop.org/article/10.1088/1741-2552/abee50/data))
+- Step 4 - Add DBS stimulation
 
-*Neurons are modeled by Izhikevich, with synaptic connection modeled by Tsodkys and Markram*
+### General files
+- tcm_params
+- model_plots
+- model_functions
 
-- [ ] Model_C 1.0:
-    - [ ] 1 neuron in layer D
-    - [ ] 1 neuron in layer M
-    - [ ] 1 neuron in layer S
-    - [ ] 1 neuron in layer CI
+## Step 1
+### Files
+- izhikevich_neuron
+- izhikevih_neuron/izhikevich_neuron_simulations
+- izhikevih_neuron/izhikevich_neuron_simulations
 
-- [ ] Model_C 2.0:
-    - [ ] 10 neuron in layer D
-    - [ ] 10 neuron in layer M
-    - [ ] 10 neuron in layer S
-    - [ ] 10 neuron in layer CI
+### How to run
 
-- [ ] Model_C 3.0:
-    - [ ] 100 neuron in layer D
-    - [ ] 100 neuron in layer M
-    - [ ] 100 neuron in layer S
-    - [ ] 100 neuron in layer CI
+## Step 2
+### Files
+- TM_syn_FS
+- TM_syn_IB
+- TM_syn_LTS
+- TM_syn_RS
+- TM_syn_TC
+- TM_syn_TR
+- tm_synapse_all
+
+### How to run
+
+## Step 3
+### Files
+- step-1-cortical-D
+- step-2-cortical-DS
+- step-3-cortical
+- step-4-thalamus-unreal
+- step-4-thalamus
+
+### How to run
+
+## Step 4
+### Files
+- TR_nucleus_DBS
+- TC_nucleus_DBS
+- CI_nucleus_DBS
+- D_nucleus_DBS
+- M_nucleus_DBS
+- S_nucleus_DBS
+- DBS
+- dbs_modes
+  
+### How to run
     
-
-### STEP 2 - CREATE A MODEL OF THE THALAMUS
-
-*Neurons are modeled by Izhikevich, with synaptic connection modeled by Tsodkys and Markram*
-
-- [ ] Model_T 1.0:
-    - [ ] 1 neuron in thalamo-cortical relay nucleus (TC)
-    - [ ] 1 neuron in thalamic reticular nucleus (TR)
-
-- [ ] Model_T 2.0:
-    - [ ] 10 neuron in thalamo-cortical relay nucleus (TC)
-    - [ ] 4 neuron in thalamic reticular nucleus (TR)
-    
-- [ ] Model_T 3.0:
-    - [ ] 100 neuron in thalamo-cortical relay nucleus (TC)
-    - [ ] 40 neuron in thalamic reticular nucleus (TR)
-
-### STEP 3 - COUPLING THE CORTEX AND THE THALAMUS
-
-*Connection between the layer D and the Thalamus (TC and TR) -> Pure Facilitating*
-*Connection between the TC and layer D -> Pure Depressive*
-
-- [ ] Model_Final:
-    - [ ] Modelo_C_1 + Modelo_T_1
-    - [ ] Modelo_C_2 + Modelo_T_2
-    - [ ] Modelo_C_3 + Modelo_T_3
