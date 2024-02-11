@@ -29,7 +29,7 @@ neuron_type = "Baixo Limiar de Disparo (LTS)"
 a = 0.02 + 0.008*random_factor
 b = 0.25 - 0.005*random_factor
 c = -65 
-d = 0.05 
+d = 2 
 
 I = 4
 W = 1

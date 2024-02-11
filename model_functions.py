@@ -28,13 +28,13 @@ def izhikevich_dudt(v, u, a, b):
 # TM synapse
 # =============================================================================
 def synapse_utilization(u, tau_f, U, AP, dt):
-    return dt*(-1/tau_f*u) + U*(1 - u)*AP
+    return dt*(-u/tau_f) + U*(1 - u)*AP
 
-def synapse_recovery(R, tau_d, u_next, AP, dt):
-    return dt*(1/tau_d*(1 - R)) - u_next*R*AP
+def synapse_recovery(R, tau_d, u_next, AP, dt, R_prev):
+    return dt*((1/tau_d)*(1 - R)) - u_next*R_prev*AP
 
-def synapse_current(I, tau_s, A, R, u_next, AP, dt):
-    return dt*(-1/tau_s*I) + A*R*u_next*AP
+def synapse_current(I, tau_s, A, R_prev, u_next, AP, dt):
+    return dt*(-I/tau_s) + A*R_prev*u_next*AP
 
 def tm_synapse_eq(u, R, I, AP, t_f, t_d, t_s, U, A, dt, p):
     # Solve EDOs using Euler method
@@ -45,11 +45,6 @@ def tm_synapse_eq(u, R, I, AP, t_f, t_d, t_s, U, A, dt, p):
         R[0][j] = R[0][j - 1] + dt*(1 - R[0][j - 1])/t_d[j - 1] - u[0][j]*R[0][j - 1]*AP
         # PSC
         I[0][j] = I[0][j - 1] + -dt*I[0][j - 1]/t_s + A[j - 1]*R[0][j - 1]*u[0][j - 1]*AP
-        
-        # print('tm_synapse_eq')
-        # print('u = ', u)
-        # print('R = ', R)
-        # print('I = ', I)
         
     Ipost = np.sum(I)
     
@@ -86,8 +81,8 @@ def tm_syn_excit_dep(sim_steps, vr, vp, a, b, c, d, spikes, time, I, W, dt, neur
     t_f = 17
     t_d = 671
     U = 0.5
-    A = 0.63
-    t_s = 3         # decay time constante of I (PSC current)
+    A = 1
+    t_s = 3         
     
     v = np.zeros((1, sim_steps)) 
     v[0][0] = vr
@@ -105,6 +100,22 @@ def tm_syn_excit_dep(sim_steps, vr, vp, a, b, c, d, spikes, time, I, W, dt, neur
     for t in time:
         AP_syn = spikes[t]
         
+        # Synapse var - Excitatory - Depression
+        syn_u_aux = 1*u_syn[0][t - 1]
+        syn_R_aux = 1*R_syn[0][t - 1]
+        syn_I_aux = 1*I_syn[0][t - 1]
+            
+        # Synapse - Excitatory - Depression
+        syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f,  U = U, AP = AP_syn, dt = dt)
+        u_syn[0][t] = syn_u_aux + syn_du
+        
+        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=1*R_syn[0][t - 2])
+        R_syn[0][t] = syn_R_aux + syn_dR
+        
+        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev = 1*R_syn[0][t - 2], u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt)
+        I_syn[0][t] = syn_I_aux + syn_dI
+        PSC[0][t] = 1*I_syn[0][t]
+        
         v_aux = 1*v[0][t - 1]
         u_aux = 1*u[0][t - 1]
         
@@ -120,22 +131,6 @@ def tm_syn_excit_dep(sim_steps, vr, vp, a, b, c, d, spikes, time, I, W, dt, neur
 
             v[0][t] = v_aux + dt*(dv + W*PSC[0][t - 1])
             u[0][t] = u_aux + dt*du
-        
-        # Synapse var - Excitatory - Depression
-        syn_u_aux = 1*u_syn[0][t - 1]
-        syn_R_aux = 1*R_syn[0][t - 1]
-        syn_I_aux = 1*I_syn[0][t - 1]
-            
-        # Synapse - Excitatory - Depression
-        syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f,  U = U, AP = AP_syn, dt = dt)
-        u_syn[0][t] = syn_u_aux + syn_du
-        
-        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = u_syn[0][t], AP = AP_syn, dt = dt)
-        R_syn[0][t] = syn_R_aux + syn_dR
-        
-        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R = syn_R_aux, u_next = u_syn[0][t], AP = AP_syn, dt = dt)
-        I_syn[0][t] = syn_I_aux + syn_dI
-        PSC[0][t] = 1*I_syn[0][t]
 
     v_value = []
     for ap in AP_neuron[0]:
@@ -145,7 +140,7 @@ def tm_syn_excit_dep(sim_steps, vr, vp, a, b, c, d, spikes, time, I, W, dt, neur
     if (len(v_value) != 0):
         fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
         ax4.stem(np.arange(0,len(v_value)), v_value)
-        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.3)
+        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
         ax4.set_title('Valor de pico da tensao')
     else:
         print('--- No Action Potential')
@@ -165,7 +160,7 @@ def tm_syn_excit_fac(sim_steps, vr, vp, a, b, c, d, time, dt, spikes, I, W, neur
     t_d = 138
     t_s = 3
     U = 0.09
-    A = 0.2
+    A = 1
     
     v = np.zeros((1, sim_steps)) 
     v[0][0] = vr
@@ -182,6 +177,22 @@ def tm_syn_excit_fac(sim_steps, vr, vp, a, b, c, d, time, dt, spikes, I, W, neur
 
     for t in time:
         AP_syn = spikes[t - 1]
+
+        # Synapse var - Excitatory - Facilitation
+        syn_u_aux = 1*u_syn[0][t - 1]
+        syn_R_aux = 1*R_syn[0][t - 1]
+        syn_I_aux = 1*I_syn[0][t - 1]
+            
+        syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f, U = U, AP = AP_syn, dt = dt)
+        u_syn[0][t] = syn_u_aux + syn_du
+        
+        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=1*R_syn[0][t - 2])
+        R_syn[0][t] = syn_R_aux + syn_dR
+        
+        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev = 1*R_syn[0][t - 2], u_next = 1*u_syn[0][t], AP = AP_syn,dt = dt)
+        I_syn[0][t] = syn_I_aux + syn_dI
+        PSC[0][t] = 1*I_syn[0][t]
+        
         v_aux = 1*v[0][t - 1]
         u_aux = 1*u[0][t - 1]
         
@@ -198,21 +209,6 @@ def tm_syn_excit_fac(sim_steps, vr, vp, a, b, c, d, time, dt, spikes, I, W, neur
             v[0][t] = v_aux + dt*(dv + W*PSC[0][t - 1])
             u[0][t] = u_aux + dt*du
         
-        # Synapse var - Excitatory - Facilitation
-        syn_u_aux = 1*u_syn[0][t - 1]
-        syn_R_aux = 1*R_syn[0][t - 1]
-        syn_I_aux = 1*I_syn[0][t - 1]
-            
-        syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f, U = U, AP = AP_syn, dt = dt)
-        u_syn[0][t] = syn_u_aux + syn_du
-        
-        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = u_syn[0][t], AP = AP_syn, dt = dt)
-        R_syn[0][t] = syn_R_aux + syn_dR
-        
-        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R = syn_R_aux, u_next = u_syn[0][t], AP = AP_syn,dt = dt)
-        I_syn[0][t] = syn_I_aux + syn_dI
-        PSC[0][t] = 1*I_syn[0][t]
-        
         v_aux = 1*v[0][t - 1]
         u_aux = 1*u[0][t - 1]
        
@@ -225,7 +221,7 @@ def tm_syn_excit_fac(sim_steps, vr, vp, a, b, c, d, time, dt, spikes, I, W, neur
     if (len(v_value) != 0):
         fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
         ax4.stem(np.arange(0,len(v_value)), v_value)
-        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.3)
+        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
         ax4.set_title('Valor de pico da tensao')
     else:
         print('--- No Action Potential')
@@ -244,7 +240,7 @@ def tm_syn_inib_dep(sim_steps, dt, time, a, b, c, d, vp, vr, spikes, I, W, neuro
     t_f = 21
     t_d = 706
     U = 0.25
-    A = 0.75
+    A = 1
     t_s = 11
     
     v = np.zeros((1, sim_steps)) 
@@ -261,9 +257,26 @@ def tm_syn_inib_dep(sim_steps, dt, time, a, b, c, d, vp, vr, spikes, I, W, neuro
     AP_neuron = np.zeros((1, sim_steps))
 
     for t in time:
+        AP_syn = spikes[t - 1]
+        
+        # Synapse var - Inhibitory - Depression
+        syn_u_aux = 1*u_syn[0][t - 1]
+        syn_R_aux = 1*R_syn[0][t - 1]
+        syn_I_aux = 1*I_syn[0][t - 1]
+            
+        # Synapse - Inhibitory - Depression
+        syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f, U = U, AP = AP_syn, dt = dt)
+        u_syn[0][t] = syn_u_aux + syn_du
+        
+        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=1*R_syn[0][t - 2])
+        R_syn[0][t] = syn_R_aux + syn_dR
+        
+        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev=1*R_syn[0][t - 2], u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt)
+        I_syn[0][t] = syn_I_aux + syn_dI
+        PSC[0][t] = 1*I_syn[0][t]
+        
         v_aux = 1*v[0][t - 1]
         u_aux = 1*u[0][t - 1]
-        AP_syn = spikes[t - 1]
         
         # Neuron - RS - Excitatory
         if (v_aux >= vp):
@@ -277,22 +290,6 @@ def tm_syn_inib_dep(sim_steps, dt, time, a, b, c, d, vp, vr, spikes, I, W, neuro
      
             v[0][t] = v_aux + dt*(dv + W*PSC[0][t - 1])
             u[0][t] = u_aux + dt*du
-            
-        # Synapse var - Inhibitory - Depression
-        syn_u_aux = 1*u_syn[0][t - 1]
-        syn_R_aux = 1*R_syn[0][t - 1]
-        syn_I_aux = 1*I_syn[0][t - 1]
-            
-        # Synapse - Inhibitory - Depression
-        syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f, U = U, AP = AP_syn, dt = dt)
-        u_syn[0][t] = syn_u_aux + syn_du
-        
-        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = u_syn[0][t], AP = AP_syn, dt = dt)
-        R_syn[0][t] = syn_R_aux + syn_dR
-        
-        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R = syn_R_aux, u_next = u_syn[0][t], AP = AP_syn, dt = dt)
-        I_syn[0][t] = syn_I_aux + syn_dI
-        PSC[0][t] = 1*I_syn[0][t]
         
     v_value = []
     for ap in AP_neuron[0]:
@@ -303,7 +300,7 @@ def tm_syn_inib_dep(sim_steps, dt, time, a, b, c, d, vp, vr, spikes, I, W, neuro
     if (len(v_value) != 0):
         fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
         ax4.stem(np.arange(0,len(v_value)), v_value)
-        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.3)
+        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
         ax4.set_title('Valor de pico da tensao')
     else:
         print('--- No Action Potential')
@@ -322,7 +319,7 @@ def tm_syn_inib_fac(sim_steps, time, dt, a, b, c, d, vp, vr, I, spikes, W, neuro
     t_f = 376
     t_d = 45
     U = 0.016
-    A = 0.08
+    A = 1
     t_s = 11
     
     v = np.zeros((1, sim_steps))
@@ -341,6 +338,22 @@ def tm_syn_inib_fac(sim_steps, time, dt, a, b, c, d, vp, vr, I, spikes, W, neuro
     for t in time:
         AP_syn = spikes[t - 1]
         
+        # Synapse var - Inhibitory - Faciliation
+        syn_u_aux = 1*u_syn[0][t - 1]
+        syn_R_aux = 1*R_syn[0][t - 1]
+        syn_I_aux = 1*I_syn[0][t - 1]   
+            
+        # Synapse - Inhibitory - Facilitation
+        syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f, U = U, AP=AP_syn, dt = dt)
+        u_syn[0][t] = syn_u_aux + syn_du
+        
+        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=1*R_syn[0][t - 2])
+        R_syn[0][t] = syn_R_aux + syn_dR
+        
+        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev=1*R_syn[0][t - 2], u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt)
+        I_syn[0][t] = syn_I_aux + syn_dI
+        PSC[0][t] = 1*I_syn[0][t]
+        
         v_aux = 1*v[0][t - 1]
         u_aux = 1*u[0][t - 1]
         
@@ -357,23 +370,8 @@ def tm_syn_inib_fac(sim_steps, time, dt, a, b, c, d, vp, vr, I, spikes, W, neuro
             v[0][t] = v_aux + dt*(dv + W*PSC[0][t - 1])
             u[0][t] = u_aux + dt*du
         
-        # Synapse var - Inhibitory - Faciliation
-        syn_u_aux = 1*u_syn[0][t - 1]
-        syn_R_aux = 1*R_syn[0][t - 1]
-        syn_I_aux = 1*I_syn[0][t - 1]   
-            
-        # Synapse - Inhibitory - Facilitation
-        syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f, U = U, AP=AP_syn, dt = dt)
-        u_syn[0][t] = syn_u_aux + syn_du
-        
-        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = u_syn[0][t], AP = AP_syn, dt = dt)
-        R_syn[0][t] = syn_R_aux + syn_dR
-        
-        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R = syn_R_aux, u_next = u_syn[0][t], AP = AP_syn, dt = dt)
-        I_syn[0][t] = syn_I_aux + syn_dI
-        PSC[0][t] = 1*I_syn[0][t]
-        
     v_value = []
+    
     for ap in AP_neuron[0]:
         if (ap > 1):
             print(ap)
@@ -382,7 +380,7 @@ def tm_syn_inib_fac(sim_steps, time, dt, a, b, c, d, vp, vr, I, spikes, W, neuro
     if (len(v_value) != 0):
         fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
         ax4.stem(np.arange(0,len(v_value)), v_value)
-        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.3)
+        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
         ax4.set_title('Valor de pico da tensao')
     else:
         print('--- No Action Potential')

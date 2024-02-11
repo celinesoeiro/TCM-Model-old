@@ -28,7 +28,7 @@ neuron_type = "Disparo em Rajada (IB)"
 
 a = 0.02 
 b = 0.2 
-c = -65 + 15*random_factor**2
+c = -55 + 15*random_factor**2
 d = 4 - 0.6*random_factor**2
 
 I = 4.1*4
@@ -60,3 +60,5 @@ tm_syn_inib_dep(sim_steps, dt, time, a, b, c, d, vp, vr, spikes, I, W, neuron_ty
 # INHIBITORY - FACILITATION
 # =============================================================================
 tm_syn_inib_fac(sim_steps, time, dt, a, b, c, d, vp, vr, I, spikes, W, neuron_type)
+
+
