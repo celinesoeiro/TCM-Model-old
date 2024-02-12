@@ -212,10 +212,7 @@ def dbs(freq):
     # DBS
     # =============================================================================
     print('-- Setting the DBS')
-    dbs = TCM_model_parameters()['dbs'][1]
-    dbs_freq = TCM_model_parameters()['dbs_freq']
-    
-    I_dbs = I_DBS(sim_steps, dt, fs, dbs_freq, td_syn, t_f_E, t_d_E, U_E, t_s_E, A_E)
+    I_dbs = I_DBS(sim_steps, dt, fs, freq, td_syn, t_f_E, t_d_E, U_E, t_s_E, A_E)
 
     plot_I_DBS(I_dbs[0], 'I DBS pre sinaptica')
 
@@ -324,23 +321,23 @@ def dbs(freq):
     
     # Power Spectral Density
     f,S = PSD(beta_waves, fs)
-    plot_PSD_DBS(f, S, dbs_freq)
+    plot_PSD_DBS(f, S, freq)
     return f, S
     
     print("-- Done!")
     
-f_60, s_60 = dbs(60)
-f_80, s_80 = dbs(80)
+# f_60, s_60 = dbs(60)
+# f_80, s_80 = dbs(80)
 f_100, s_100 = dbs(100)
-f_120, s_120 = dbs(120)
-f_140, s_140 = dbs(140)
-f_160, s_160 = dbs(160)
-f_180, s_180 = dbs(180)
+# f_120, s_120 = dbs(120)
+# f_140, s_140 = dbs(140)
+# f_160, s_160 = dbs(160)
+# f_180, s_180 = dbs(180)
 f_200, s_200 = dbs(200)
-f_220, s_220 = dbs(220)
-f_240, s_240 = dbs(240)
-f_260, s_260 = dbs(260)
-f_280, s_280 = dbs(280)
+# f_220, s_220 = dbs(220)
+# f_240, s_240 = dbs(240)
+# f_260, s_260 = dbs(260)
+# f_280, s_280 = dbs(280)
 f_300, s_300 = dbs(300)
 
 from matplotlib import pyplot as plt
@@ -348,17 +345,18 @@ from matplotlib import pyplot as plt
 x_arr = np.arange(0, 101, 10)
 
 plt.figure()
-plt.semilogy(f_60, s_60)
-plt.semilogy(f_80, s_80)
-plt.semilogy(f_120, s_120)
-plt.semilogy(f_140, s_140)
-plt.semilogy(f_160, s_160)
-plt.semilogy(f_180, s_180)
+# plt.semilogy(f_60, s_60)
+# plt.semilogy(f_80, s_80)
+plt.semilogy(f_100, s_100)
+# plt.semilogy(f_120, s_120)
+# plt.semilogy(f_140, s_140)
+# plt.semilogy(f_160, s_160)
+# plt.semilogy(f_180, s_180)
 plt.semilogy(f_200, s_200)
-plt.semilogy(f_220, s_220)
-plt.semilogy(f_240, s_240)
-plt.semilogy(f_260, s_260)
-plt.semilogy(f_280, s_280)
+# plt.semilogy(f_220, s_220)
+# plt.semilogy(f_240, s_240)
+# plt.semilogy(f_260, s_260)
+# plt.semilogy(f_280, s_280)
 plt.semilogy(f_300, s_300)
 plt.ylim([1e-5, 1e5])
 plt.xlim([0, 100])
