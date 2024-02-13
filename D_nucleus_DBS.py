@@ -73,8 +73,8 @@ def D_nucleus(t, v_D, u_D, AP_D, PSC_D, PSC_S, PSC_M, PSC_T_D, PSC_CI, PSC_TR, P
     I_syn_t = np.zeros((1, n_D))
     
     for d in range(n_D):
-        if (d >= 1 and d <= D_affected):
-            dbs_I = I_dbs[0][t - 1]
+        if (d >= 0 and d <= D_affected):
+            dbs_I = 1*I_dbs[0][t - 1]
         else:
             dbs_I = 1*I_dbs[1][t - 1]
             

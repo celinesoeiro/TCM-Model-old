@@ -82,8 +82,8 @@ def TC_nucleus(t, v_TC, u_TC, AP_TC, PSC_TC, PSC_S, PSC_M, PSC_D_T, PSC_TR, PSC_
     I_syn_t = np.zeros((1, n_TC))
     
     for tc in range(n_TC):
-        if (tc >= 1 and tc <= TC_affected):
-            dbs_I = I_dbs[t - 1]
+        if (tc >= 10 and tc <= TC_affected):
+            dbs_I = 1*I_dbs[t - 1]
         else:
             dbs_I = 0
             

@@ -42,9 +42,9 @@ def tm_synapse_eq(u, R, I, AP, t_f, t_d, t_s, U, A, dt, p):
         # u -> utilization factor -> resources ready for use
         u[0][j] = u[0][j - 1] + -dt*u[0][j - 1]/t_f[j] + U[j]*(1 - u[0][j - 1])*AP
         # x -> availabe resources -> Fraction of resources that remain available after neurotransmitter depletion
-        R[0][j] = R[0][j - 1] + dt*(1 - R[0][j - 1])/t_d[j - 1] - u[0][j]*R[0][j - 1]*AP
+        R[0][j] = R[0][j - 1] + dt*(1 - R[0][j - 1])/t_d[j] - u[0][j]*R[0][j - 1]*AP
         # PSC
-        I[0][j] = I[0][j - 1] + -dt*I[0][j - 1]/t_s + A[j - 1]*R[0][j - 1]*u[0][j - 1]*AP
+        I[0][j] = I[0][j - 1] + -dt*I[0][j - 1]/t_s + A[j]*R[0][j - 1]*u[0][j]*AP
         
     Ipost = np.sum(I)
     
@@ -67,11 +67,12 @@ def tm_synapse_poisson_eq(spikes, sim_steps, t_delay, dt, t_f, t_d, t_s, U, A, t
             if (spikes[0][i - 1] != 0):
                 ap = 1
             # u -> utilization factor -> resources ready for use
-            u[p][i] = u[p - 1][i - 1] + -dt*u[p - 1][i - 1]/t_f[p - 1] + U[p - 1]*(1 - u[p - 1][i - 1])*ap
+            u[p][i] = u[p][i - 1] + -dt*u[p][i - 1]/t_f[p] + U[p]*(1 - u[p][i - 1])*ap
             # x -> availabe resources -> Fraction of resources that remain available after neurotransmitter depletion
-            R[p][i] = R[p - 1][i - 1] + dt*(1 - R[p - 1][i - 1])/t_d[p - 1] - u[p - 1][i - 1]*R[p - 1][i - 1]*ap
+            R[p][i] = R[p][i - 1] + dt*(1 - R[p][i - 1])/t_d[p] - u[p][i - 1]*R[p][i - 1]*ap
             # PSC
-            I[p][i] = I[p - 1][i - 1] + -dt*I[p - 1][i - 1]/t_s + A[p - 1]*R[p - 1][i - 1]*u[p - 1][i - 1]*ap
+            I[p][i] = I[p][i - 1] + -dt*I[p][i - 1]/t_s + A[p]*R[p][i - 1]*u[p][i - 1]*ap
+            
         
     Ipost = np.sum(I, 0)
         
@@ -104,15 +105,16 @@ def tm_syn_excit_dep(sim_steps, vr, vp, a, b, c, d, spikes, time, I, W, dt, neur
         syn_u_aux = 1*u_syn[0][t - 1]
         syn_R_aux = 1*R_syn[0][t - 1]
         syn_I_aux = 1*I_syn[0][t - 1]
+        syn_R_prev = 1*R_syn[0][t - 1]
             
         # Synapse - Excitatory - Depression
         syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f,  U = U, AP = AP_syn, dt = dt)
         u_syn[0][t] = syn_u_aux + syn_du
         
-        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=1*R_syn[0][t - 2])
+        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=syn_R_prev)
         R_syn[0][t] = syn_R_aux + syn_dR
         
-        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev = 1*R_syn[0][t - 2], u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt)
+        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev = syn_R_prev, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt)
         I_syn[0][t] = syn_I_aux + syn_dI
         PSC[0][t] = 1*I_syn[0][t]
         
@@ -126,10 +128,10 @@ def tm_syn_excit_dep(sim_steps, vr, vp, a, b, c, d, spikes, time, I, W, dt, neur
             v[0][t] = c
             u[0][t] = u_aux + d
         else:
-            dv = izhikevich_dvdt(v = v_aux, u = u_aux, I = I)
+            dv = izhikevich_dvdt(v = v_aux, u = u_aux, I = W*PSC[0][t - 1])
             du = izhikevich_dudt(v = v_aux, u = u_aux, a = a, b = b)
 
-            v[0][t] = v_aux + dt*(dv + W*PSC[0][t - 1])
+            v[0][t] = v_aux + dt*dv
             u[0][t] = u_aux + dt*du
 
     v_value = []
@@ -137,29 +139,29 @@ def tm_syn_excit_dep(sim_steps, vr, vp, a, b, c, d, spikes, time, I, W, dt, neur
         if (ap > 1):
             v_value.append(v[0][int(ap) - 1])
             
-    if (len(v_value) != 0):
-        fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
-        ax4.stem(np.arange(0,len(v_value)), v_value)
-        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
-        ax4.set_title('Valor de pico da tensao')
-    else:
-        print('--- No Action Potential')
-        fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(15, 15), constrained_layout=True)
+    # if (len(v_value) != 0):
+    #     fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
+    #     ax4.stem(np.arange(0,len(v_value)), v_value)
+    #     ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
+    #     ax4.set_title('Valor de pico da tensao')
+    # else:
+    #     print('--- No Action Potential')
+    fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(15, 15), constrained_layout=True, sharex=True)
     
-    fig.suptitle(f'{neuron_type}', fontsize=20)
+    fig.suptitle(f'{neuron_type}', fontsize=30)
     ax1.plot(spikes)
     ax2.plot(PSC[0])
     ax3.plot(v[0])
 
-    ax1.set_title('Trem de pulsos gerado por Poisson')
-    ax2.set_title('PSC - Excitatoria dominada por depressao')
-    ax3.set_title('Tensao do neuronio')
+    ax1.set_title('Trem de pulsos gerado por Poisson', fontsize=20)
+    ax2.set_title('PSC - Excitatoria dominada por depressao', fontsize=20)
+    ax3.set_title('Tensao do neuronio', fontsize=20)
         
 def tm_syn_excit_fac(sim_steps, vr, vp, a, b, c, d, time, dt, spikes, I, W, neuron_type):
     t_f = 670
     t_d = 138
     t_s = 3
-    U = 0.09
+    U = 0.5
     A = 1
     
     v = np.zeros((1, sim_steps)) 
@@ -182,14 +184,15 @@ def tm_syn_excit_fac(sim_steps, vr, vp, a, b, c, d, time, dt, spikes, I, W, neur
         syn_u_aux = 1*u_syn[0][t - 1]
         syn_R_aux = 1*R_syn[0][t - 1]
         syn_I_aux = 1*I_syn[0][t - 1]
+        syn_R_prev = 1*R_syn[0][t - 1]
             
         syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f, U = U, AP = AP_syn, dt = dt)
         u_syn[0][t] = syn_u_aux + syn_du
         
-        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=1*R_syn[0][t - 2])
+        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=syn_R_prev)
         R_syn[0][t] = syn_R_aux + syn_dR
         
-        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev = 1*R_syn[0][t - 2], u_next = 1*u_syn[0][t], AP = AP_syn,dt = dt)
+        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev = syn_R_prev, u_next = 1*u_syn[0][t], AP = AP_syn,dt = dt)
         I_syn[0][t] = syn_I_aux + syn_dI
         PSC[0][t] = 1*I_syn[0][t]
         
@@ -203,10 +206,10 @@ def tm_syn_excit_fac(sim_steps, vr, vp, a, b, c, d, time, dt, spikes, I, W, neur
             v[0][t] = c
             u[0][t] = u_aux + d
         else:
-            dv = izhikevich_dvdt(v = v_aux, u = u_aux, I = I)
+            dv = izhikevich_dvdt(v = v_aux, u = u_aux, I = W*PSC[0][t - 1])
             du = izhikevich_dudt(v = v_aux, u = u_aux, a = a, b = b)
 
-            v[0][t] = v_aux + dt*(dv + W*PSC[0][t - 1])
+            v[0][t] = v_aux + dt*dv
             u[0][t] = u_aux + dt*du
         
         v_aux = 1*v[0][t - 1]
@@ -218,28 +221,28 @@ def tm_syn_excit_fac(sim_steps, vr, vp, a, b, c, d, time, dt, spikes, I, W, neur
             print(ap)
             v_value.append(v[0][int(ap)])
 
-    if (len(v_value) != 0):
-        fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
-        ax4.stem(np.arange(0,len(v_value)), v_value)
-        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
-        ax4.set_title('Valor de pico da tensao')
-    else:
-        print('--- No Action Potential')
-        fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(15, 15), constrained_layout=True)
+    # if (len(v_value) != 0):
+    #     fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
+    #     ax4.stem(np.arange(0,len(v_value)), v_value)
+    #     ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
+    #     ax4.set_title('Valor de pico da tensao')
+    # else:
+    #     print('--- No Action Potential')
+    fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(15, 15), constrained_layout=True, sharex=True)
     
-    fig.suptitle(f'{neuron_type}', fontsize=20)
+    fig.suptitle(f'{neuron_type}', fontsize=30)
     ax1.plot(spikes)
     ax2.plot(PSC[0])
     ax3.plot(v[0])
 
-    ax1.set_title('Trem de pulsos gerado por Poisson')
-    ax2.set_title('PSC - Excitatoria dominada por facilitacao')
-    ax3.set_title('Tensao do neuronio')
+    ax1.set_title('Trem de pulsos gerado por Poisson', fontsize=20)
+    ax2.set_title('PSC - Excitatoria dominada por facilitacao', fontsize=20)
+    ax3.set_title('Tensao do neuronio', fontsize=20)
 
 def tm_syn_inib_dep(sim_steps, dt, time, a, b, c, d, vp, vr, spikes, I, W, neuron_type):
     t_f = 21
     t_d = 706
-    U = 0.25
+    U = 0.5
     A = 1
     t_s = 11
     
@@ -263,15 +266,16 @@ def tm_syn_inib_dep(sim_steps, dt, time, a, b, c, d, vp, vr, spikes, I, W, neuro
         syn_u_aux = 1*u_syn[0][t - 1]
         syn_R_aux = 1*R_syn[0][t - 1]
         syn_I_aux = 1*I_syn[0][t - 1]
+        syn_R_prev = 1*R_syn[0][t - 1]
             
         # Synapse - Inhibitory - Depression
         syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f, U = U, AP = AP_syn, dt = dt)
         u_syn[0][t] = syn_u_aux + syn_du
         
-        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=1*R_syn[0][t - 2])
+        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=syn_R_prev)
         R_syn[0][t] = syn_R_aux + syn_dR
         
-        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev=1*R_syn[0][t - 2], u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt)
+        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev=syn_R_prev, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt)
         I_syn[0][t] = syn_I_aux + syn_dI
         PSC[0][t] = 1*I_syn[0][t]
         
@@ -285,10 +289,10 @@ def tm_syn_inib_dep(sim_steps, dt, time, a, b, c, d, vp, vr, spikes, I, W, neuro
             v[0][t] = c
             u[0][t] = u_aux + d
         else:
-            dv = izhikevich_dvdt(v = v_aux, u = u_aux, I = I)
+            dv = izhikevich_dvdt(v = v_aux, u = u_aux, I = W*PSC[0][t - 1])
             du = izhikevich_dudt(v = v_aux, u = u_aux, a = a, b = b)
      
-            v[0][t] = v_aux + dt*(dv + W*PSC[0][t - 1])
+            v[0][t] = v_aux + dt*dv
             u[0][t] = u_aux + dt*du
         
     v_value = []
@@ -297,28 +301,28 @@ def tm_syn_inib_dep(sim_steps, dt, time, a, b, c, d, vp, vr, spikes, I, W, neuro
             print(ap)
             v_value.append(v[0][int(ap)])
             
-    if (len(v_value) != 0):
-        fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
-        ax4.stem(np.arange(0,len(v_value)), v_value)
-        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
-        ax4.set_title('Valor de pico da tensao')
-    else:
-        print('--- No Action Potential')
-        fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(15, 15), constrained_layout=True)
+    # if (len(v_value) != 0):
+    #     fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
+    #     ax4.stem(np.arange(0,len(v_value)), v_value)
+    #     ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
+    #     ax4.set_title('Valor de pico da tensao')
+    # else:
+    # print('--- No Action Potential')
+    fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(15, 15), constrained_layout=True, sharex=True)
     
-    fig.suptitle(f'{neuron_type}', fontsize=20)
+    fig.suptitle(f'{neuron_type}', fontsize=30)
     ax1.plot(spikes)
     ax2.plot(PSC[0])
     ax3.plot(v[0])
 
-    ax1.set_title('Trem de pulsos gerado por Poisson')
-    ax2.set_title('PSC - Inibitoria dominada por depressao')
-    ax3.set_title('Tensao do neuronio')
+    ax1.set_title('Trem de pulsos gerado por Poisson', fontsize=20)
+    ax2.set_title('PSC - Inibitoria dominada por depressao', fontsize=20)
+    ax3.set_title('Tensao do neuronio', fontsize=20)
 
 def tm_syn_inib_fac(sim_steps, time, dt, a, b, c, d, vp, vr, I, spikes, W, neuron_type):
     t_f = 376
     t_d = 45
-    U = 0.016
+    U = 0.5
     A = 1
     t_s = 11
     
@@ -342,15 +346,16 @@ def tm_syn_inib_fac(sim_steps, time, dt, a, b, c, d, vp, vr, I, spikes, W, neuro
         syn_u_aux = 1*u_syn[0][t - 1]
         syn_R_aux = 1*R_syn[0][t - 1]
         syn_I_aux = 1*I_syn[0][t - 1]   
+        syn_R_prev = 1*R_syn[0][t - 1]
             
         # Synapse - Inhibitory - Facilitation
         syn_du = synapse_utilization(u = syn_u_aux, tau_f = t_f, U = U, AP=AP_syn, dt = dt)
         u_syn[0][t] = syn_u_aux + syn_du
         
-        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=1*R_syn[0][t - 2])
+        syn_dR = synapse_recovery(R = syn_R_aux, tau_d = t_d, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt, R_prev=syn_R_prev)
         R_syn[0][t] = syn_R_aux + syn_dR
         
-        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev=1*R_syn[0][t - 2], u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt)
+        syn_dI = synapse_current(I = syn_I_aux, tau_s = t_s, A = A, R_prev=syn_R_prev, u_next = 1*u_syn[0][t], AP = AP_syn, dt = dt)
         I_syn[0][t] = syn_I_aux + syn_dI
         PSC[0][t] = 1*I_syn[0][t]
         
@@ -364,10 +369,10 @@ def tm_syn_inib_fac(sim_steps, time, dt, a, b, c, d, vp, vr, I, spikes, W, neuro
             v[0][t] = c
             u[0][t] = u_aux + d
         else:
-            dv = izhikevich_dvdt(v = v_aux, u = u_aux, I = I)
+            dv = izhikevich_dvdt(v = v_aux, u = u_aux, I = W*PSC[0][t - 1])
             du = izhikevich_dudt(v = v_aux, u = u_aux, a = a, b = b)
         
-            v[0][t] = v_aux + dt*(dv + W*PSC[0][t - 1])
+            v[0][t] = v_aux + dt*dv
             u[0][t] = u_aux + dt*du
         
     v_value = []
@@ -377,23 +382,23 @@ def tm_syn_inib_fac(sim_steps, time, dt, a, b, c, d, vp, vr, I, spikes, W, neuro
             print(ap)
             v_value.append(v[0][int(ap)])
 
-    if (len(v_value) != 0):
-        fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
-        ax4.stem(np.arange(0,len(v_value)), v_value)
-        ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
-        ax4.set_title('Valor de pico da tensao')
-    else:
-        print('--- No Action Potential')
-        fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(15, 15), constrained_layout=True)
+    # if (len(v_value) != 0):
+    #     fig, (ax1,ax2,ax3, ax4) = plt.subplots(4,1,figsize=(15, 15), constrained_layout=True)
+    #     ax4.stem(np.arange(0,len(v_value)), v_value)
+    #     ax4.plot(np.arange(0,len(v_value)), v_value,  'o--', color='grey', alpha=0.4)
+    #     ax4.set_title('Valor de pico da tensao')
+    # else:
+    #     print('--- No Action Potential')
+    fig, (ax1,ax2,ax3) = plt.subplots(3,1,figsize=(15, 15), constrained_layout=True, sharex=True)
     
-    fig.suptitle(f'{neuron_type}', fontsize=20)
+    fig.suptitle(f'{neuron_type}', fontsize=30)
     ax1.plot(spikes)
     ax2.plot(PSC[0])
     ax3.plot(v[0])
 
-    ax1.set_title('Trem de pulsos gerado por Poisson')
-    ax2.set_title('PSC - Inibitoria dominada por facilitacao')
-    ax3.set_title('Tensao do neuronio')
+    ax1.set_title('Trem de pulsos gerado por Poisson', fontsize=20)
+    ax2.set_title('PSC - Inibitoria dominada por facilitacao', fontsize=20)
+    ax3.set_title('Tensao do neuronio', fontsize=20)
 
 # =============================================================================
 # DBS
@@ -427,11 +432,11 @@ def I_DBS(sim_steps, dt, fs, dbs_freq, td_syn, t_f_E, t_d_E, U_E, t_s_E, A_E):
     for p in range(3):
         for i in range(td_syn, sim_steps - 1):
             # u -> utilization factor -> resources ready for use
-            u_dbs[p][i] = u_dbs[p - 1][i - 1] + -dt*u_dbs[p - 1][i - 1]/t_f_E[p - 1] + U_E[p - 1]*(1 - u_dbs[p - 1][i - 1])*I_dbs_pre[0][i- td_syn]
+            u_dbs[p][i] = u_dbs[p][i - 1] + -dt*u_dbs[p][i - 1]/t_f_E[p] + U_E[p]*(1 - u_dbs[p][i - 1])*I_dbs_pre[0][i- td_syn]
             # x -> availabe resources -> Fraction of resources that remain available after neurotransmitter depletion
-            R_dbs[p][i] = R_dbs[p - 1][i - 1] + dt*(1 - R_dbs[p - 1][i - 1])/t_d_E[p - 1] - u_dbs[p - 1][i - 1]*R_dbs[p - 1][i - 1]*I_dbs_pre[0][i- td_syn]
+            R_dbs[p][i] = R_dbs[p][i - 1] + dt*(1 - R_dbs[p][i - 1])/t_d_E[p] - u_dbs[p][i - 1]*R_dbs[p][i - 1]*I_dbs_pre[0][i- td_syn]
             # PSC
-            Is_dbs[p][i] = Is_dbs[p - 1][i - 1] + -dt*Is_dbs[p - 1][i - 1]/t_s_E + A_E[p - 1]*R_dbs[p - 1][i - 1]*u_dbs[p - 1][i - 1]*I_dbs_pre[0][i- td_syn]
+            Is_dbs[p][i] = Is_dbs[p][i - 1] + -dt*Is_dbs[p][i - 1]/t_s_E + A_E[p]*R_dbs[p][i - 1]*u_dbs[p][i - 1]*I_dbs_pre[0][i- td_syn]
             
     I_dbs_post = np.sum(Is_dbs, 0)
     

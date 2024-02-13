@@ -71,8 +71,8 @@ def CI_nucleus(t, v_CI, u_CI, AP_CI, PSC_CI, PSC_D, PSC_M, PSC_S, PSC_TC, PSC_TR
     I_syn = np.zeros((1, n_CI))
     
     for ci in range(n_CI):
-        if (ci >= 1 and ci <= CI_affected):
-            dbs_I = I_dbs[t - 1]
+        if (ci >= 0 and ci <= CI_affected):
+            dbs_I = 1*I_dbs[t - 1]
         else:
             dbs_I = 0
             

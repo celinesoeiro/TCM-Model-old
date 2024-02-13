@@ -71,8 +71,8 @@ def M_nucleus(t, v_M, u_M, AP_M, PSC_M, PSC_S, PSC_D, PSC_CI, PSC_TC, PSC_TR, u_
     I_syn = np.zeros((1, n_M))
     
     for m in range(n_M):
-        if (m >= 1 and m <= M_affected):
-            dbs_I = I_dbs[t - 1]
+        if (m >= 0 and m <= M_affected):
+            dbs_I = 1*I_dbs[t - 1]
         else:
             dbs_I = 0
             

@@ -70,8 +70,8 @@ def TR_nucleus(t, v_TR, u_TR, AP_TR, PSC_TR, PSC_TC, PSC_CI, PSC_D_T, PSC_M, PSC
     I_syn = np.zeros((1, n_TR))
     
     for tr in range(n_TR):
-        if (tr >= 1 and tr <= TR_affected):
-            dbs_I = I_dbs[t - 1]
+        if (tr >= 0 and tr <= TR_affected):
+            dbs_I = 1*I_dbs[t - 1]
         else:
             dbs_I = 0
             

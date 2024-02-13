@@ -17,7 +17,7 @@ dt = TCM_model_parameters()['dt']
 fs = TCM_model_parameters()['sampling_frequency']
 sim_steps = TCM_model_parameters()['simulation_steps']
 
-time_arr = np.arange(0, sim_steps + 1, fs)
+time_arr = np.arange(0, sim_steps + 1, fs, dtype=int)
 xlabels = [f'{x/fs}' for x in time_arr]
 
 def plot_heat_map(matrix_normal, matrix_PD): 
@@ -142,7 +142,7 @@ def plot_I_DBS(I, title):
     plt.show()
     
 def plot_BP_filter(signal, lowcut, highcut):
-    plt.figure()
+    plt.figure(figsize=(30, 10))
     plt.xticks(time_arr, labels=xlabels)
     plt.plot(signal)
     plt.title(f'Sinal filtrado em - ${lowcut} - ${highcut}')
@@ -153,22 +153,22 @@ def plot_BP_filter(signal, lowcut, highcut):
 def plot_PSD_DBS(f, S, dbs_freq):
     x_arr = np.arange(0, 101, 10)
     
-    plt.figure()
+    plt.figure(figsize=(21, 10))
     plt.semilogy(f, S)
-    plt.ylim([1e-5, 1e5])
+    plt.ylim([1e-3, 1e8])
     plt.xlim([0, 100])
     plt.xticks(x_arr)
     plt.xlabel('frequencia (Hz)')
     plt.ylabel('PSD [V**2/Hz]')
-    plt.title(f'PSD - ${dbs_freq}')
+    plt.title(f'PSD - {dbs_freq}')
     plt.show()
     
 def plot_PSD(f, S):
     x_arr = np.arange(0, 101, 10)
     
-    plt.figure()
+    plt.figure(figsize=(21, 10))
     plt.semilogy(f, S)
-    plt.ylim([1e-5, 1e5])
+    plt.ylim([1e-3, 1e8])
     plt.xlim([0, 100])
     plt.xticks(x_arr)
     plt.xlabel('frequencia (Hz)')
@@ -400,7 +400,7 @@ def plot_raster_2(
     
     spikes = np.concatenate([spike_TR_clean, spike_TC_clean, spike_CI_clean, spike_D_clean, spike_M_clean, spike_S_clean])
     
-    fig, ax1 = plt.subplots(figsize=(10, 10))
+    fig, ax1 = plt.subplots(figsize=(21, 10))
     fig.canvas.manager.set_window_title(f'Raster plot')
     fig.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
         

@@ -325,7 +325,7 @@ beta_waves = butter_bandpass_filter(LFP_D, lowcut, highcut, fs)
 plot_BP_filter(beta_waves, lowcut, highcut)
 
 # Power Spectral Density
-f, S = PSD(beta_waves, fs, dbs_freq)
+f, S = PSD(beta_waves, fs)
 plot_PSD_DBS(f, S, dbs_freq)
 
 print("-- Done!")

@@ -20,7 +20,7 @@ dt = rate
 vp = 30     # voltage peak
 vr = -65    # voltage threshold
 
-W = 1e2
+W = 100
 
 random_factor = np.random.rand()
 
